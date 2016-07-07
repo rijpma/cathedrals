@@ -1,5 +1,5 @@
 | country     | geocoding | main file | relation churches | checked | 
----------------------------------------------------
+| ----------- | --------- | --------- | ----------------- | ------- |
 | france      | done      | done      | fif made          | rel. churches unchecked |
 | switzerland | done      | done      | fif made          | rel. churches unchecked | 
 | belgium     | done      | done      | done              | rel. churches unchecked |
