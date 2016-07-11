@@ -136,49 +136,52 @@ checks = function(dyn, full, churchlist){
 
 recombine_churches = function(churches, guesses){
     fill = list()
-    statlength = which(names(churches)=="lon")
+    dynvrbs = grep('V\\d+', names(churches))
+    # statlength = which(names(churches)=="lon")
     for (id in unique(churches$osmid)){
         church = as.data.frame(churches[osmid==id, ])
-        temp = data.frame(osmid=rep(id, ncol(church) - statlength), 
-                          year=integer(ncol(church) - statlength),
-                          m2=integer(ncol(church) - statlength),
-                          hgt=integer(ncol(church) - statlength),
-                          gss=integer(ncol(church) - statlength))
-        temp$year = unlist(as.numeric(church[2, -c(1:statlength)]))
-        temp$m2 = unlist(as.numeric(church[3, -c(1:statlength)]))
-        temp$hgt = unlist(as.numeric(church[4, -c(1:statlength)]))
-        temp$gss_hgt = unlist(guesses[osmid==id, ][4, -c(1:statlength), with=F]) == "guestimate"
-        temp$gss_m2 = unlist(guesses[osmid==id, ][3, -c(1:statlength), with=F]) == "guestimate"
+        temp = data.frame(osmid=rep(id, length(dynvrbs)), 
+                          year=integer(length(dynvrbs)),
+                          m2=integer(length(dynvrbs)),
+                          hgt=integer(length(dynvrbs)),
+                          gss_hgt=logical(length(dynvrbs)),
+                          gss_m2=logical(length(dynvrbs)))
+        temp$year = unlist(as.numeric(church[2, dynvrbs]))
+        temp$m2 = unlist(as.numeric(church[3, dynvrbs]))
+        temp$hgt = unlist(as.numeric(church[4, dynvrbs]))
+        temp$gss_hgt = unlist(guesses[osmid==id, ][4, dynvrbs, with=F]) == "guestimate"
+        temp$gss_m2 = unlist(guesses[osmid==id, ][3, dynvrbs, with=F]) == "guestimate"
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
-        fill[[id]][["static"]] = church[1, 1:statlength]
+        fill[[id]][["static"]] = church[1, -dynvrbs]
         fill[[id]][["dynamic"]] = temp
     }
     return(fill)
 }
 
-write_filltable = function(polys, outfile, 
+write_filltable = function(dat, outfile, 
     baseinfo=c("osmid", "city", "osmname", "surface", "osmwikipedia", "osmlink", "lat", "lon"),
     fillvrbs=c("year", "surface", "height", "m3", "guestimate")){
-    polys@data[, paste0('yr', sprintf("%o2d", 1:20))] = "x"
-    write.table(polys@data[0, baseinfo], file=outfile, sep=',')
-    for (rw in 1:nrow(polys@data)){
-        write.table(polys@data[rw, c(baseinfo, grepr("yr", names(polys)))], 
+    dat@data[, paste0('yr', sprintf("%o2d", 1:20))] = "x"
+    write.table(dat@data[0, baseinfo], file=outfile, sep=',')
+    for (rw in 1:nrow(dat@data)){
+        write.table(dat@data[rw, c(baseinfo, grepr("yr", names(dat)))], 
             file=outfile, append=T, col.names=F, row.names=F, sep=',')
         for (fillvrb in fillvrbs){
-            write.table(cbind(polys@data[rw, c("osmid", "city", "osmname")], fillvrb), 
+            write.table(cbind(dat@data[rw, c("osmid", "city", "osmname")], fillvrb), 
                 file=outfile, append=T, col.names=F, row.names=F, sep=',')
             
         }
-        # write.table(cbind(polys@data[rw, c("city", "osmname")], fillvrb), 
+        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
         #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(polys@data[rw, c("city", "osmname")], fillvrb), 
+        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
         #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(polys@data[rw, c("city", "osmname")], fillvrb), 
+        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
         #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(polys@data[rw, c("city", "osmname")], fillvrb), 
+        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
             # file=outfile, append=T, col.names=F, sep=',')
         write.table('', file=outfile, append=T, row.names=F, col.names=F, sep=',')
+        }
     }
 }
 
