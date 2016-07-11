@@ -147,7 +147,8 @@ recombine_churches = function(churches, guesses){
         temp$year = unlist(as.numeric(church[2, -c(1:statlength)]))
         temp$m2 = unlist(as.numeric(church[3, -c(1:statlength)]))
         temp$hgt = unlist(as.numeric(church[4, -c(1:statlength)]))
-        temp$gss = unlist(guesses[osmid==id, ][3, -c(1:statlength), with=F]) == "guestimate"
+        temp$gss_hgt = unlist(guesses[osmid==id, ][4, -c(1:statlength), with=F]) == "guestimate"
+        temp$gss_m2 = unlist(guesses[osmid==id, ][3, -c(1:statlength), with=F]) == "guestimate"
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
         fill[[id]][["static"]] = church[1, 1:statlength]
