@@ -136,10 +136,11 @@ checks = function(dyn, full, churchlist){
 
 recombine_churches = function(churches, guesses){
     fill = list()
-    dynvrbs = grep('V\\d+', names(churches))
-    # statlength = which(names(churches)=="lon")
-    for (id in unique(churches$osmid)){
+    for (id in unique(churches$osmid[churches$osmid!=''])){
         church = as.data.frame(churches[osmid==id, ])
+        dynstrt = which(church[2, 5:ncol(church)]!='' & !is.na(church[2, 5:ncol(church)]))
+        if (length(dynstrt)==0) next
+        dynvrbs = dynstrt[1]:ncol(church)
         temp = data.frame(osmid=rep(id, length(dynvrbs)), 
                           year=integer(length(dynvrbs)),
                           m2=integer(length(dynvrbs)),
@@ -153,7 +154,7 @@ recombine_churches = function(churches, guesses){
         temp$gss_m2 = unlist(guesses[osmid==id, ][3, dynvrbs, with=F]) == "guestimate"
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
-        fill[[id]][["static"]] = church[1, -dynvrbs]
+        fill[[id]][["static"]] = church[1, -grep('V\\d+', names(churches))]
         fill[[id]][["dynamic"]] = temp
     }
     return(fill)
@@ -181,7 +182,6 @@ write_filltable = function(dat, outfile,
         # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
             # file=outfile, append=T, col.names=F, sep=',')
         write.table('', file=outfile, append=T, row.names=F, col.names=F, sep=',')
-        }
     }
 }
 
