@@ -1,11 +1,11 @@
 | country     | geocoding | main file | relation churches | checked | 
 | ----------- | --------- | --------- | ----------------- | ------- |
-| france      | done      | done      | fif made          | rel. churches unchecked |
-| switzerland | done      | done      | fif made          | rel. churches unchecked | 
-| belgium     | done      | done      | done              | rel. churches unchecked |
-| luxembourg  | done      | fif made  | none present      | no |
-| netherlands | done      | done      | done              | rel. churches unchecked |
-| britain     | done      | done      | fif made          | no
-| germany     | done      | done      | done              | no |
+| france      | done      | done      | done              | done |
+| switzerland | done      | done      | done              | done | 
+| belgium     | done      | done      | done              | done |
+| luxembourg  | done      | done(none)| done              | done (none) |
+| netherlands | done      | done      | done              | list made |
+| britain     | done      | done      | done              | list made
+| germany     | done      | done      | done              | list made |
 | ireland     | no        | no        | no                | no |
 | italy       | no        | no        | no                | no |
