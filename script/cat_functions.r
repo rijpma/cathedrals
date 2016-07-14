@@ -224,6 +224,30 @@ get_osm_data_city = function(cty, what='way', radius=5){
     polys@data$city = cty$city
     return(polys)
 }
+get_osm_data_church = function(osmid, what=c("way", "relation")){
+    # shh but this would also work if you put the osm
+    # directly in osmid and it would even take a bounding box...
+    # anyway, function for aditional single additions to the data
+
+    if (what=="way") topo = osmar::get_osm(osmar::way(osmid), full=TRUE)
+    if (what=="relation") topo = osmar::get_osm(osmar::relation(osmid), full=TRUE)
+    polys = osmar::as_sp(topo, what="polygons")
+    tags = get_osm_tags(topo)
+    
+    rownames(tags) = tags$id
+    if (what=="relation")
+        rel_refs = topo$relations$refs[topo$relation$refs$ref %in% polys@data$id, ]
+
+        polys = polys[match(rel_refs$ref, polys@data$id),] 
+        polys = aggregate(polys, by=list(rel_refs$id), dissolve=FALSE)
+        polys@data = data.frame(polys@data, tags[as.character(polys$Group.1), ])
+        polys@data$id = rel_refs$ref
+        polys@data$role = rel_refs$role
+    if (what=="way"){
+        polys@data = tags
+    }
+    return(polys)
+}
 get_osm_tags <- function(topo, what="way"){
     # make sure it can handle relations as well
     # rbind topo$ways$tags with topo$ways$relations
