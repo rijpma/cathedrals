@@ -138,9 +138,10 @@ recombine_churches = function(churches, guesses){
     fill = list()
     for (id in unique(churches$osmid[churches$osmid!=''])){
         church = as.data.frame(churches[osmid==id, ])
-        dynstrt = which(church[2, 5:ncol(church)]!='' & !is.na(church[2, 5:ncol(church)]))
-        if (length(dynstrt)==0) next
-        dynvrbs = dynstrt[1]:ncol(church)
+        # dynstrt = which(church[2, 5:ncol(church)]!='' & !is.na(church[2, 5:ncol(church)]))
+        # if (length(dynstrt)==0) next
+        # dynvrbs = dynstrt[1]:ncol(church)
+        dynvrbs = 5:ncol(church)
         temp = data.frame(osmid=rep(id, length(dynvrbs)), 
                           year=integer(length(dynvrbs)),
                           m2=integer(length(dynvrbs)),
@@ -232,9 +233,9 @@ get_osm_data_church = function(osmid, what=c("way", "relation")){
     if (what=="way") topo = osmar::get_osm(osmar::way(osmid), full=TRUE)
     if (what=="relation") topo = osmar::get_osm(osmar::relation(osmid), full=TRUE)
     polys = osmar::as_sp(topo, what="polygons")
-    tags = get_osm_tags(topo)
+    tags = get_osm_tags(topo, what=what)
     
-    rownames(tags) = tags$id
+    rownames(tags) = tags$osmid
     if (what=="relation"){
         rel_refs = topo$relations$refs[topo$relation$refs$ref %in% polys@data$id, ]
 
