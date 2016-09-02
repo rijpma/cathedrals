@@ -1,3 +1,15 @@
+panel_approx <- function(y, timevar, indexvar){
+    # na.approx for panel data: 
+    # does not interpolate between observations in two different countries etc.
+
+    out <- y
+    for (i in unique(indexvar)){
+        if (sum(!is.na(y[indexvar==i])) > 1){
+            out[indexvar==i] <- zoo::na.approx(object=y[indexvar==i], x=timevar[indexvar==i], na.rm=F)
+        }
+      }
+  return(out)
+}
 find_duplicated_ids = function(ids, pattern='_'){
     ids_duplicated = ids[grepl(pattern, ids)]
     ids_duplicated = c(ids_duplicated, gsub(paste0(pattern, '.*'), '', ids_duplicated))
@@ -35,10 +47,16 @@ to_annual_obs = function(dyn, churchlist){
     full[m3obs > 1, im3:=zoo::na.approx(m3, method='constant', na.rm=F), by=osmid]
 
     full[m2obs > 1, iphaselength:=zoo::na.approx(phaselength, method='constant', na.rm=F, rule=1:2), by=osmid]
+    full[, irestphase:=zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), by=osmid]
     full[, im2_ann:=im2/iphaselength]
+    full[irestphase==1, im2_ann:=0]
     full[firstobs==TRUE & !is.na(firstobs), im2_ann:=0]
-    full[, im3_ann:=im2/iphaselength]
 
+    # check m3 treatment
+    full[, im3_ann:=im3/iphaselength]
+    full[irestphase==1, im3_ann:=0]
+    full[firstobs==TRUE & !is.na(firstobs), im3_ann:=0]
+    
     full = full[order(osmid, year), ]
     full[, ibldindex:=zoo::na.approx(bldindex, method='constant', rule=2:1, na.rm=F), by=osmid]
     full[, osmid_buildindex:=paste(osmid, ibldindex, sep='_')]
@@ -50,7 +68,8 @@ to_annual_obs = function(dyn, churchlist){
 to_dynobs = function(churchlist){
     dyn = do.call(rbind, lapply(churchlist, function(x) x$dynamic))
     dyn = data.table::as.data.table(dyn)
-    dyn = dyn[!is.na(m2), ][order(osmid, year)]
+    # dyn = dyn[!is.na(m2), ][order(osmid, year)]
+    dyn = dyn[!is.na(m2) | !is.na(year), ][order(osmid, year)]
 
     dyn[, m3:=m2*hgt]
     dyn[which(diff(year)==0) + 1, year:=year + 1, by=osmid]
@@ -60,6 +79,7 @@ to_dynobs = function(churchlist){
     dyn[nobs <= 2, phase:=as.integer(1), by=osmid]
     dyn[, phaselength:=c(NA, diff(year)), by=osmid]
     dyn[, firstobs:=year==min(year), by=osmid]
+    dyn[, restphase:=is.na(m2)]
 
     # building index for interpolation m2
     dyn[m2==0, bldindex:=1:length(m2), by=osmid]
@@ -134,7 +154,7 @@ checks = function(dyn, full, churchlist){
     return(prb_osmids)
 }
 
-recombine_churches = function(churches, guesses){
+recombine_churches = function(churches, guesses=NULL){
     fill = list()
     for (id in unique(churches$osmid[churches$osmid!=''])){
         church = as.data.frame(churches[osmid==id, ])
@@ -151,8 +171,13 @@ recombine_churches = function(churches, guesses){
         temp$year = unlist(as.numeric(church[2, dynvrbs]))
         temp$m2 = unlist(as.numeric(church[3, dynvrbs]))
         temp$hgt = unlist(as.numeric(church[4, dynvrbs]))
-        temp$gss_hgt = unlist(guesses[osmid==id, ][4, dynvrbs, with=F]) == "guestimate"
-        temp$gss_m2 = unlist(guesses[osmid==id, ][3, dynvrbs, with=F]) == "guestimate"
+        if (is.null(guesses)){
+            temp$gss_m2 = unlist(as.logical(as.numeric(church[6, dynvrbs])))
+            temp$gss_hgt = unlist(as.logical(as.numeric(church[6, dynvrbs])))
+        } else{
+            temp$gss_hgt = unlist(guesses[osmid==id, ][4, dynvrbs, with=F]) == "guestimate"
+            temp$gss_m2 = unlist(guesses[osmid==id, ][3, dynvrbs, with=F]) == "guestimate"            
+        }
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
         fill[[id]][["static"]] = church[1, -grep('V\\d+', names(churches))]
@@ -215,8 +240,10 @@ get_osm_data_city = function(cty, what='way', radius=5){
 
         polys = polys[match(rel_refs$ref, polys@data$id),] 
         # rel_refs = topo$relations$refs[match(polys@data$id, topo$relations$refs$ref), ]
-        polys = aggregate(polys, by=list(rel_refs$id), dissolve=FALSE)
-        polys@data = data.frame(polys@data, tags[as.character(polys$Group.1), ])
+        # polys = aggregate(polys, by=list(rel_refs$id), FUN=function(x) x[1], dissolve=FALSE)
+        # polys = aggregate(polys, by=list(rel_refs$id), FUN=mean, dissolve=TRUE)
+        # polys@data = data.frame(polys@data, tags[as.character(polys$Group.1), ])
+        polys@data = data.frame(polys@data, tags[as.character(rel_refs$id), ])
         polys@data$id = rel_refs$ref
         polys@data$role = rel_refs$role
     } else {
@@ -240,6 +267,7 @@ get_osm_data_church = function(osmid, what=c("way", "relation")){
         rel_refs = topo$relations$refs[topo$relation$refs$ref %in% polys@data$id, ]
 
         polys = polys[match(rel_refs$ref, polys@data$id),] 
+        # shorten, see previous?
         polys = aggregate(polys, by=list(rel_refs$id), dissolve=FALSE)
         polys@data = data.frame(polys@data, tags[as.character(polys$Group.1), ])
         polys@data$id = rel_refs$ref
@@ -318,7 +346,9 @@ aggregate_multipolys = function(polys){
     polys@data$lon = tapply(polys@data$lon, polys@data$Group.1, mean)[as.character(polys@data$Group.1)]
     polys@data$lat = tapply(polys@data$lat, polys@data$Group.1, mean)[as.character(polys@data$Group.1)]
     polys@data$surface = tapply(polys@data$surface, polys@data$Group.1, sum)[as.character(polys@data$Group.1)]
-    out = aggregate(polys, by=list(polys$Group.1), function(x) x[1])
+    out = aggregate(polys, by=list(polys$Group.1), FUN=function(x) x[1])
+    # caution: used to be aggregate spdf and returned spdf, now requires FUN= to do that
+    # out = aggregate.data.frame(polys, by=list(polys$Group.1), `[`, 1)
     return(out)
 }
 
