@@ -24,8 +24,8 @@ gss_de[grepl('[A-z]', city), 2:ncol(gss_de):=gss_de[grepl('[A-z]', city), -ncol(
 setnames(chr_de, names(chr_de), c('osmid', names(chr_de)[1:(ncol(chr_de) - 1)]))
 setnames(gss_de, names(gss_de), c('osmid', names(gss_de)[1:(ncol(gss_de) - 1)]))
 
-chr_de[, osmid:=ifelse(grepl('[A-z]', osmid), shift(osmid, type='lead'), osmid)]
-gss_de[, osmid:=ifelse(grepl('[A-z]', osmid), shift(osmid, type='lead'), osmid)]
+chr_de[, osmid:=ifelse(grepl('[A-z]', osmid), data.table::shift(osmid, type='lead'), osmid)]
+gss_de[, osmid:=ifelse(grepl('[A-z]', osmid), data.table::shift(osmid, type='lead'), osmid)]
 
 chr_de[, osmwikipedia:=iconv(osmwikipedia, from='macroman', to='utf8')]
 chr_de[, osmname:=iconv(osmname, from='macroman', to='utf8')]
@@ -44,6 +44,7 @@ gss_de[ ,city:=gsub("√§", "ä", city)]
 table(table(gss_de$osmid[gss_de$osmid!='']))
 duplids = names(table(gss_de$osmid[gss_de$osmid!='']))[table(gss_de$osmid[gss_de$osmid!='']) > 6]
 
+# add guesses?
 as.data.frame(chr_de[osmid%in% duplids, list(osmid, lon, V8, V9)])
 chr_de = chr_de[!(osmid=="26441576" & city=="Duesseldorf (Düsseldorf)"), ]
 chr_de = chr_de[!(osmid=="130432939" & city=="Ludwigshafen"), ]
@@ -66,10 +67,9 @@ dynobs_de = to_dynobs(churchlist=chrlist_de)
 fullobs_de = to_annual_obs(dyn=dynobs_de, churchlist=chrlist_de)
 citobs_de = to_city_obs(statobs=statobs_de, fullobs=fullobs_de)
 
-
 chk = checks(full=fullobs_de, dyn=dynobs_de, churchlist=chrlist_de)
 str(chk)
-chrlist_de[chk$totaloutl]
+# chrlist_de[chk$totaloutl]
 
 plot(fullobs_de[, sum(im2_ann, na.rm=T), by=year], type='l', xlim=c(800, 1500))
 
@@ -94,14 +94,36 @@ gss_gb[, osmwikipedia:=iconv(osmwikipedia, from='macroman', to='utf8')]
 gss_gb[, osmname:=iconv(osmname, from='macroman', to='utf8')]
 gss_gb[, city:=iconv(city, from='macroman', to='utf8')]
 
+duplids = names(table(gss_gb$osmid[gss_gb$osmid!='']))[table(gss_gb$osmid[gss_gb$osmid!='']) > 6]
 as.data.frame(chr_gb[osmid%in% duplids, list(osmid, lon, V9, V10)])
+
+dupladd = chr_gb[(osmid=="94653456" & city=="Rochester") | 
+                 (osmid=="32394647" & city=="Portsmouth") | 
+                 (osmid=="145633296" & city=="Newcastle-upon-Tyne") | 
+                 (osmid=="369161987" & city=="London") | 
+                 (osmid=="26183417" & city=="London") | 
+                 (osmid=="102336744"), ]
+
+chr_gb[osmid=="85550395", 1:12, with=F] # done in checkfile
+chr_gb[osmid=="4678895", ] # done in checkfile
+chr_gb = chr_gb[!(osmid=="94653456" & city!="Rochester"), ] 
+chr_gb = chr_gb[!(osmid=="32394647" & city!="Portsmouth"), ] 
+chr_gb = chr_gb[!(osmid=="4678895" & city!="Paisley"), ] 
+chr_gb = chr_gb[!(osmid=="145633296" & city!="Newcastle-upon-Tyne"), ] 
+chr_gb = chr_gb[!(osmid=="369161987" & city!="London"), ] 
+chr_gb = chr_gb[!(osmid=="26183417" & city!="London"), ] 
 
 chrlist_gb = recombine_churches(churches=chr_gb, guesses=gss_gb)
 # yes = which(sapply(chrlist_gb, function(x) nrow(x$dynamic)) > 0)
 # no = which(sapply(chrlist_gb, function(x) nrow(x$dynamic)) == 0)
 # lapply(chrlist_gb[sample(yes, 10)], `[[`, 'dynamic')
 # sample(no, 10)
-
+chr_gb["207193672", ]
+chr_gb[osmid=="94653456"] # double, now solved elsewhere
+chr_gb[osmid=="26183417"] # double, now solved elsewhere
+chrlist_gb[["26183417"]]
+chrlist_gb[["94653456"]]
+chrlist_gb[["26183417"]]
 
 chrlist_gb[["96409899"]]$static$surface = 1000 # crude fix
 
@@ -140,7 +162,15 @@ gss_nl[, osmwikipedia:=iconv(osmwikipedia, from='macroman', to='utf8')]
 gss_nl[, osmname:=iconv(osmname, from='macroman', to='utf8')]
 gss_nl[, city:=iconv(city, from='macroman', to='utf8')]
 
+duplids = names(table(gss_nl$osmid[gss_nl$osmid!='']))[table(gss_nl$osmid[gss_nl$osmid!='']) > 6]
 as.data.frame(chr_nl[osmid%in% duplids, list(osmid, lon, V9, V10)])
+
+setdiff(names(dupladd), names(chr_nl))
+dupladd$rmlink <- NA
+dupladd = rbindlist(list(dupladd, chr_nl[(osmid=="273129012" & city=="Vlaardingen"), ]), fill=TRUE)
+
+chr_nl = chr_nl[!(osmid=="273129012" & city!="Vlaardingen"), ] 
+chr_nl = chr_nl[!(osmid=="52212222" & city!="Schiedam"), ] # done in checkfile
 
 chrlist_nl = recombine_churches(churches=chr_nl, guesses=gss_nl)
 # yes = which(sapply(chrlist_nl, function(x) nrow(x$dynamic)) > 0)
@@ -185,6 +215,8 @@ chr_be[city=="rumpelbeke", city:="Roeselare"]
 chr_be[city=="damme", city:="Brugge (Bruges)"]
 chr_be[city=="elverdinge", city:="Ieper (Ypres)"]
 
+
+duplids = names(table(gss_be$osmid[gss_be$osmid!='']))[table(gss_be$osmid[gss_be$osmid!='']) > 6]
 as.data.frame(chr_be[osmid%in% duplids, list(osmid, lon, V9, V10)])
 
 chrlist_be = recombine_churches(churches=chr_be, guesses=gss_be)
@@ -209,8 +241,12 @@ statobs_be = data.table::as.data.table(statobs_be)
 statobs_be$ctr = "be"
 
 dynobs_be = to_dynobs(churchlist=chrlist_be)
+
 fullobs_be = to_annual_obs(dyn=dynobs_be, churchlist=chrlist_be)
+unique(fullobs_be[osmid=="104422494" & year > 1500 & year < 1650,im2_ann])
 citobs_be = to_city_obs(statobs=statobs_be, fullobs=fullobs_be)
+dynobs_be[osmid=="104422494",]
+fullobs_be[osmid=="104422494" & year > 1625 & year < 1652, ]
 
 chk = checks(full=fullobs_be, dyn=dynobs_be, churchlist=chrlist_be)
 
@@ -236,6 +272,7 @@ gss_ch[, city:=iconv(city, from='macroman', to='utf8')]
 unique(chr_ch$city)
 unique(gss_ch$city) # zurich encoding problem only in gss
 
+duplids = names(table(gss_ch$osmid[gss_ch$osmid!='']))[table(gss_ch$osmid[gss_ch$osmid!='']) > 6]
 as.data.frame(chr_ch[osmid%in% duplids, list(osmid, lon, V9, V10)])
 
 chrlist_ch = recombine_churches(churches=chr_ch, guesses=gss_ch)
@@ -315,7 +352,51 @@ gss_fr[, osmwikipedia:=iconv(osmwikipedia, from='macroman', to='utf8')]
 gss_fr[, osmname:=iconv(osmname, from='macroman', to='utf8')]
 gss_fr[, city:=iconv(city, from='macroman', to='utf8')]
 
-as.data.frame(chr_fr[osmid%in% duplids, list(osmid, lon, V9, V10)])
+duplids = names(table(gss_fr$osmid[gss_fr$osmid!='']))[table(gss_fr$osmid[gss_fr$osmid!='']) > 6]
+as.data.frame(chr_fr[osmid%in% duplids, list(osmid, lon, V9, V10, V11)])
+
+
+dupladd = data.table::rbindlist(list(dupladd, 
+    chr_fr[(osmid=="78704808" & city=="Roubaix"), ] , 
+    chr_fr[(osmid=="130189168" & city=="Beaucaire"), ]), fill=T)
+dupladd_list = recombine_churches(dupladd, guesses=dupladd)
+
+write.table(dupladd[0, ], "dat/duplicate_fixes.csv", row.names=F, col.names=T, sep=',', na='')
+for (id in unique(dupladd$osmid)){
+    write.table(dupladd[osmid==id, ], "dat/duplicate_fixes.csv", row.names=F, col.names=F, append=T, sep=',', na='')
+    write.table('\n', "dat/duplicate_fixes.csv", append=T, row.names=F, col.names=F, na='')
+}
+
+chr_fr = chr_fr[!(osmid=="78704808" & city!="Roubaix"), ] 
+chr_fr = chr_fr[!(osmid=="130189168" & city!="Beaucaire"), ] 
+# below already treated correctly
+chr_fr = chr_fr[!(osmid=="107869413" & city!="Tarascon"), ] 
+chr_fr = chr_fr[!(osmid=="64451463" & city!="Rouen"), ] 
+chr_fr = chr_fr[!(osmid=="64201546" & city!="Rouen"), ] 
+chr_fr = chr_fr[!(osmid=="63420359" & city!="Rouen"), ] 
+chr_fr = chr_fr[!(osmid=="201611261" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="62287173" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="56046786" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="55984117" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="55742120" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="55477164" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="55343672" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="43877261" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="24406636" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="19740659" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="16077204" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="14349317" & city!="Paris"), ] 
+chr_fr = chr_fr[!(osmid=="136200148" & city!="Lyon"), ] 
+chr_fr = chr_fr[!(osmid=="82254733" & city!="Lyon"), ] 
+chr_fr = chr_fr[!(osmid=="60803772" & city!="Lyon"), ] 
+chr_fr = chr_fr[!(osmid=="60801683" & city!="Lyon"), ] 
+chr_fr = chr_fr[!(osmid=="60798750" & city!="Lyon"), ] 
+
+
+chr_fr[osmid=="77548166", 1:12, with=F] # solved in checkfile
+chr_fr[osmid=="145372160", 1:12, with=F] # solved in checkfile
+
+
 chrlist_fr = recombine_churches(churches=chr_fr, guesses=gss_fr)
 unique(sapply(chrlist_fr, function(x) x$static$city))
 # check perigeux
@@ -440,10 +521,6 @@ citobs[!is.na(city2), city:=city2]
 unique(citobs[!is.na(city2), list(city, city2)])
 citobs[!is.na(city2), city:=city2][, city2:=NULL]
 
-# fix excel encoding mess still necessary?
-citobs[grep("√", city),]
-statobs[grep("√", city),]
-
 setdiff(citobs$city, siem$city)
 setdiff(siem$city, citobs$city)
 
@@ -454,10 +531,16 @@ statobs = data.table::rbindlist(list(statobs_be, statobs_fr, statobs_ch, statobs
 dynobs = data.table::rbindlist(list(dynobs_be, dynobs_fr, dynobs_ch, dynobs_gb, dynobs_nl, dynobs_de))
 fullobs = data.table::rbindlist(list(fullobs_be, fullobs_fr, fullobs_ch, fullobs_gb, fullobs_nl, fullobs_de))
 
+# fix excel encoding mess still necessary?
+citobs[grep("√", city),]
+statobs[grep("√", city),]
+
 eltjo = copy(dynobs)
 eltjo[, gss:=as.numeric(gss_m2|gss_hgt)]
 eltjo[, m3:=NA]
 eltjo[is.na(year),]
+
+eltjo[osmid=="20470246",]
 
 osm = copy(statobs)
 osm = osm[osmid %in% unique(eltjo$osmid), ][order(ctr, city, osmname), ]
@@ -482,9 +565,9 @@ fill[, 1:3] = lapply(osm[, list(osmid, city, osmname)], rep, each=7)
 fill[1:nrow(fill) %% 7 == 0, ] = ''
 names(fill) = baseinfo
 
-truiden3 = get_osm_data_church(3207528, what="relation")
-smungo = get_osm_data_church(5761459, what="relation")
-durham = get_osm_data_church(3584722, what="relation")
+truiden3 = get_osm_data_church(osmid=3207528, what="relation")
+smungo = get_osm_data_church(osmid=5761459, what="relation")
+durham = get_osm_data_church(osmid=3584722, what="relation")
 
 cluny = get_osm_data_church(2322752, what="relation")
 cluny_rns = osmar::get_osm(osmar::way(174041154), full=TRUE)
@@ -511,6 +594,7 @@ additions@data$city = c("Cluny", "Gent (Gand, Ghent)", "Durham", "Glasgow")
 additions@data$ctr = c('fr', 'be', 'uk', 'uk')
 additions@data[setdiff(baseinfo, names(additions))] = NA
 
+
 write.csv(fill, file="dat/checkfile.csv", row.names=F, na='')
 write_filltable(additions, baseinfo=baseinfo, outfile='dat/additions.csv')
 write_filltable(maximin, baseinfo=baseinfo, outfile='dat/maximin.csv')
@@ -525,6 +609,7 @@ all_by_ctr = data.frame(table(statobs$ctr))
 sum(table(statobs[osmid %in% dynobs$osmid, ctr]))
 all_by_ctr_b1500 = data.frame(table(statobs[osmid %in% dynobs$osmid, ctr]))
 
+# fix for rest phases
 sum(table(statobs[match(dynobs$osmid, osmid), ctr]))
 all_bldphsase_by_ctr = data.frame(table(statobs[match(dynobs$osmid, osmid), ctr]))
 
@@ -629,7 +714,10 @@ fullobs_sp[, sum(im2_ann, na.rm=T), by=list(year, grid)]
 fullobs_sp[, im2_dec:=sum(abs(im2_ann), na.rm=T), by=list(osmid, decade)]
 # fullobs_spd = fullobs_sp[, list(im2_dec=sum(abs(im2_ann), na.rm=T), lat, lon), by=list(osmid, decade)]
 # fullobs_spd[, lim2_dec:=ifelse(is.na(im2_dec) | im2_dec<=0, 0, log(im2_dec))]
-
+r = raster::raster(ymn= floor(min(fullobs_sp$lat, na.rm=T)),
+        ymx= ceiling(max(fullobs_sp$lat, na.rm=T)),
+        xmn= floor(min(fullobs_sp$lon, na.rm=T)),
+        xmx= ceiling(max(fullobs_sp$lon, na.rm=T)), res=0.5)
 fill = list()
 for (i in seq(from=800, to=1500, by=10)){
     d = fullobs_sp[year==i & !is.na(year), ]
