@@ -17,6 +17,56 @@ siem$city <- iconv(siem$city, from='macroman', to='utf8')
 tld <- structure(countrycode(unique(siem$country), 'country.name', 'iso2c'), names=unique(siem$country))
 siem$tld <- tld[siem$country]
 
+# Italy
+#------
+siem_it = siem[grep('tal', siem$country), ]
+it_gcd = lapply(gsub('\\(.*', '', siem_it$city), 
+    function(x) geocode(x, reg='it'))
+it_gcd[sapply(it_gcd, nrow) > 1]
+
+it_2nd = filter_prox(it_gcd, siem_it)
+it_2nd[sapply(it_2nd, nrow) > 1]
+it_2nd[sapply(it_2nd, nrow) > 1] = it_gcd[sapply(it_2nd, nrow) > 1]
+
+it_3rd = lapply(it_2nd, function(x) x[1, ])
+
+# it_3rd[[grep('ldenburg', siem_it$city)]] = geocode("Oldenburg-Land", reg="de")
+it_3rd[[grep('illafra', siem_it$city)]] = geocode("Villafrance Piemonte", reg='it')[1, ]
+# varallo = slightly better code?
+it_3rd[[grep('inigag', siem_it$city)]] = geocode("Senigalia", reg='it')
+it_3rd[[grep('artolome', siem_it$city)]] = geocode("San Bartolomeo in Galdo", reg="it")
+it_3rd[[grep('Piana', siem_it$city)]] = geocode("Piana degli Albanesi", reg="it")
+it_3rd[[grep('Novi', siem_it$city)]] = geocode("Novi Ligure", reg="it")
+it_3rd[[grep('Montemaggiore', siem_it$city)]] = geocode("Montemaggiore Belsito", reg="it")
+it_3rd[[grep('Monte di San Giuliano', siem_it$city)]]= geocode("Erice", reg="it")
+it_3rd[[grep('Mola', siem_it$city)]] = geocode("Mola di Bari", reg="it")
+it_3rd[[grep("Acquaviva", siem_it$city)]] = geocode("Acquaviva", reg="sm")
+it_3rd[[grep("Aderno", siem_it$city)]] = geocode("Adrano", reg="it")
+it_3rd[[grep("Aquila", siem_it$city)]] = geocode("L'Aquila", reg="it")
+it_3rd[[grep("Augusta", siem_it$city)]] = geocode("Augusta, Sicily", reg="it")
+it_3rd[[grep("Bella", siem_it$city)]] = geocode("Bella, Basilicata", reg="it")
+it_3rd[[grep("Casale", siem_it$city)]] = geocode("Casale Monferrato", reg="it")
+it_3rd[[grep("Francavilla", siem_it$city)]] = geocode("Francavilla Fontana", reg="it")
+it_3rd[[grep("Gravina", siem_it$city)]] = geocode("Gravina in Puglia", reg="it")
+it_3rd[[grep("Mazzara", siem_it$city)]] = geocode("Mazara del Vallo", reg="it")
+# both of these are correct, yes?
+
+siem_it_gcd = check_geocodes(siem_ctr=siem_it, ctr_gcd=it_3rd)
+siem_it_gcd[siem_it_gcd$distance > 25, c('city', 'north', 'east', 
+    'lat', 'lon', 'loc_frmtd', 'distance')]
+
+write.csv(siem_it_gcd, 'dat/siem_it.csv')
+
+# Portugal
+#--------
+siem_pt = siem[grep('ortuga', siem$country), ]
+pt_gcd = lapply(gsub('\\(.*', '', siem_pt$city), 
+    function(x) geocode(x, reg='pt'))
+all(sapply(pt_gcd, nrow) == 1)
+siem_pt_gcd = check_geocodes(siem_ctr=siem_pt, ctr_gcd=pt_gcd)
+siem_pt_gcd[siem_pt_gcd$distance > 25, c('city', 'north', 'east', 
+    'lat', 'lon', 'loc_frmtd', 'distance')]
+write.csv(siem_pt_gcd, "dat/siem_pt.csv")
 
 # Germany
 #--------
