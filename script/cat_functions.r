@@ -1,3 +1,18 @@
+sp_rbind = function(polys, polys4merge){
+    
+    polys4merge@data[, setdiff(names(polys), names(polys4merge))] = NA
+    polys@data[, setdiff(names(polys4merge), names(polys))] = NA
+
+    rownames(polys@data) = sapply(slot(polys, "polygons"), function(x) slot(x, "ID"))
+    rownames(polys4merge@data) = sapply(slot(polys4merge, "polygons"), function(x) slot(x, "ID"))
+    # row.names(polys4merge@data) = as.character(polys4merge$id)
+    # row.names(polys@data) = as.character(polys$id)
+
+    polys = rbind(polys, polys4merge, makeUniqueIDs=TRUE)
+    # polys = maptools::spRbind(polys, polys4merge, makeUniqueIDs=TRUE)
+
+    return(polys)
+}
 panel_approx <- function(y, timevar, indexvar){
     # na.approx for panel data: 
     # does not interpolate between observations in two different countries etc.
@@ -61,6 +76,7 @@ to_annual_obs = function(dyn, churchlist){
     full[, ibldindex:=zoo::na.approx(bldindex, method='constant', rule=2:1, na.rm=F), by=osmid]
     full[, osmid_buildindex:=paste(osmid, ibldindex, sep='_')]
     full[!is.na(im2_ann), im2_cml:=cumsum(im2_ann), by=osmid_buildindex]
+    full[!is.na(im3_ann), im3_cml:=cumsum(im3_ann), by=osmid_buildindex]
 
     return(full)
 }
@@ -211,14 +227,22 @@ write_filltable = function(dat, outfile,
     }
 }
 
-get_osm_data_city = function(cty, what='way', radius=5){
+get_osm_data = function(cty, what='way', radius=5, block=FALSE){
+    if (block){
+        lat1 = cty$lat1
+        lat2 = cty$lat2
+        lon1 = cty$lon1
+        lon2 = cty$lon2
+    } else {
+        lat1 = cty$lat - km2lat(radius)
+        lat2 = cty$lat + km2lat(radius)
+        lon1 = cty$lon - km2lon(radius, lat=cty$lat)
+        lon2 = cty$lon + km2lon(radius, lat=cty$lat)
+    }
+
     cat(cty$city)
-    topo = get_osm_all_churches_rect(
-        lat1=cty$lat - km2lat(radius),
-        lat2=cty$lat + km2lat(radius),
-        lon1=cty$lon - km2lon(radius, lat=cty$lat),
-        lon2=cty$lon + km2lon(radius, lat=cty$lat),
-        what=what)
+    topo = get_osm_all_churches_rect(lat1=lat1, lat2=lat2, 
+        lon1=lon1, lon2=lon2, what=what)
 
     if (dim(topo)["ways"] == 0){
         cat("no results\n")
@@ -342,13 +366,13 @@ plot_churches_by_city = function(polylist, siem){
              labels=polylist[[cityname]]@data$osmname, cex=0.2)
     }
 }
-aggregate_multipolys = function(polys){
-    polys@data$lon = tapply(polys@data$lon, polys@data$Group.1, mean)[as.character(polys@data$Group.1)]
-    polys@data$lat = tapply(polys@data$lat, polys@data$Group.1, mean)[as.character(polys@data$Group.1)]
-    polys@data$surface = tapply(polys@data$surface, polys@data$Group.1, sum)[as.character(polys@data$Group.1)]
-    out = aggregate(polys, by=list(polys$Group.1), FUN=function(x) x[1])
+aggregate_multipolys = function(polys, by="Group.1"){
+    polys@data$lon = tapply(polys@data$lon, polys@data[, by], mean)[as.character(polys@data[, by])]
+    polys@data$lat = tapply(polys@data$lat, polys@data[, by], mean)[as.character(polys@data[, by])]
+    polys@data$surface = tapply(polys@data$surface, polys@data[, by], sum)[as.character(polys@data[, by])]
+    out = aggregate(polys, by=list(polys@data[, by]), FUN=function(x) x[1])
     # caution: used to be aggregate spdf and returned spdf, now requires FUN= to do that
-    # out = aggregate.data.frame(polys, by=list(polys$Group.1), `[`, 1)
+    # out = aggregate.data.frame(polys, by=list(polys[, by]), `[`, 1)
     return(out)
 }
 
