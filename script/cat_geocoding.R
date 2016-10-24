@@ -16,6 +16,32 @@ siem$city <- iconv(siem$city, from='macroman', to='utf8')
 
 tld <- structure(countrycode(unique(siem$country), 'country.name', 'iso2c'), names=unique(siem$country))
 siem$tld <- tld[siem$country]
+mss = read.csv("dat/missing_bishoprics.csv", skip=1)
+
+# missing bishoprics
+# ------------------
+mss$ctr = substring(mss$ctr, 1, 2)
+mss$ctr[mss$ctr=="sw"] = "ch"
+ms_gcd = apply(mss, 1, function(x) geocode(x['loc'], reg=x['ctr']))
+nms = sapply(ms_gcd, function(x) unique(x$loc))
+# replace with names
+ms_gcd[sapply(ms_gcd, nrow) > 1]
+ms_gcd[[grep('bangor', nms)]] = ms_gcd[[grep('bangor', nms)]][ms_gcd[[grep('bangor', nms)]]$lon > -5, ]
+ms_gcd[[grep('magelone', nms)]] = geocode("Villeneuve-lès-Maguelone", reg='fr')
+ms_gcd[[grep('dol', nms)]] = geocode("Dol-de-Bretagne", reg='fr')
+
+
+ms_gcd[[grep('david', nms)]] = geocode("St Davids, Pembrokeshire")
+ms_gcd[[grep('lizier', nms)]] = geocode("Saint-Lizier, arriege", reg='fr')
+ms_gcd[[grep('brugny', nms)]][c('lat', 'lon')] = c(48.71, 2.49)
+ms_gcd[[grep('galndive', nms)]][c('lat', 'lon')] = c(43.95, 6.81)
+# brungy zijn: 48.71 N, 2.49  E
+# glandive zijn: 43.95 N en 6.81 E
+out = do.call(rbind, ms_gcd)
+names(out)[1] = 'city'
+out$tld = mss$ctr
+write.csv(out, 'dat/extra_bishoprics.csv', row.names=F)
+
 
 # Italy
 #------
@@ -50,6 +76,8 @@ it_3rd[[grep("Francavilla", siem_it$city)]] = geocode("Francavilla Fontana", reg
 it_3rd[[grep("Gravina", siem_it$city)]] = geocode("Gravina in Puglia", reg="it")
 it_3rd[[grep("Mazzara", siem_it$city)]] = geocode("Mazara del Vallo", reg="it")
 # both of these are correct, yes?
+siem[grep("Gravina", siem_it$city), c("north", "east")]
+siem[grep("Mazzara", siem_it$city), c("north", "east")]
 
 siem_it_gcd = check_geocodes(siem_ctr=siem_it, ctr_gcd=it_3rd)
 siem_it_gcd[siem_it_gcd$distance > 25, c('city', 'north', 'east', 
@@ -89,6 +117,7 @@ write.csv(siem_de_gcd, 'dat/siem_de.csv')
 
 # England
 #--------
+
 siem_uk = siem[grep('UK', siem$country), ]
 uk_gcd = lapply(gsub('\\(.*', '', siem_uk$city), 
     function(x) geocode(x, reg='uk'))
