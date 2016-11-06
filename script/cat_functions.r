@@ -1299,3 +1299,13 @@ inferno = function(n, alpha = 1, begin = 0, end = 1) {
 plasma = function(n, alpha = 1, begin = 0, end = 1) {
   viridis(n, alpha, begin, end, option = "plasma")
 }
+
+uured = '#F52A01' # the UU hexs seem off.
+uuyel = '#FFCD00'
+uublu = '#094D8E'
+uugre = '#419702'
+uupur = '#791D72'
+uulbl = '#36A2C9'
+uupnk = '#9A0000'
+uuora = '#F08000'
+uulgr = '#FEF200'
