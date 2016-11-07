@@ -81,9 +81,9 @@ dynobs_sp = merge(dynobs, statobs, by="osmid")
 dim(fullobs)
 fullobs_sp = merge(fullobs, statobs, by="osmid", all=T)
 dim(fullobs_sp)
+dynobs[fullobs_sp[is.na(year), osmid], ]
 fullobs_sp = fullobs_sp[!is.na(year), ]
 unique(table(fullobs_sp$year, useNA='ifany'))
-dynobs[fullobs_sp[is.na(year), osmid], ]
 
 plot(fullobs_sp[year <= 1500, sum(im2_ann, na.rm=T) + sum(im2_cml * 0.005, na.rm=T), by=decade], type='l')
 
