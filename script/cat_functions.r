@@ -6,6 +6,7 @@ add_borders = function(border=1){
     data(wrld_simpl)
     eur = wrld_simpl[wrld_simpl$REGION==150, ]
     eur = wrld_simpl[wrld_simpl$SUBREGION %in% c(39, 154, 155), ]
+    eur = wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ]
     plot(eur, add=T, lwd=0.5, border=border)
 }
 
