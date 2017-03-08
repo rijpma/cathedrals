@@ -39,8 +39,8 @@ pdf("figs/height_surface_sq_ci.pdf")
 plot(nave_height ~ ground_surface_m2, data=hgt, bty='l', type='n')
 fit = predict(m_sq_or, newdata=data.frame(ground_surface_m2=0:8000), 
     se=TRUE, interval='confidence')
-polygon(x=c(0:8000, 8000:0), y=c(fit$fit[,'lwr'], rev(fit$fit[,'upr'])), col='pink', border=NA)
-lines(x=0:8000, fit$fit[, 'fit'], col=2, lwd=1.5)
+# polygon(x=c(0:8000, 8000:0), y=c(fit$fit[,'lwr'], rev(fit$fit[,'upr'])), col='pink', border=NA)
+lines(x=0:8000, fit$fit[, 'fit'], col=2, lwd=2)
 points(nave_height ~ ground_surface_m2, data=hgt, bty='l')
 dev.off()
 
