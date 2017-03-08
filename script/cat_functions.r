@@ -1,13 +1,15 @@
+thinmargins <- c(4, 4, 3, 0.5)
+
 calcMode <- function(x, ...) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
 }
-add_borders = function(border=1){
+add_borders = function(border=1, add=T){
     data(wrld_simpl)
     eur = wrld_simpl[wrld_simpl$REGION==150, ]
     eur = wrld_simpl[wrld_simpl$SUBREGION %in% c(39, 154, 155), ]
     eur = wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ]
-    plot(eur, add=T, lwd=0.5, border=border)
+    plot(eur, add=add, lwd=0.5, border=border)
 }
 
 sp_rbind = function(polys, polys4merge){
@@ -73,9 +75,13 @@ to_annual_obs = function(dyn, churchlist){
     full[hgtobs > 1, ihgt:=zoo::na.approx(hgt, method='constant', na.rm=F), by=osmid]
     full[m3obs > 1, im3:=zoo::na.approx(m3, method='constant', na.rm=F), by=osmid]
 
-    full[m2obs > 1, iphaselength:=zoo::na.approx(phaselength, method='constant', na.rm=F, rule=1:2), by=osmid]
+    full[, inobs:=zoo::na.approx(nobs, method='constant', rule=1, na.rm=F), by=osmid]
+    full[m2obs > 1 & !is.na(inobs), iphaselength:=zoo::na.approx(phaselength, method='constant', na.rm=F, rule=2:1), by=osmid]
+    # create a valid data range and then use rule=2 ?
+    # no
+    # zoo::na.approx does not work on nobs=2
     full[, irestphase:=zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), by=osmid]
-    full[, im2_ann:=im2/iphaselength]
+    full[, im2_ann:=im2 / iphaselength]
     full[irestphase==1, im2_ann:=0]
     full[firstobs==TRUE & !is.na(firstobs), im2_ann:=0]
 
@@ -85,12 +91,15 @@ to_annual_obs = function(dyn, churchlist){
     full[firstobs==TRUE & !is.na(firstobs), im3_ann:=0]
     
     full = full[order(osmid, year), ]
-    full[, ibldindex:=zoo::na.approx(bldindex, method='constant', rule=2:1, na.rm=F), by=osmid]
+    full[, ibldindex:=zoo::na.approx(bldindex, method='constant', rule=1, na.rm=F), by=osmid]
+    full[is.na(newbld), newbld:=FALSE]
     full[, osmid_buildindex:=paste(osmid, ibldindex, sep='_')]
-    full[!is.na(im2_ann), im2_cml:=cumsum(im2_ann), by=osmid_buildindex]
-    full[!is.na(im2_ann) & ibldindex==0, im2_cml:=im2_cml + im2[1], by=osmid]
-    full[!is.na(im3_ann), im3_cml:=cumsum(im3_ann), by=osmid_buildindex]
-    full[!is.na(im3_ann) & ibldindex==0, im3_cml:=im3_cml + im3[1], by=osmid]
+
+    full[!is.na(im2_ann), im2_cml:=cumsum(im2_ann) + im2[newbld==TRUE], by=osmid_buildindex]
+    # full[!is.na(im2_ann), im2_cml:=im2_cml + im2[newbld==TRUE], by=osmid_buildindex]
+    full[, im2_cml:=zoo::na.approx(im2_cml, method='constant', rule=1:2, yleft=0, na.rm=F), by=osmid]
+    full[!is.na(im3_ann), im3_cml:=cumsum(im3_ann) + im3[newbld==TRUE], by=osmid_buildindex]
+    full[, im3_cml:=zoo::na.approx(im3_cml, method='constant', rule=1:2, yleft=0, na.rm=F), by=osmid]
 
     return(full)
 }
@@ -107,16 +116,20 @@ to_dynobs = function(churchlist){
     
     dyn[nobs > 2, phase:=1:length(m2), by=osmid]
     dyn[nobs <= 2, phase:=as.integer(1), by=osmid]
-    dyn[, phaselength:=c(NA, diff(year)), by=osmid]
+    dyn[, phaselength:=c(diff(year)[1], diff(year)), by=osmid]
     dyn[, firstobs:=year==min(year), by=osmid]
     dyn[, restphase:=is.na(m2)]
 
-    # building index for interpolation m2
-    dyn[m2==0, bldindex:=1:length(m2), by=osmid]
-    dyn[, nbblds:=sum(!is.na(bldindex)), by=osmid]
-    dyn[nbblds > 0, bldindex:=as.integer(zoo::na.approx(bldindex, method="constant", na.rm=F, rule=1:2)), by=osmid]
-    dyn[nbblds==0, bldindex:=1]
-    dyn[is.na(bldindex), bldindex:=0]
+    # indexing entirely new buildings
+    dyn[, newbld := ifelse((m2 == 0 & !is.na(m2)) | firstobs == TRUE, TRUE, FALSE), by=osmid]
+    dyn[newbld == TRUE, bldindex := 1:length(nobs), by=osmid]
+    dyn[, bldindex := zoo::na.approx(bldindex, method='constant', rule=1:2)]
+    
+    # dyn[m2==0, bldindex:=1:length(m2), by=osmid]
+    # dyn[, nbblds:=sum(!is.na(bldindex)), by=osmid]
+    # dyn[nbblds > 0, bldindex:=as.integer(zoo::na.approx(bldindex, method="constant", na.rm=F, rule=1:2)), by=osmid]
+    # dyn[nbblds==0, bldindex:=1]
+    # dyn[is.na(bldindex), bldindex:=0]
 
     return(dyn)
 }
@@ -241,7 +254,7 @@ write_filltable = function(dat, outfile,
     }
 }
 
-get_osm_data = function(cty, what='way', radius=5, block=FALSE){
+get_osm_data = function(cty, what='way', radius=5, block=FALSE, ruins=FALSE){
     if (block){
         lat1 = cty$lat1
         lat2 = cty$lat2
@@ -256,7 +269,7 @@ get_osm_data = function(cty, what='way', radius=5, block=FALSE){
 
     cat(cty$city)
     topo = get_osm_all_churches_rect(lat1=lat1, lat2=lat2, 
-        lon1=lon1, lon2=lon2, what=what)
+        lon1=lon1, lon2=lon2, what=what, ruins=ruins)
 
     if (dim(topo)["ways"] == 0){
         cat("no results\n")
@@ -471,19 +484,33 @@ get_osm_churches_rect <- function(lat1, lon1, lat2, lon2){
     return(topo)
 }
 
-get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2, what="way"){
+get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2, 
+    what="way", ruins=F){
     # make this handle relations as well
     basequery <-   '[out:xml][timeout:900];
         (
             %2$s["building"="church"] %1$s;
             %2$s["building"="chapel"] %1$s;
-            %2$s["amenity"="place_of_worship"] %1$s;
             %2$s["building"="cathedral"] %1$s;
+            %2$s["amenity"="place_of_worship"] %1$s;
         );
         out body;
         >;
         out skel qt;'
-    
+    if (ruins){
+        basequery <-   '[out:xml][timeout:900];
+        (
+            %2$s["building"="church"] %1$s;
+            %2$s["building"="chapel"] %1$s;
+            %2$s["building"="cathedral"] %1$s;
+            %2$s["building"="ruins"] %1$s;
+            %2$s["historic"="ruins"] %1$s;
+            %2$s["amenity"="place_of_worship"] %1$s;
+        );
+        out body;
+        >;
+        out skel qt;'
+    }
     bounding <- paste0('(',paste(c(lat1, lon1, lat2, lon2), collapse=','),')')
     qry <- sprintf(basequery, bounding, what)
     
