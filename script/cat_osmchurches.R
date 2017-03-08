@@ -15,9 +15,100 @@ rdriehoek = CRS("+init=epsg:28992")
 
 source("script/cat_functions.r")
 
+siem_pt = data.table::fread("dat/siem_pt.csv")
+siem_uk = data.table::fread("dat/siem_uk.csv")
+siem_fr = data.table::fread("dat/siem_france.csv")
+siem_bs = data.table::fread('dat/extra_bishoprics.csv')
+siem_be = data.table::fread("dat/siem_belgium.csv")
+siem_ch = data.table::fread("dat/siem_swiss.csv")
+siem_de = data.table::fread("dat/siem_de.csv")
+siem_nl = data.table::fread("dat/siem_nl.csv")
+siem_lu = data.table::fread("dat/siem_lu.csv")
+
+
+# rural squares
+#--------------
+pet_way = get_osm_data(siem_uk[city=="Peterborough (Medeshamstede)", ], 
+    what='way', radius=50, ruins=TRUE)
+pet_rel = get_osm_data(siem_uk[city=="Peterborough (Medeshamstede)", ], 
+    what='relation', radius=50, ruins=TRUE)
+che_way = get_osm_data(siem_uk[city=="Chester", ], 
+    what='way', radius=50, ruins=TRUE)
+che_rel = get_osm_data(siem_uk[city=="Chester", ], 
+    what='relation', radius=50, ruins=TRUE)
+ami_way = get_osm_data(siem_fr[city=="Amiens", ], 
+    what='way', radius=50, ruins=TRUE)
+ami_rel = get_osm_data(siem_fr[city=="Amiens", ], 
+    what='relation', radius=50, ruins=TRUE)
+tou_way = get_osm_data(siem_fr[city=="Toulouse", ], 
+    what='way', radius=50, ruins=TRUE)
+tou_rel = get_osm_data(siem_fr[city=="Toulouse", ], 
+    what='relation', radius=50, ruins=TRUE)
+dij_way = get_osm_data(siem_fr[city=="Dijon", ], 
+    what='way', radius=50, ruins=TRUE)
+dij_rel = get_osm_data(siem_fr[city=="Dijon", ], 
+    what='relation', radius=50, ruins=TRUE)
+maa_way = get_osm_data(siem_nl[city=="Maastricht", ], 
+    what='way', radius=50, ruins=TRUE)
+maa_rel = get_osm_data(siem_nl[city=="Maastricht", ], 
+    what='relation', radius=50, ruins=TRUE)
+osn_way = get_osm_data(siem_de[city=="Osnabrueck (Osnabrück)", ], 
+    what='way', radius=50, ruins=TRUE)
+osn_rel = get_osm_data(siem_de[city=="Osnabrueck (Osnabrück)", ], 
+    what='relation', radius=50, ruins=TRUE)
+nue_way = get_osm_data(siem_de[city=="Nuernberg (Nürnberg)", ], 
+    what='way', radius=50, ruins=TRUE)
+nue_rel = get_osm_data(siem_de[city=="Nuernberg (Nürnberg)", ], 
+    what='relation', radius=50, ruins=TRUE)
+
+rur_ways = list(pet_way, che_way, ami_way, tou_way, dij_way, maa_way, osn_way, nue_way)
+rur_rels = list(pet_rel, che_rel, ami_rel, tou_rel, dij_rel, maa_rel, osn_rel, nue_rel)
+
+polys_way_rur = polylist2df(rur_ways)
+polys_way_rur@data$surface = geosphere::areaPolygon(polys_way_rur)
+polys_way_rur@data$lon = sp::coordinates(polys_way_rur)[, 1]
+polys_way_rur@data$lat = sp::coordinates(polys_way_rur)[, 2]
+
+polys_rel_rur = polylist2df(rur_rels, what='relation')
+polys_rel_rur@data$surface = geosphere::areaPolygon(polys_rel_rur)
+polys_rel_rur@data$surface[polys_rel_rur@data$role=="inner"] = -1 * polys_rel_rur@data$surface[polys_rel_rur@data$role=="inner"]
+polys_rel_rur@data$lon = sp::coordinates(polys_rel_rur)[, 1]
+polys_rel_rur@data$lat = sp::coordinates(polys_rel_rur)[, 2]
+polys_rel_rur = aggregate_multipolys(polys=polys_rel_rur, by='osmid')
+
+add_borders()
+
+out = sp_rbind(polys4merge=polys_way_rur, polys=polys_rel_rur)
+
+dim(out)
+out = out[out$surface >= 1e3, ]
+dim(out)
+
+# previously checked osmids
+osmids = NULL
+fls = grepr('_eb[^g]', list.files("dat"))
+for (fl in fls){
+    osmids = c(osmids, data.table::fread(paste0("dat/", fl), skip=2, colClasses="character")[, 1])
+}
+osmids = unique(unlist(osmids))
+osmids = gsub('_.*', '', osmids)
+osmids = gsub('\\D', '', osmids)
+
+out = out[!gsub('_.*', '', out$osmid) %in% unique(unlist(osmids)), ]
+
+max(nchar(unlist(out@data))) < 254
+out@data$timestamp = as.character(out@data$timestamp)
+maptools::writeSpatialShape(out, "dat/gis/rur")
+maptools::readSpatialShape(out, "dat/gis/rur")
+
+
+
+
+out = out[order(out$city, out$surface), ]
+write_filltable(out, outfile="dat/rurcities.csv")
+
 # extra bishoprics
 #---------
-siem_bs = data.table::fread('dat/extra_bishoprics.csv')
 polylist_rel_bs = list()
 for (i in 37:nrow(siem_bs)){
     cty = siem_bs[i, ]
@@ -69,7 +160,6 @@ write_filltable(out, outfile="dat/bscities.csv")
 
 # portugal
 #---------
-siem_pt = data.table::fread("dat/siem_pt.csv")
 
 polylist_rel_pt = list()
 for (i in 1:nrow(siem_pt)){
@@ -128,7 +218,6 @@ write_filltable(out, outfile="dat/ptcities.csv")
 
 # belgium relations
 #------------------
-siem_be = data.table::fread("dat/siem_belgium.csv")
 polylist_rel_be = list()
 for (i in 1:nrow(siem_be)){
     cty = siem_be[i, ]
@@ -155,7 +244,6 @@ write_filltable(out, outfile="dat/belgiancities_rels.csv")
 
 # switzerland relations
 #----------------------
-siem_ch = fread("dat/siem_swiss.csv")
 
 # additional churches entered as relation
 polylist_rel_ch = list()
@@ -183,8 +271,6 @@ write_filltable(out, outfile="dat/swisscities_rels.csv")
 
 # french relations
 #-----------------
-siem_fr = fread("dat/siem_france.csv")
-
 # additional churches entered as relation
 polylist_rel_fr = list()
 for (i in 53:nrow(siem_fr)){
@@ -211,7 +297,6 @@ write_filltable(out, outfile="dat/frenchcities_rels.csv")
 
 # germany
 #--------
-siem_de = data.table::fread("dat/siem_de.csv")
 
 polylist_rel_de = list()
 for (i in 48:nrow(siem_de)){
@@ -273,7 +358,6 @@ write_filltable(polys_de, 'dat/deucities.csv')
 
 # united kingdom
 #---------------
-siem_uk = fread("dat/siem_uk.csv")
 
 # additional churches entered as relation
 polylist_rel_uk = list()
@@ -281,6 +365,44 @@ for (i in 129:nrow(siem_uk)){
     polylist_rel_uk[[siem_uk$city[i]]] = get_osm_data(cty=siem_uk[i, ], what='relation', block=FALSE)
     Sys.sleep(30)
 }
+# manchester cathedral has broken polys, could be fixed on osm
+# newark not in siem
+# stamford not in siem
+# stirling not in siem
+# windsor, louth, melford, lavenham all not in siem
+# rochester (), salisbury (149498084) was accidentally omitted in bruce's file
+# wells (1277182) not in siem (bath is)
+# ripon, southwell, binham not in siem
+# bury st edmunds, 
+# St Augustine's Abbey (ruin) not in osm
+# crowland, dunster, glastonbury, great malvern, hexham, lindisfarm, malmesbury, pershore not in siem
+# cambridge SMG is only 700 m2
+# altham niet in siem
+
+unique(siem$city[grep('ranth|avenha|elfo|outh', siem$city)])
+# Dorchester could be added: get_osm_data_church(35311931, what='way')
+# Norwich could be added: get_osm_data_church(103327553, what='way')
+# Greyfriars church (77468736), reading is 900m2, could be added as this is in part because it is ruined
+# southwark 26183417 zou er in moeten zitten; AR controleren
+
+# Manchester
+topo = osmar::as_sp(osmar::get_osm(osmar::relation("4423340"), full=TRUE))
+coordinates(rgeos::gCentroid(topo$lines))
+
+# Norwich
+topo = osmar::as_sp(osmar::get_osm(osmar::way("103327553"), full=TRUE))
+coordinates(rgeos::gCentroid(topo$lines))
+
+# Reading
+topo = osmar::as_sp(osmar::get_osm(osmar::way("77468736"), full=TRUE))
+coordinates(rgeos::gCentroid(topo$lines))
+
+# canterbury: aug abbey (in osm, ruin)
+# bury st edmunds: niet in osm (ruine)
+# whitby abbey: ruine in osm
+# st mary's in york: ruine in osm
+# reading abbey: ruine in osm
+# rest: ruine | niet in siem | te klein
 
 polys_rel_uk = polylist2df(polylist_rel_uk)
 polys_rel_uk@data$surface = geosphere::areaPolygon(polys_rel_uk)
@@ -362,7 +484,6 @@ write_filltable(polys_uk, outfile="dat/gbrcities.csv",
 
 # netherlands
 #------------
-siem_nl = fread("dat/siem_nl.csv")
 
 # additional churches entered as relation
 polylist_rel_nl = list()
@@ -453,7 +574,6 @@ write_filltable(polys_nl, outfile="dat/nldcities.csv",
 
 # luxembourg
 #-----------
-siem_lu = fread("dat/siem_lu.csv")
 polylist_lu = list()
 for (i in 1:nrow(siem_lu)){
     polylist_lu[[siem_lu[i, city]]] = get_osm_data(siem_lu[i, ], block=FALSE)
