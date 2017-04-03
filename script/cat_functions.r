@@ -1,5 +1,87 @@
 thinmargins <- c(4, 4, 3, 0.5)
 
+
+rtnorm = function (n, mean = 0, sd = 1, min = -Inf, max = Inf) {
+    # replace Trunc distributions from envstats
+    # in due time remove
+    # laeken, plyr, MASS, Rcpp (≥ 0.11.0), e1071, parallel, nnet, doParallel, foreach, colorspace, VIM, methods, party, EnvStats, fitdistrplus, ranger
+
+    ln <- length(n)
+    if (ln < 1)
+        stop("'n' must be non-empty.")
+    if (ln > 1)
+        n <- ln
+    else {
+        if (is.na(n) || n <= 0 || n != trunc(n))
+            stop("'n' must be a positive integer or vector.")
+    }
+    arg.mat <- cbind(n.vec = rep(1, n), mean = as.vector(mean),
+        sd = as.vector(sd), min = as.vector(min), max = as.vector(max))
+    if (n < nrow(arg.mat))
+        arg.mat <- arg.mat[1:n, , drop = FALSE]
+    na.index <- apply(arg.mat, 1, function(x) any(is.na((x))))
+    if (all(na.index))
+        return(rep(NA, n))
+    else {
+        r <- numeric(n)
+        r[na.index] <- NA
+        r.no.na <- r[!na.index]
+        n.vec <- arg.mat[!na.index, "n.vec"]
+        mean <- arg.mat[!na.index, "mean"]
+        sd <- arg.mat[!na.index, "sd"]
+        min <- arg.mat[!na.index, "min"]
+        max <- arg.mat[!na.index, "max"]
+        if (any(sd < .Machine$double.eps))
+            stop("All non-missing values of 'sd' must be positive.")
+        if (any(min > max))
+            stop(paste("All non-missing values of 'min' must be",
+                "less than the corresponding elements of 'max'."))
+        r[!na.index] <- qtnorm(p = runif(n.vec), mean = mean,
+            sd = sd, min = min, max = max)
+        return(r)
+    }
+}
+
+qtnorm = function (p, mean = 0, sd = 1, min = -Inf, max = Inf)
+{
+    names.p <- names(p)
+    arg.mat <- cbind(p = as.vector(p), mean = as.vector(mean),
+        sd = as.vector(sd), min = as.vector(min), max = as.vector(max))
+    na.index <- apply(arg.mat, 1, function(x) any(is.na((x))))
+    if (all(na.index))
+        q <- rep(NA, nrow(arg.mat))
+    else {
+        q <- numeric(nrow(arg.mat))
+        q[na.index] <- NA
+        q.no.na <- q[!na.index]
+        for (i in c("p", "mean", "sd", "min", "max")) assign(i,
+            arg.mat[!na.index, i])
+        if (any(p < 0) || any(p > 1))
+            stop("All non-missing values of 'p' must be between 0 and 1")
+        if (any(sd < .Machine$double.eps))
+            stop("All non-missing values of 'sd' must be positive.")
+        if (any(min >= max))
+            stop(paste("All non-missing values of 'min' must be",
+                "less than the corresponding elements of 'max'."))
+        p.low <- p == 0
+        q.no.na[p.low] <- min[p.low]
+        p.high <- p == 1
+        q.no.na[p.high] <- max[p.high]
+        if (any(index <- !(p.low | p.high))) {
+            mean <- mean[index]
+            sd <- sd[index]
+            F.min <- pnorm(min[index], mean = mean, sd = sd)
+            q.no.na[index] <- qnorm(p[index] * (pnorm(max[index],
+                mean = mean, sd = sd) - F.min) + F.min, mean = mean,
+                sd = sd)
+        }
+        q[!na.index] <- q.no.na
+    }
+    if (!is.null(names.p))
+        names(q) <- rep(names.p, length = length(q))
+    return(q)
+}
+
 calcMode <- function(x, ...) {
     ux <- unique(x)
     ux[which.max(tabulate(match(x, ux)))]
