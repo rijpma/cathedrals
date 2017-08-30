@@ -279,14 +279,14 @@ checks = function(dyn, full, churchlist){
     return(prb_osmids)
 }
 
-recombine_churches = function(churches, guesses=NULL){
+recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
     fill = list()
     for (id in unique(churches$osmid[churches$osmid!=''])){
         church = as.data.frame(churches[osmid==id, ])
         # dynstrt = which(church[2, 5:ncol(church)]!='' & !is.na(church[2, 5:ncol(church)]))
         # if (length(dynstrt)==0) next
         # dynvrbs = dynstrt[1]:ncol(church)
-        dynvrbs = 5:ncol(church)
+        dynvrbs = firstm2col:ncol(church)
         temp = data.frame(osmid=rep(id, length(dynvrbs)), 
                           year=integer(length(dynvrbs)),
                           m2=integer(length(dynvrbs)),
@@ -760,6 +760,7 @@ get_osm_other_churches_rect <- function(lat1, lon1, lat2, lon2){
 
     return(topo)
 }
+
 # virids_map = read.csv("https://raw.githubusercontent.com/sjmgarnier/viridis/master/data-raw/viridis_map.csv")
 # clsA = read.csv("https://raw.githubusercontent.com/sjmgarnier/viridis/master/data-raw/optionA.csv")
 # clsB = read.csv("https://raw.githubusercontent.com/sjmgarnier/viridis/master/data-raw/optionB.csv")
