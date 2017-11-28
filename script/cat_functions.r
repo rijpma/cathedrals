@@ -449,6 +449,7 @@ polylist2df = function(polylist, what="way"){
     for (i in 2:length(polylist)){
         polys4merge = polylist[[i]]
         duplpolys = polys4merge$id %in% polys$id
+        duplpolys = duplpolys | duplicated(polys4merge$id)
         polys4merge$id[duplpolys] = paste0(polys4merge$id[duplpolys], '_', i)
         polys4merge = sp::spChFIDs(polys4merge, as.character(polys4merge$id))
         row.names(polys4merge@data) = as.character(polys4merge$id)
