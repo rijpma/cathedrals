@@ -142,7 +142,7 @@ to_city_obs = function(statobs, fullobs, res=100){
 }
 
 to_annual_obs = function(dyn, churchlist){
-    full = as.data.table(expand.grid(year=700:1800, osmid=names(churchlist), stringsAsFactors=FALSE))
+    full = as.data.table(expand.grid(year=600:1800, osmid=names(churchlist), stringsAsFactors=FALSE))
     data.table::setkey(full, osmid, year)
     data.table::setkey(dyn, osmid, year)
     full = dyn[full]
