@@ -15,6 +15,7 @@ rdriehoek = CRS("+init=epsg:28992")
 
 source("script/cat_functions.r")
 
+siem_it = data.table::fread("dat/siem_it.csv")
 siem_pt = data.table::fread("dat/siem_pt.csv")
 siem_uk = data.table::fread("dat/siem_uk.csv")
 siem_fr = data.table::fread("dat/siem_france.csv")
@@ -24,6 +25,65 @@ siem_ch = data.table::fread("dat/siem_swiss.csv")
 siem_de = data.table::fread("dat/siem_de.csv")
 siem_nl = data.table::fread("dat/siem_nl.csv")
 siem_lu = data.table::fread("dat/siem_lu.csv")
+
+# italy
+#---------
+
+polylist_rel_it = list()
+for (i in 61:nrow(siem_it)){
+    cty = siem_it[i, ]
+    polylist_rel_it[[cty$city]] = get_osm_data(cty, what='relation', block=FALSE)
+    Sys.sleep(30)
+}
+polylist_way_it = list()
+for (i in 236:nrow(siem_it)){
+    cty = siem_it[i, ]
+    polylist_way_it[[cty$city]] = get_osm_data(cty, what='way', block=FALSE)
+    Sys.sleep(30)
+}
+
+# combine two lists 
+# or later as dataframe?
+polys_way_it = polylist2df(polylist_way_it)
+polys_way_it@data$surface = geosphere::areaPolygon(polys_way_it)
+polys_way_it@data$lon = sp::coordinates(polys_way_it)[, 1]
+polys_way_it@data$lat = sp::coordinates(polys_way_it)[, 2]
+
+polys_rel_it = polylist2df(polylist_rel_it, what='relation')
+polys_rel_it@data$surface = geosphere::areaPolygon(polys_rel_it)
+polys_rel_it@data$surface[polys_rel_it@data$role=="inner"] = -1 * polys_rel_it@data$surface[polys_rel_it@data$role=="inner"]
+polys_rel_it@data$lon = sp::coordinates(polys_rel_it)[, 1]
+polys_rel_it@data$lat = sp::coordinates(polys_rel_it)[, 2]
+polys_rel_it = aggregate_multipolys(polys=polys_rel_it, by='osmid')
+
+plot(polys_way_it)
+plot(polys_rel_it, add=T, col=2)
+
+
+pdf('figs/it_way_churches.pdf')
+plot_churches_by_city(polylist_way_it, siem_it)
+dev.off()
+
+out = sp_rbind(polys4merge=polys_way_it, polys=polys_rel_it)
+# out = rbindlist(list(polys_way_pt@data, polys_rel_pt@data), use.names=TRUE, fill=TRUE)
+
+pdf('figs/it_churches.pdf')
+plot_churches_by_city(c(polylist_way_it, polylist_rel_it), siem_it)
+# plot_churches_by_city(polylist_rel_pt, polylist_rel_pt), siem_pt)
+dev.off()
+
+dim(out)
+out = out[out$surface >= 1e3, ]
+dim(out)
+
+max(nchar(unlist(out@data)), na.rm = T) < 254
+out@data$timestamp = as.character(out@data$timestamp)
+maptools::writeSpatialShape(out, "dat/gis/it")
+
+out = out[order(out$city, out$surface), ]
+
+write_filltable(out, outfile="dat/itcities.csv")
+
 
 
 # rural squares
@@ -155,7 +215,6 @@ maptools::writeSpatialShape(out, "dat/gis/bs")
 out = out[order(out$city, out$surface), ]
 
 write_filltable(out, outfile="dat/bscities.csv")
-
 
 
 # portugal
