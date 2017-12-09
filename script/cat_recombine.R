@@ -68,28 +68,14 @@ chr[city=="reading", city := "Reading"]
 chr[city=="norwich", city := "Norwich"]
 
 # fix height typos
-chr[osmid == "32530870" & surface == "height", V19]
 chr[osmid == "32530870" & surface == "height", V19 := "15.8"]
-chr[osmid == "69972010" & surface == "year", V17]
 chr[osmid == "69972010" & surface == "year", V17 := "1000"] # guess for now
-chr[osmid == "136200148" & surface == "year", V23]
 chr[osmid == "136200148" & surface == "year", V23 := "1450"] # guess for now
 
-chr[, 1:14]
 chrlist = recombine_churches(churches=chr, guesses=NULL, firstm2col = 14)
-chrlist[['217546683a']]
-chrlist[['217546683b']]
-chrlist[["26183417"]]
-
-sort(unique(unlist(chr[surface == 'height', 14:ncol(chr)])))
-sort(unique(unlist(chr[surface == 'surface', 14:ncol(chr)])))
-sort(unique(unlist(chr[surface == 'year', 14:ncol(chr)])))
-# 100?
 
 statobs = do.call(rbind, lapply(chrlist, `[[`, 'static')) 
 statobs = data.table::as.data.table(statobs)
-
-statobs[osmid == "26183417"]
 
 ## country splits north/south
 statobs[, ctr2:=ctr]
