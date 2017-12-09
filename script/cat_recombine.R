@@ -56,6 +56,8 @@ match(duplids, chr$osmid)
  # chr[osmid %in% duplids, ]
 
 # manual fixes
+chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
+chr[osmid == "66636479", "osmwikipedia"][1] <- ""
 # halle should be two churches with unique osmids
 chr[osmid=="217546683", "osmid"] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
 
