@@ -64,12 +64,6 @@ chr[city=="Middelburg", osmid := osmid[1]]
 
 # table(table(chr$osmid[chr$osmid!='']))
 
-# now fixed in data v 7
-# chr[city=="Manchester" & !is.na(lat), ctr:="uk"]
-
-# chr[osmid=="196893593" & V13 == "114", V13 := "1140"]
-# chr[osmid=="196893593" & V14 == "116", V14 := "1160"]
-
 chr[city=="reading", city := "Reading"]
 chr[city=="norwich", city := "Norwich"]
 
