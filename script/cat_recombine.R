@@ -56,6 +56,8 @@ match(duplids, chr$osmid)
  # chr[osmid %in% duplids, ]
 
 # manual fixes
+chr[osmid == "2322752", "lat"][1] = 46.4349 # cluny
+
 chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
 chr[osmid == "66636479", "osmwikipedia"][1] <- ""
 # halle should be two churches with unique osmids
