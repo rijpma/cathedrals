@@ -67,13 +67,13 @@ chr[city=="Middelburg", osmid := osmid[1]]
 chr[city=="reading", city := "Reading"]
 chr[city=="norwich", city := "Norwich"]
 
-# fix height type
+# fix height typos
 chr[osmid == "32530870" & surface == "height", V19]
-chr[osmid == "32530870" & surface == "height", V19 := 15.8]
+chr[osmid == "32530870" & surface == "height", V19 := "15.8"]
 chr[osmid == "69972010" & surface == "year", V17]
-chr[osmid == "69972010" & surface == "year", V17 := 1000] # guess for now
+chr[osmid == "69972010" & surface == "year", V17 := "1000"] # guess for now
 chr[osmid == "136200148" & surface == "year", V23]
-chr[osmid == "136200148" & surface == "year", V23 := 1450] # guess for now
+chr[osmid == "136200148" & surface == "year", V23 := "1450"] # guess for now
 
 chr[, 1:14]
 chrlist = recombine_churches(churches=chr, guesses=NULL, firstm2col = 14)
