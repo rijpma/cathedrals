@@ -78,6 +78,8 @@ chrlist = recombine_churches(churches=chr, guesses=NULL, firstm2col = 14)
 
 statobs = do.call(rbind, lapply(chrlist, `[[`, 'static')) 
 statobs = data.table::as.data.table(statobs)
+statobs[, lat := as.numeric(lat)]
+statobs[, lon := as.numeric(lon)]
 
 ## country splits north/south
 statobs[, ctr2:=ctr]
