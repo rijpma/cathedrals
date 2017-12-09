@@ -9,7 +9,8 @@ library("stringi")
 library("plm")
 library("raster") # for spatial splitting of data
 
-chr = data.table::fread("dat/checkedchurches_eb_7.csv", header=T, encoding="UTF-8")
+chr = data.table::fread("dat/checkedchurches_eb_7.csv", 
+    header=T, encoding="UTF-8", colClasses = "character")
 chr = chr[, 1:29, with=F]
 hgt = data.table::fread("dat/heights.csv", encoding="UTF-8")
 sfc = data.table::fread("dat/backproj.csv", encoding="UTF-8")
@@ -26,6 +27,7 @@ chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
 chr[, osmname := iconv(osmname, from='macroman', to='utf8')]
 chr[, city := iconv(city, from='macroman', to='utf8')]
 
+# should not give encoding errors
 chr$city[grep("√", chr$city)]
 grep("xyz", chr$osmname)
 grep("xyz", chr$city)
@@ -48,20 +50,19 @@ sample(chr$osmname[grep("ü", chr$osmname)], 5)
 # check for duplicate osmids
 table(table(chr$osmid[chr$osmid!='']))
 duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) > 6]
-chr[osmid %in% duplids, ]
+# chr[osmid %in% duplids, ]
 duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) < 6]
 match(duplids, chr$osmid)
-chr[osmid %in% duplids, ]
+ # chr[osmid %in% duplids, ]
 
 # manual fixes
 # halle should be two churches with unique osmids
-chr[osmid=="217546683", 'osmid'] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
+chr[osmid=="217546683", "osmid"] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
 
 # middelburg should have one id
 chr[city=="Middelburg", osmid := osmid[1]]
-chr[city=="Middelburg", osmid]
 
-table(table(chr$osmid[chr$osmid!='']))
+# table(table(chr$osmid[chr$osmid!='']))
 
 # now fixed in data v 7
 # chr[city=="Manchester" & !is.na(lat), ctr:="uk"]
