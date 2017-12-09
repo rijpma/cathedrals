@@ -140,11 +140,10 @@ doubles = c("Strasbourg", "Strasbourg (Strassburg)",
 
 doubles[!doubles %in% siem$city] # only worry about !
 statobs[city %in% doubles[!doubles %in% siem$city], ]
-siem[city %in% doubles, list(lat, lon, city)][order(city)]
+siem[city %in% doubles, list(lat, lon, city, year)][order(city)]
 siem[city %in% doubles, list(lat[1], lon[1]), by=city]
 
 dynobs = to_dynobs(churchlist=chrlist)
-dynobs[osmid == "26183417"]
 
 # correct date heaping
 table(as.numeric(stringi::stri_sub(dynobs$year, -1)))
