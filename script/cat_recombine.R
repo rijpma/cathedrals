@@ -146,18 +146,10 @@ siem[city %in% doubles, list(lat[1], lon[1]), by=city]
 dynobs = to_dynobs(churchlist=chrlist)
 
 # correct date heaping
-table(as.numeric(stringi::stri_sub(dynobs$year, -1)))
-table(as.numeric(stringi::stri_sub(dynobs$year, -2)))
-dynobs[, ey:=as.numeric(stringi::stri_sub(dynobs$year, -2))]
 
 pdf('figs/heaping2dig.pdf', height=6)
 par(mfrow=c(1, 1))
-hist(dynobs$ey, breaks=100)
-dev.off()
-
-pdf('figs/heaping3dig.pdf', height=6)
-# hist(as.numeric(stringi::stri_sub(dynobs$year, -3)), breaks=1000)
-hist(dynobs[year >= 500, year], breaks=1000)
+hist(as.numeric(stringi::stri_sub(dynobs$year, -2)), breaks=100)
 dev.off()
 
 dynobs[, year_lead := data.table::shift(year, type='lead', fill=Inf), by=osmid]
