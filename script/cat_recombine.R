@@ -159,8 +159,8 @@ dynobs[, dyear := data.table::shift(year, type='lead') - year, by=osmid]
 M = 9
 for (j in 1:M){
     dynobs[, year_crc := year]
+
     dynobs[, heap100 := year %% 100 == 0 | year %% 100 == 1]
-    # dynobs[((year -1) %% 100 == 0) & (year_lag %% 100 == 0), heap100]
     dynobs[, heap20 := ((year - 20) %% 100 == 0) | ((year + 20) %% 100 == 0) ]
     dynobs[, heap25 := ((year - 25) %% 100 == 0) | ((year + 25) %% 100 == 0) | ((year - 50) %% 100 == 0) ]
     dynobs[, heap10 := (year %% 10 == 0) & heap100 + heap20 + heap25 == 0]
@@ -181,10 +181,15 @@ for (j in 1:M){
                max = dynobs[!is.na(sdev), year_lead] - 1)
     dynobs[!is.na(sdev), year_crc := round(rsmpl)]
 
-    # needs double resampling to prevent new heaping on 5
-    # or just at runif(N) and round
+    # uniform double resampling to prevent new heaping on 5
+    # note that this currently causes underheaping at 5
+    # because 2/3 of times neighbour is twenty years away
+    # maybe simple approach preferable because smaller pbolem?
     n = nrow(dynobs[heap10 == TRUE])
     dynobs[heap10 == TRUE, splt10 := rbinom(n, size=1, prob=0.5)]
+    # rsmpl = runif(n = n,
+    #                min = dynobs[heap10 == TRUE, year - 4.75],
+    #                max = dynobs[heap10 == TRUE, year + 4.75])
     rsmpl4 = runif(n = sum(dynobs$splt10 == 1, na.rm=T),
                    min = dynobs[heap10 == TRUE & splt10 == 1, year - 4],
                    max = dynobs[heap10 == TRUE & splt10 == 1, year + 4])
@@ -192,6 +197,7 @@ for (j in 1:M){
                    min = dynobs[heap10 == TRUE, ][splt10 == 0, year - 5],
                    max = dynobs[heap10 == TRUE, ][splt10 == 0, year + 5])
 
+    # dynobs[heap10 == TRUE, year_crc := round(rsmpl)]
     dynobs[heap10 == TRUE & splt10 == 1, year_crc := round(rsmpl4)]
     dynobs[heap10 == TRUE & splt10 == 0, year_crc := round(rsmpl5)]
 
