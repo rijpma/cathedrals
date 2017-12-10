@@ -219,10 +219,18 @@ for (j in 1:M){
     setnames(dynobs, 'year_crc', paste0("year_crc", j))
 }
 
-pdf("figs/distrs_prepost_heap.pdf", width=11)
-par(mfrow=c(1, 2))
-hist(dynobs[, year], breaks=data.table::uniqueN(dynobs$year), main='heaping', xlab='year')
-hist(dynobs[, year_crc1], breaks=data.table::uniqueN(dynobs$year_crc1), main='heaping resampled', xlab='year')
+h_heap = hist(dynobs[, year], breaks=data.table::uniqueN(dynobs$year), plot = F)
+h_unheap = hist(dynobs[, year_crc1], breaks=data.table::uniqueN(dynobs$year_crc1), plot = F)
+h_heap$counts = log1p(h_heap$counts)
+h_unheap$counts = log1p(h_unheap$counts)
+
+pdf("figs/distrs_prepost_heap.pdf", width=11, height = 6)
+par(mfrow=c(1, 2), font.main = 1)
+plot(h_heap, main='heaping', xlab='year', yaxt = 'n')
+axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
+plot(h_heap, main='heaping resampled', xlab='year', yaxt = 'n', border = NA)
+lines(h_unheap)
+axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
 # imps = dynobs[, round(rowMeans(.SD)), .SDcols=grep('year_crc', names(dynobs))]
 # hist(imps, uniqueN(imps), main='heaping resampled average')
 dev.off()
