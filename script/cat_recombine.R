@@ -15,8 +15,6 @@ chr = chr[, 1:29, with=F]
 hgt = data.table::fread("dat/heights.csv", encoding="UTF-8")
 sfc = data.table::fread("dat/backproj.csv", encoding="UTF-8")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
-ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
-gdp = data.table::fread("dat/maddison_gdp_old.csv")
 cathedrals = read.csv("dat/cathedral_osmids.csv", header=F)
 
 nanames = which(names(chr)=="NA")
@@ -267,13 +265,6 @@ close(outfile)
 unique(stringi::stri_enc_mark(siem$city))
 unique(stringi::stri_enc_mark(citobs$city))
 
-
-# for bruce
-# data.table::fwrite(fullobs_sp[year <= 1500, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T)), by=list(decade, ctr2, category)], "dat/fullobs20yctr2cat.csv")
-# data.table::fwrite(fullobs_sp[year <= 1500, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T)), by=list(decade, ctr2)], "dat/fullobs20yctr2.csv")
-# data.table::fwrite(fullobs_sp[year <= 1500, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T)), by=list(decade, ctr)], "dat/fullobs20yctr.csv")
-
-
 # m3 per region
 
 out = fullobs_sp[data.table::between(year, 700, 1500), list(im2 = sum(im2_ann, na.rm=T), 
@@ -282,6 +273,3 @@ out = fullobs_sp[data.table::between(year, 700, 1500), list(im2 = sum(im2_ann, n
                                     im3_tot = max(im3_cml, na.rm=T)), 
     by=list(ctr, city, decade, category)][order(ctr, city, category, decade), ]
 write.csv(out, "dat/fullobs_sp_20y.csv", row.names=F)
-
-
-
