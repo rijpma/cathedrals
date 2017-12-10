@@ -235,8 +235,6 @@ axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
 # hist(imps, uniqueN(imps), main='heaping resampled average')
 dev.off()
 
-tail(sort(table(dynobs[, year_crc1])), 10)
-
 fullobs = to_annual_obs(dyn=dynobs, churchlist=chrlist)
 
 unique(table(fullobs[, osmid]))
@@ -264,56 +262,16 @@ for (j in 1:M){
 
 fullobs[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 
-pdf("figs/heap_v_noheap_ann.pdf", height=6)
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T) * 1.1, by=year], type='n', ylab='m3/ann')
-abline(v=(7:15)*100, col='gray70', lwd=0.8)
-abline(v=c(1315, 1348), col='gray70', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year], col='gray')
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2)
-legend('topleft', legend=c("heaping", "heaping corrected"), fill=c('gray70', 'red'))
-dev.off()
-
-pdf("figs/heap_v_noheap.pdf", width=11)
-par(mfrow=c(1, 2))
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year], type='n', xlab = 'm3/year')
-abline(v=(7:15)*100, col='gray', lwd=0.8)
-abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year])
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2)
-
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=decade], type='n', xlab = 'm3/dec')
-abline(v=(7:15)*100, col='gray', lwd=0.8)
-abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=decade], type='b')
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2, type='b')
-
-legend('topleft', legend=c("heaping", "heaping corrected"), fill=1:2)
-dev.off()
-
-sum(fullobs[data.table::between(year, 700, 1500), sum(im2_ann, na.rm=T), by=year])
-sum(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im2_ann\\d", names(fullobs))])
-
 citobs = to_city_obs(statobs=statobs, fullobs=fullobs)
 
 dynobs_sp = merge(dynobs, statobs, by="osmid")
 dim(fullobs)
 fullobs_sp = merge(fullobs, statobs, by="osmid", all=T)
 dim(fullobs_sp)
-dynobs[fullobs_sp[is.na(year), osmid], ]
+dynobs[fullobs_sp[is.na(year), osmid], ] # are one obs churches in 700
 fullobs_sp = fullobs_sp[!is.na(year), ]
 unique(table(fullobs_sp$year, useNA='ifany'))
 
-# average end-size church
-dynobs[, list(m2_end=sum(m2, na.rm=T)), by=paste(osmid, bldindex)][, mean(m2_end)]
-dynobs[, list(m3_end=sum(m3, na.rm=T)), by=paste(osmid, bldindex)][, mean(m3_end)]
-dynobs[, list(m2_end=sum(m2[bldindex==max(bldindex)], na.rm=T)), by=osmid][, mean(m2_end)]
-dynobs[, list(m3_end=sum(m3[bldindex==max(bldindex)], na.rm=T)), by=osmid][, mean(m3_end)]
-
-# average size church by year
-plot(fullobs[, mean(im2_cml), by = year], type= 'l')
-abline(v = 1500)
-plot(fullobs[im2_ann == 0, mean(im2_cml), by = year][order(year)], type= 'l')
-abline(v = 1500)
 
 write.csv(dynobs_sp[ctr=='uk', ], 'dat/dynobs_uk.csv', row.names=F)
 
