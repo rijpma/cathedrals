@@ -9,6 +9,10 @@ citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, 1:grep("decade", names(fullobs_sp)), with = F]
 
+ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
+gdp = data.table::fread("dat/maddison_gdp_old.csv")
+siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
+
 pdf("figs/heap_v_noheap_ann.pdf", height=6)
 plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T) * 1.1, by=year], type='n', ylab='m3/ann')
 abline(v=(7:15)*100, col='gray70', lwd=0.8)
