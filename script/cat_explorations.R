@@ -3,11 +3,23 @@ setwd("~/dropbox/cathedrals")
 
 library("data.table")
 
+M = 9 # number of imputations
+
 dynobs = data.table::fread("dat/dynobs.csv")
 statobs = data.table::fread("dat/statobs.csv")
 citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
-fullobs = fullobs_sp[, 1:grep("decade", names(fullobs_sp)), with = F]
+
+im3crc = fullobs_sp[, .SD, .SDcols = grep('im3_ann\\d', names(fullobs_sp))] +
+    fullobs_sp[, .SD * 0.005, .SDcols = grep('im3_cml\\d', names(fullobs_sp))]
+im2crc = fullobs_sp[, .SD, .SDcols = grep('im2_ann\\d', names(fullobs_sp))] +
+    fullobs_sp[, .SD * 0.005, .SDcols = grep('im2_cml\\d', names(fullobs_sp))]
+fullobs_sp[, paste0("im3_ann_cmc", 1:M) := im3crc]
+fullobs_sp[, paste0("im2_ann_cmc", 1:M) := im2crc]
+fullobs_sp[, im3_ann_cmc := im3_ann + im3_cml * 0.005]
+fullobs_sp[, im2_ann_cmc := im2_ann + im2_cml * 0.005]
+
+fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
