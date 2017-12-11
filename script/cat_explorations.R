@@ -7,6 +7,8 @@ M = 9 # number of imputations
 
 dynobs = data.table::fread("dat/dynobs.csv")
 statobs = data.table::fread("dat/statobs.csv")
+dynobs_sp = merge(dynobs, statobs, by="osmid")
+
 citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 
@@ -52,19 +54,17 @@ legend('topleft', legend=c("heaping", "heaping corrected"), fill=1:2)
 dev.off()
 
 # total diffs
-sum(fullobs[data.table::between(year, 700, 1500), sum(im2_ann, na.rm=T), by=year])
-sum(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im2_ann\\d", names(fullobs))])
+sum(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year])
+sum(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))])
 
 # average end-size church
-dynobs[, list(m2_end=sum(m2, na.rm=T)), by=paste(osmid, bldindex)][, mean(m2_end)]
 dynobs[, list(m3_end=sum(m3, na.rm=T)), by=paste(osmid, bldindex)][, mean(m3_end)]
-dynobs[, list(m2_end=sum(m2[bldindex==max(bldindex)], na.rm=T)), by=osmid][, mean(m2_end)]
 dynobs[, list(m3_end=sum(m3[bldindex==max(bldindex)], na.rm=T)), by=osmid][, mean(m3_end)]
 
 # average size church by year
-plot(fullobs[, mean(im2_cml), by = year], type= 'l')
+plot(fullobs[, mean(im3_cml), by = year], type= 'l')
 abline(v = 1500)
-plot(fullobs[im2_ann == 0, mean(im2_cml), by = year][order(year)], type= 'l')
+plot(fullobs[im3_ann == 0, mean(im3_cml), by = year][order(year)], type= 'l')
 abline(v = 1500)
 
 # distribution observations

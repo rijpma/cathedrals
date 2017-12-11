@@ -244,7 +244,6 @@ fullobs[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 
 citobs = to_city_obs(statobs=statobs, fullobs=fullobs)
 
-dynobs_sp = merge(dynobs, statobs, by="osmid")
 dim(fullobs)
 fullobs_sp = merge(fullobs, statobs, by="osmid", all=T)
 dim(fullobs_sp)
