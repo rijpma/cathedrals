@@ -258,26 +258,6 @@ dev.off()
 
 
 
-### fix statobs city names to match siem
-fixes = lapply(gsub('-', ' ', setdiff(statobs$city, siem$city)), function(x) unique(siem$city)[grep(x, gsub('-', ' ', unique(siem$city)))])
-fixes[sapply(fixes, length) == 0] = NA
-fixes = unlist(fixes)
-names(fixes) = setdiff(statobs$city, siem$city)
-
-unique(fixes[match(statobs$city, names(fixes))])
-statobs[, city2:=fixes[match(city, names(fixes))]]
-statobs[!is.na(city2), city:=city2]
-unique(statobs[!is.na(city2), list(city, city2)])
-statobs[!is.na(city2), city:=city2][, city2:=NULL]
-
-setdiff(statobs$city, siem$city)
-all(unique(statobs$city) %in% siem$city)
-
-# different city names in siem check, should be zero rows
-statobs[!city %in% siem$city, ]
-siem[, .SD[1], by = city][city %in% unique(statobs$city), ][duplicated(city)]
-
-
 x = fullobs_sp
 x[, year := round(year / 100)  * 100] # for compatability w. century
 x = x[data.table::between(year, 650, 1550), list(im3_cnt = base::sum(abs(.SD), na.rm=T) / M), by=list(city, year), .SDcols=impvrbs]
@@ -377,15 +357,20 @@ dev.off()
 # points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Switzerland / Switzerland[V1==1500]] * x[ctr=="ch" & decade==1500, im3_dec])
 # dev.off()
 
-x = merge(fullobs_sp, siem[, list(inhab, lat, lon, city, year)], by=c('city', 'year'), all.x=T)
-x = x[!is.na(decade) & data.table:::between(decade, 700, 1500), ]
+# add ctr2 and ctr3 to siem
+siem = unique(x[, list(ctr2, ctr3, city)])[siem, on = 'city']
 
-x1 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M, inhab=sum(inhab, na.rm=T)), by=list(decade, ctr), .SDcols = impvrbs]
-x2 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M, inhab=sum(inhab, na.rm=T)), by=list(decade, ctr2), .SDcols = impvrbs]
-x3 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M, inhab=sum(inhab, na.rm=T)), by=list(decade, ctr3), .SDcols = impvrbs]
-x3_im3 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr3), .SDcols = grep("im3_ann", names(x))]
-x3 = x3[x3_im3, on = list(decade, ctr3)]
-eu = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M, inhab = sum(inhab, na.rm=T)), by=decade, .SDcols = impvrbs]
+x = fullobs_sp[!is.na(decade) & data.table:::between(decade, 700, 1500), ]
+
+x1 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr), .SDcols = impvrbs]
+x1 = siem[, list(inhab = sum(inhab)), by = list(ctr, decade = year)][x1, on = c('ctr', 'decade')]
+# note: ctr2 & ctr3 siem urban inhab total are only for cities 
+x2 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr2), .SDcols = impvrbs]
+x2 = siem[, list(inhab = sum(inhab)), by = list(ctr2, decade = year)][x2, on = c('ctr2', 'decade')]
+x3 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr3), .SDcols = impvrbs]
+x3 = siem[, list(inhab = sum(inhab)), by = list(ctr3, decade = year)][x3, on = c('ctr3', 'decade')]
+eu = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade), .SDcols = impvrbs]
+eu = siem[grep("fr|be|ch|uk|nl|de", ctr), list(inhab = sum(inhab)), by = list(decade = year)][eu, on = c('decade')]
 
 x1[decade %% 100!=0, inhab:=NA] # fix zeroes
 x2[decade %% 100!=0, inhab:=NA]
@@ -401,9 +386,7 @@ write.csv(x3, "~/dropbox/cathedrals/dat/countryseries.csv", row.names=F)
 x1[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr]
 x2[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr2]
 x3[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr3]
-x3[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr3]
 eu[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade)]
-
 
 pdf('figs/europetotal_puc_hc.pdf', height=6)
 par(mfrow=c(1, 1))
