@@ -354,28 +354,28 @@ text(x=c(1, 8), y=c(1, 0.4), c('pooled', 'within'), col=2)
 dev.off()
 
 
-x = fullobs_sp[data.table::between(decade, 700, 1500), list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T)), by=list(decade, ctr)]
+# x = fullobs_sp[data.table::between(decade, 700, 1500), list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T)), by=list(decade, ctr)]
 
-pdf("figs/m3bycountry.pdf", height=9)
-par(mfrow=c(3, 2))
-plot(im3_dec ~ decade, data=x[ctr=="de", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="de")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Germany / Germany[V1==1500]] * x[ctr=="de" & decade==1500, im3_dec])
+# pdf("figs/m3bycountry.pdf", height=9)
+# par(mfrow=c(3, 2))
+# plot(im3_dec ~ decade, data=x[ctr=="de", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="de")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Germany / Germany[V1==1500]] * x[ctr=="de" & decade==1500, im3_dec])
 
-plot(im3_dec ~ decade, data=x[ctr=="uk", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="uk")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, UK / UK[V1==1500]] * x[ctr=="uk" & decade==1500, im3_dec])
+# plot(im3_dec ~ decade, data=x[ctr=="uk", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="uk")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, UK / UK[V1==1500]] * x[ctr=="uk" & decade==1500, im3_dec])
 
-plot(im3_dec ~ decade, data=x[ctr=="fr", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="fr")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, France / France[V1==1500]] * x[ctr=="fr" & decade==1500, im3_dec])
+# plot(im3_dec ~ decade, data=x[ctr=="fr", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="fr")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, France / France[V1==1500]] * x[ctr=="fr" & decade==1500, im3_dec])
 
-plot(im3_dec ~ decade, data=x[ctr=="be", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="be")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Belgium / Belgium[V1==1500]] * x[ctr=="be" & decade==1500, im3_dec])
+# plot(im3_dec ~ decade, data=x[ctr=="be", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="be")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Belgium / Belgium[V1==1500]] * x[ctr=="be" & decade==1500, im3_dec])
 
-plot(im3_dec ~ decade, data=x[ctr=="nl", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="nl")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Netherlands / Netherlands[V1==1500]] * x[ctr=="nl" & decade==1500, im3_dec])
+# plot(im3_dec ~ decade, data=x[ctr=="nl", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="nl")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Netherlands / Netherlands[V1==1500]] * x[ctr=="nl" & decade==1500, im3_dec])
 
-plot(im3_dec ~ decade, data=x[ctr=="ch", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="ch")
-points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Switzerland / Switzerland[V1==1500]] * x[ctr=="ch" & decade==1500, im3_dec])
-dev.off()
+# plot(im3_dec ~ decade, data=x[ctr=="ch", ], type='l', col=2, lwd=1.5, bty='l', xlim=c(700, 1500), main="ch")
+# points(x=c(1, 1000, 1500), y=gdp[V1 <= 1500, Switzerland / Switzerland[V1==1500]] * x[ctr=="ch" & decade==1500, im3_dec])
+# dev.off()
 
 x = merge(fullobs_sp, siem[, list(inhab, lat, lon, city, year)], by=c('city', 'year'), all.x=T)
 x = x[!is.na(decade) & data.table:::between(decade, 700, 1500), ]
