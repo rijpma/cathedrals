@@ -506,20 +506,6 @@ dev.off()
 x1 = x[, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T), inhab=sum(inhab, na.rm=T)), by=list(decade, ctr)]
 x2 = x[, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T), inhab=sum(inhab, na.rm=T)), by=list(decade, ctr2)]
 x3 = x[, list(im2_dec=sum(im2_ann, na.rm=T), im3_dec=sum(im3_ann, na.rm=T), inhab=sum(inhab, na.rm=T)), by=list(decade, ctr3)]
-x1[decade %% 100!=0, inhab:=NA] # fix zeroes
-x2[decade %% 100!=0, inhab:=NA]
-x3[decade %% 100!=0, inhab:=NA]
-x1[, iinhab:=exp(zoo::na.approx(log(inhab))), by=ctr]
-x2[, iinhab:=exp(zoo::na.approx(log(inhab))), by=ctr2]
-x3[, iinhab:=exp(zoo::na.approx(log(inhab))), by=ctr3]
-
-x1[, im2_dec_smth:=predict(loess(im2_dec / iinhab ~ decade), newdata=decade), by=ctr]
-x2[, im2_dec_smth:=predict(loess(im2_dec / iinhab ~ decade), newdata=decade), by=ctr2]
-x3[, im2_dec_smth:=predict(loess(im2_dec / iinhab ~ decade), newdata=decade), by=ctr3]
-
-x1[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr]
-x2[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr2]
-x3[, im3_dec_smth:=predict(loess(im3_dec / iinhab ~ decade), newdata=decade), by=ctr3]
 
 pdf('figs/france_panel.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
