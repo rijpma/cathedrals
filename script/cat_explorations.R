@@ -13,6 +13,8 @@ dynobs_sp = merge(dynobs, statobs, by="osmid")
 citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 
+impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
+
 im3crc = fullobs_sp[, .SD, .SDcols = grep('im3_ann\\d', names(fullobs_sp))] +
     fullobs_sp[, .SD * 0.005, .SDcols = grep('im3_cml\\d', names(fullobs_sp))]
 im2crc = fullobs_sp[, .SD, .SDcols = grep('im2_ann\\d', names(fullobs_sp))] +
@@ -126,7 +128,6 @@ write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
 plot(hgt ~ m2, data=dynobs[m2 >0, ])
 curve(0.4542*sqrt(x), add=T, col=2)
 
-impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
@@ -157,8 +158,8 @@ dev.off()
 
 pdf("figs/bytype_hc.pdf")
 bytype = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=list(decade, category), .SDcols = impvrbs]
-cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
-bytype[, V1 := V1 + cmladd$V1]
+# cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
+# bytype[, V1 := V1 + cmladd$V1]
 par(mfrow=c(2, 2), mar=c(4,3,1.5,0.5), font.main=1)
 plot(V1 ~ decade, data=bytype[category=="cathedral", ],
     type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann')
@@ -200,13 +201,15 @@ dev.off()
 
 pdf('figs/mendicants_hc.pdf', height = 4)
 bytype = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=list(decade, category, mendicants), .SDcols = impvrbs]
-cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category, mendicants), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
-bytype = bytype[, V1 := V1 + cmladd$V1][category == "conventual"]
+# cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category, mendicants), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
+# bytype = bytype[, V1 := V1 + cmladd$V1][category == "conventual"]
 par(mfrow = c(1, 2))
-plot(V1 ~ decade, data=bytype[category=="conventual" & mendicants == 1, ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann', main = 'Mendicant')
 plot(V1 ~ decade, data=bytype[category=="conventual" & mendicants == 0, ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann', main = 'Other')
+    type='n', bty='l', col=2, lwd=1.5, ylab = 'm3/ann', main = 'Other')
+lines(V1 ~ decade, data=bytype[category=="conventual" & mendicants == 1, ],
+    type='l', bty='l', col=2, lwd=1.5, ylab = 'm3/ann', main = 'Mendicant')
+plot(V1 ~ decade, data=bytype[category=="conventual" & mendicants == 0, ],
+    type='l', bty='l', col=2, lwd=1.5, ylab = 'm3/ann', main = 'Other')
 dev.off()
 
 pdf("figs/bytype.pdf")
@@ -277,12 +280,13 @@ siem[, .SD[1], by = city][city %in% unique(statobs$city), ][duplicated(city)]
 
 x = fullobs_sp
 x[, year := round(year / 100)  * 100] # for compatability w. century
-x = x[data.table::between(year, 650, 1550), list(im3_cnt = base::sum(abs(.SD), na.rm=T) / M), by=list(city, year), .SDcols=paste0("im3_ann", 1:M)]
+x = x[data.table::between(year, 650, 1550), list(im3_cnt = base::sum(abs(.SD), na.rm=T) / M), by=list(city, year), .SDcols=impvrbs]
 
 pcitobs = merge(x, siem, by=c('city', 'year'), all.x=T)
-# why mean? already total by city, now take mean for kind of city per
+
 pdf("figs/geography_hc.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1)
+# why mean? already total by city, now take mean for kind of city per
 plot(pcitobs[year <=1500 & rivercanal==1, mean(im3_cnt), by=year],
     type='n', col='lightgray', ylab='mean m3 per city')
 lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='lightgray')
