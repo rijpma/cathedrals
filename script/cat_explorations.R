@@ -116,6 +116,7 @@ siem_cities = siem_cities[siem_cities$ctr!='it', ]
 ss_out = data.frame(siem_cities, cities_w_church=church_cities[,-1],
     n_churches=churches_by_ctr[, -1], n_phases=phases_all[,-1],
     n_phases_pre1000=phases_pre1000[,-1], n_phases_pre1200=phases_pre1200[, -1])
+ss_out = ss_out[order(-as.numeric(ss_out$city)), ]
 ss_out = rbind(ss_out, c('all', colSums(ss_out[, -1])))
 
 write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
