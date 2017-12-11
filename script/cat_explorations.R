@@ -1,5 +1,6 @@
 rm(list = ls())
 setwd("~/dropbox/cathedrals")
+source("script/cat_functions.r")
 
 library("data.table")
 
@@ -129,13 +130,13 @@ impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
-plot(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
+plot(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
     type='l', ylab = 'm3/ann')
-plot(fullobs_sp[category!="cathedral" & data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
+plot(fullobs_sp[category!="cathedral" & data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
     type='l', ylab = 'm3/ann')
-plot(fullobs_sp[category!="cathedral" & data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
+plot(fullobs_sp[category!="cathedral" & data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
     type='l', ylab = 'm3/ann')
-lines(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
+lines(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
     type='l', col=2)
 text(c(1200, 1300), c(5e5, 16e5), c('cathedrals', 'all churches'), col=2:1)
 dev.off()
