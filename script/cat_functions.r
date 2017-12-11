@@ -1,5 +1,12 @@
 thinmargins <- c(4, 4, 3, 0.5)
 
+add_loess = function(frm, dat, span=0.7, res=100){
+    # cannot handle NA atm
+    pred = loess(frm, data=dat, span=span)
+    dat$ftd = predict(pred, newdata=dat)
+    fitfrm = update.formula(frm, ftd ~ .)
+    lines(fitfrm, data=dat)
+}
 
 rtnorm = function (n, mean = 0, sd = 1, min = -Inf, max = Inf) {
     # replace Trunc distributions from envstats

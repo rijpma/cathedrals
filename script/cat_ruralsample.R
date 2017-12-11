@@ -252,13 +252,7 @@ cor(uk[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], u
 cor(lc[decade <= 1500, 2:3])
 cor(lc[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], use='pairwise')
 
-add_loess = function(frm, dat, span=0.7, res=100){
-    # cannot handle NA atm
-    pred = loess(frm, data=dat, span=span)
-    dat$ftd = predict(pred, newdata=dat)
-    fitfrm = update.formula(frm, ftd ~ .)
-    lines(fitfrm, data=dat)
-}
+
 plot(fr[decade <= 1500, urban], type='l', ylab='urban', main='France')
 
 par(mfrow=c(1, 3))
