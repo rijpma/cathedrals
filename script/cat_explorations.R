@@ -27,6 +27,9 @@ ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 
+siem[, ctr:=tolower(siem$tld)]
+siem[ctr=='gb', ctr:="uk"]
+
 pdf("figs/heap_v_noheap_ann.pdf", height=6)
 plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T) * 1.1, by=year], type='n', ylab='m3/ann')
 abline(v=(7:15)*100, col='gray70', lwd=0.8)
@@ -269,8 +272,6 @@ all(unique(statobs$city) %in% siem$city)
 statobs[!city %in% siem$city, ]
 siem[, .SD[1], by = city][city %in% unique(statobs$city), ][duplicated(city)]
 
-siem[, ctr:=tolower(siem$tld)]
-siem[ctr=='gb', ctr:="uk"]
 
 x = fullobs_sp
 x[, year := round(year / 100)  * 100] # for compatability w. century
