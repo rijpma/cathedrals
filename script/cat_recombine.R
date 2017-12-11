@@ -78,6 +78,26 @@ chrlist = recombine_churches(churches=chr, guesses=NULL, firstm2col = 14)
 
 statobs = do.call(rbind, lapply(chrlist, `[[`, 'static')) 
 statobs = data.table::as.data.table(statobs)
+
+### fix statobs city names to match siem
+fixes = lapply(gsub('-', ' ', setdiff(statobs$city, siem$city)), function(x) unique(siem$city)[grep(x, gsub('-', ' ', unique(siem$city)))])
+fixes[sapply(fixes, length) == 0] = NA
+fixes = unlist(fixes)
+names(fixes) = setdiff(statobs$city, siem$city)
+
+unique(fixes[match(statobs$city, names(fixes))])
+statobs[, city2:=fixes[match(city, names(fixes))]]
+statobs[!is.na(city2), city:=city2]
+unique(statobs[!is.na(city2), list(city, city2)])
+statobs[!is.na(city2), city:=city2][, city2:=NULL]
+
+setdiff(statobs$city, siem$city)
+all(unique(statobs$city) %in% siem$city)
+
+# different city names in siem check, should be zero rows
+statobs[!city %in% siem$city, ]
+siem[, .SD[1], by = city][city %in% unique(statobs$city), ][duplicated(city)]
+
 statobs[, lat := as.numeric(lat)]
 statobs[, lon := as.numeric(lon)]
 
