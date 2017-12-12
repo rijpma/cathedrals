@@ -95,11 +95,11 @@ sqrs[, rgt := lon + km2lon(50, lat=lat)]
 rurcit = c("Peterborough (Medeshamstede)", "Chester", "Amiens",
     "Toulouse", "Dijon", "Maastricht", "Osnabrueck (Osnabrück)",
     "Nuernberg (Nürnberg)")
-siem[, sqr := ifelse(city %in% rurcit, 50, 5)]
-siem[, top := lat + km2lat(sqr)]
-siem[, bot := lat - km2lat(sqr)]
-siem[, lft := lon - km2lon(sqr, lat=lat)]
-siem[, rgt := lon + km2lon(sqr, lat=lat)]
+# siem[, sqr := ifelse(city %in% rurcit, 50, 5)]
+siem[, top := lat + km2lat(5)]
+siem[, bot := lat - km2lat(5)]
+siem[, lft := lon - km2lon(5, lat=lat)]
+siem[, rgt := lon + km2lon(5, lat=lat)]
 
 siem[city == "Peterborough (Medeshamstede)" | 
             city == "Chester" |
@@ -111,12 +111,26 @@ siem[city == "Peterborough (Medeshamstede)" |
             city == "Nuernberg (Nürnberg)"]
 
 png('figs/researcharea.png', width=720, height=720)
-plot(rur, border=1)
-points(lat ~ lon, data=fullobs_sp_urb, pch='.')
+proj4string(rur) = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
+# plot(rur, border=1)
 # points(lat ~ lon, data=siem, pch=3)
-add_borders()
+plot(nld, lwd = 0.5, 
+    xlim = range(fullobs_sp_urb$lon),
+    ylim = range(fullobs_sp_urb$lat))
+lines(fra, lwd = 0.5)
+lines(che, lwd = 0.5)
+lines(bel, lwd = 0.5)
+lines(gbr, lwd = 0.5)
+lines(deu, lwd = 0.5)
+
+points(coordinates(rur), pch = 20, cex = 0.8)
+# points(lat ~ lon, data=fullobs_sp_urb, pch='.')
+# points(lat ~ lon, data=siem, pch=3)
 rect(xleft = siem$lft[siem$country!="Italy"], ybottom = siem$bot[siem$country!="Italy"], 
-     xright = siem$rgt[siem$country!="Italy"], ytop = siem$top[siem$country!="Italy"], lwd=0.5, border=2)
+     xright = siem$rgt[siem$country!="Italy"], ytop = siem$top[siem$country!="Italy"], 
+     lwd=NA, border='gray', col = 'gray')
+rect(xleft = sqrs$lft, ybottom = sqrs$bot, 
+     xright = sqrs$rgt, ytop = sqrs$top, lwd=1, border=1)
 axis(1); axis(2)
 dev.off()
 
