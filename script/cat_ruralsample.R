@@ -44,6 +44,7 @@ dynobs_rur = to_dynobs(churchlist=chrlist_rur)
 
 fullobs_rur = to_annual_obs(dyn=dynobs_rur, churchlist=chrlist_rur)
 fullobs_rur[, decade:=(trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
+fullobs_rur[, im3_ann_cmc := im3_ann + im3_cml * 0.005]
 
 citobs = to_city_obs(statobs=statobs_rur, fullobs=fullobs_rur)
 
@@ -256,6 +257,25 @@ uk = fullobs_sp_urb[ctr=="uk", list(urban=base::sum(.SD, na.rm=T) / M), by = dec
 lc = fullobs_sp_urb[ctr=="nl" | ctr=="be", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # lc_cml = fullobs_sp_urb[ctr=="nl" | ctr=="be", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # lc[, urban := urban + lc_cml$urban]
+
+al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
+al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann_cmc, na.rm=T)), by = decade]
+al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
+al[, rural_mlp := (1 / al_sfc$rural * rural)]
+al[, combined := rural_mlp + urban]
+
+pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
+par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
+plot(rural ~ decade, data = al, type = 'l',
+    ylab = 'm3/decade', main = "Rural sample")
+plot(combined ~ decade, data = al, type = 'n',
+    ylab = 'm3/decade', main = "Urban")
+lines(urban ~ decade, data = al, type = 'l')
+plot(combined ~ decade, data = al, type = 'n',
+    ylab = 'm3/decade', main = "Combined")
+lines(combined ~ decade, data = al, type = 'l')
+dev.off()
 
 fr_rur = fullobs_sp_rur[centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # fr_rur_cml = fullobs_sp_rur[centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
