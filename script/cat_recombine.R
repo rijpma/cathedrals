@@ -256,6 +256,15 @@ for (j in 1:M){
     rm("dynobs_rs")
 }
 
+im3crc = fullobs[, .SD, .SDcols = grep('im3_ann\\d', names(fullobs))] +
+    fullobs[, .SD * 0.005, .SDcols = grep('im3_cml\\d', names(fullobs))]
+im2crc = fullobs[, .SD, .SDcols = grep('im2_ann\\d', names(fullobs))] +
+    fullobs[, .SD * 0.005, .SDcols = grep('im2_cml\\d', names(fullobs))]
+fullobs[, paste0("im3_ann_cmc", 1:M) := im3crc]
+fullobs[, paste0("im2_ann_cmc", 1:M) := im2crc]
+fullobs[, im3_ann_cmc := im3_ann + im3_cml * 0.005]
+fullobs[, im2_ann_cmc := im2_ann + im2_cml * 0.005]
+
 # do the imputations on dynobs on e.g. duration itself?
 # still no city level dataset or panel dataset...
 # do here, get standard errors, plug back in ?
