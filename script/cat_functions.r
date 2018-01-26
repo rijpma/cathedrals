@@ -614,7 +614,7 @@ get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2,
     return(topo)
 }
 
-geocode <- function(loc, reg='', bounds=''){
+geocode <- function(loc, reg='', bounds='', apikey = NA){
     # barebones version of  geocode function on:
     # https://github.com/dkahle/ggmap
 
@@ -624,6 +624,7 @@ geocode <- function(loc, reg='', bounds=''){
     base <- 'http://maps.googleapis.com/maps/api/geocode/json?address='
     request <- paste0(base, loc, '&region=', reg)
     request <- paste0(request, '&bounds=', bounds)
+    if(!is.na(apikey)) request <- paste0(request, '&key=', apikey)
     request <- URLencode(request)
     result <- readLines(url(request))
     closeAllConnections()
