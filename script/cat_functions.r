@@ -621,7 +621,7 @@ geocode <- function(loc, reg='', bounds='', apikey = NA){
     require(jsonlite)
     if (length(loc) > 1) loc <- loc[1] # geocode api takes only one location
     loc <- loc
-    base <- 'http://maps.googleapis.com/maps/api/geocode/json?address='
+    base <- 'https://maps.googleapis.com/maps/api/geocode/json?address='
     request <- paste0(base, loc, '&region=', reg)
     request <- paste0(request, '&bounds=', bounds)
     if(!is.na(apikey)) request <- paste0(request, '&key=', apikey)
