@@ -101,6 +101,17 @@ ss_out = rbind(ss_out, c('all', colSums(ss_out[, -1])))
 
 write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
 
+out = Reduce(merge, list(
+    siem[year == 1500, .N, by = ctr],
+    unique(statobs[, list(city, 1)])[siem[year == 1500], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2))), by = ctr],
+    unique(statobs[, list(city, osmid)])[siem[year == 1500], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch)), by = ctr],
+    dynobs_sp[, .N, by = list(osmid, ctr)][, list(`Building phases / church` = mean(N)), by = ctr],
+    dynobs_sp[, list(`% phases < 1000` = mean(year < 1000)), by = ctr],
+    dynobs_sp[, list(`% phases < 1200` = mean(year < 1200)), by = ctr]))
+out[, grep('\\%', names(out)) := round(.SD * 100), .SDcols = grep('\\%', names(out))]
+
+write.csv(format(out[order(-N)], digits = 1), "tab/sumstats_perc.csv", row.names = F)
+
 # catheral building v. other churches
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
