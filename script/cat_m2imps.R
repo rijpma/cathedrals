@@ -32,27 +32,27 @@ m3 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==3,])
 m1$coef
 m2$coef
 m3$coef
+
 par(mfrow=c(1, 1))
-plot(c(m1$coef, m2$coef, m3$coef), type='b')
 plot(c(m1$coef, m2$coef, m3$coef), type='b', log='y', 
-    xlab='log(ratio)', ylab='building _n', bty='l')
+    xlab='Generation', ylab='log(coef)', bty='l')
 lines(m1$coef^(1:3), col=2)
 
 pdf("figs/surface_fits.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1)
 plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', main='1st predessor')
 points(end_surface ~ previous_surface, data=sfc[factor==1,])
-abline(m1, col=2)
+abline(m1, col='gray')
 abline(a=0, b=1.879)
 # text(2000, 1000, "OLS fit", col=2)
 # text(1000, 5000, "Rule of thumb", col=1)
 plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', main='2nd predessor')
 points(end_surface ~ previous_surface, data=sfc[factor==2,])
-abline(m2, col=2)
+abline(m2, col='gray')
 abline(a=0, b=1.879^2)
 plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', main='3rd predessor')
 points(end_surface ~ previous_surface, data=sfc[factor==3,])
-abline(m3, col=2)
+abline(m3, col='gray')
 abline(a=0, b=1.879^3)
 dev.off()
 
