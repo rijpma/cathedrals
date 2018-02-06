@@ -13,6 +13,9 @@ sfc[, church:=iconv(church, from="macroman", to="utf8")]
 sfc[, period1:=as.numeric(gsub('\\D', '', period1))]
 sfc[, period2:=as.numeric(gsub('\\D', '', period2))]
 
+# N and N by 
+sfc[, .N, by = factor]
+
 par(mfrow=c(2, 2))
 plot(end_surface ~ previous_surface, data=sfc)
 plot(end_surface ~ previous_surface, data=sfc[factor==1,])
