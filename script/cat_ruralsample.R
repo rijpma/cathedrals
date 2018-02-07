@@ -61,14 +61,14 @@ unique(table(fullobs_sp_rur$year, useNA='ifany'))
 # fullobs_sp_rur[centre %in% c("Chester", "Peterborough (Medeshamstede)"), ctr := "uk"]
 # fullobs_sp_rur[centre %in% c("Maastricht"), ctr := "lc"]
 
-fullobs_sp_urb = data.table::fread("cat dat/fullobs_sp.csv.gz | gunzip")
+fullobs_sp_urb = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 # fullobs_sp_urb[ctr %in% c("nl", "be"), ctr := "lc"]
 
 fullobs_sp_urb[, decade2:=(trunc((year - 1) / 50) + 1) * 50] # so 1500 = 1481-1500
 fullobs_sp_urb[, century:=(trunc((year - 1) / 100) + 1) * 100] # so 1500 = 1481-1500
 fullobs_sp_rur[, century:=(trunc((year - 1) / 100) + 1) * 100] # so 1500 = 1481-1500
 
-rur = maptools::readShapeSpatial("dat/gis/rur")
+rur = rgdal::readOGR("dat/gis/rur.shp")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 data(wrld_simpl)
 
