@@ -23,6 +23,24 @@ siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
 
 # heaping and its correction
+h_heap = hist(dynobs[, year], breaks=data.table::uniqueN(dynobs$year), plot = F)
+h_unheap = hist(dynobs[, year_crc1], breaks=data.table::uniqueN(dynobs$year_crc1), plot = F)
+h_heap$counts = log1p(h_heap$counts)
+h_unheap$counts = log1p(h_unheap$counts)
+
+pdf("figs/distrs_prepost_heap.pdf", width=11, height = 6)
+par(mfrow=c(1, 2), font.main = 1)
+plot(h_heap, main='heaping', xlab='year', yaxt = 'n')
+axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
+plot(h_heap, main='heaping resampled', xlab='year', yaxt = 'n', border = NA)
+lines(h_unheap)
+axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
+# imps = dynobs[, round(rowMeans(.SD)), .SDcols=grep('year_crc', names(dynobs))]
+# hist(imps, uniqueN(imps), main='heaping resampled average')
+dev.off()
+
+
+
 pdf("figs/heap_v_noheap_ann.pdf", height=6)
 plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T) * 1.1, by=year], type='n', ylab='m3/ann')
 abline(v=(7:15)*100, col='gray70', lwd=0.8)
@@ -101,16 +119,25 @@ ss_out = rbind(ss_out, c('all', colSums(ss_out[, -1])))
 
 write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
 
-out = Reduce(merge, list(
-    siem[year == 1500, .N, by = ctr],
-    unique(statobs[, list(city, 1)])[siem[year == 1500], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2))), by = ctr],
-    unique(statobs[, list(city, osmid)])[siem[year == 1500], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch)), by = ctr],
+byctr = Reduce(merge, list(
+    siem[year == 1500 & ctr != 'it', .N, by = ctr],
+    unique(statobs[, list(city, 1)])[siem[year == 1500 & ctr != 'it'], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2))), by = ctr],
+    unique(statobs[, list(city, osmid)])[siem[year == 1500 & ctr != 'it'], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch)), by = ctr],
     dynobs_sp[, .N, by = list(osmid, ctr)][, list(`Building phases / church` = mean(N)), by = ctr],
     dynobs_sp[, list(`% phases < 1000` = mean(year < 1000)), by = ctr],
     dynobs_sp[, list(`% phases < 1200` = mean(year < 1200)), by = ctr]))
-out[, grep('\\%', names(out)) := round(.SD * 100), .SDcols = grep('\\%', names(out))]
-
-write.csv(format(out[order(-N)], digits = 1), "tab/sumstats_perc.csv", row.names = F)
+tot = Reduce(merge, list(
+    siem[year == 1500 & ctr != 'it', .N],
+    unique(statobs[, list(city, 1)])[siem[year == 1500 & ctr != 'it'], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2)))],
+    unique(statobs[, list(city, osmid)])[siem[year == 1500 & ctr != 'it'], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch))],
+    dynobs_sp[, .N, by = list(osmid, ctr)][, list(`Building phases / church` = mean(N))],
+    dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
+    dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]))
+out = rbind(byctr, tot, fill = T)
+# out[, grep('\\%', names(out)) := round(.SD * 100), .SDcols = grep('\\%', names(out))]
+out[, grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), .SDcols = grep('\\%', names(out))]
+# out[, grep('\\%', names(out), invert = T) := round(.SD, 1), .SDcols = grep('\\%', names(out), invert = T)]
+write.csv(format(out[order(-N)], digits = 1, nsmall = 1), "tab/sumstats_perc.csv", row.names = F)
 
 # catheral building v. other churches
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
