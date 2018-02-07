@@ -124,6 +124,53 @@ for (i in 1:nrow(sqrs)){
     # assign(paste0("sq", i), raster::extent(unlist(sqrs[i, list(lft, rgt, bot, top)])))
 }
 
+sqpols = lapply(sqrlist, as, "SpatialPolygons")
+
+sfc_fr = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==250, ])
+sfc_de = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==276, ])
+sfc_nl = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==528, ])
+sfc_be = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==56, ])
+sfc_uk = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==826, ])
+sfc_ch = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==756, ])
+
+fr_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[1]]) +  
+                             geosphere::areaPolygon(sqpols[[2]]) +
+                             geosphere::areaPolygon(sqpols[[3]])) / sfc_fr, 
+                    urban = (siem[country=="France", length(unique(city))] * 100 * 1e6) / sfc_fr)
+uk_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[4]]) + 
+                             geosphere::areaPolygon(sqpols[[5]])) / sfc_uk, 
+                    urban = (siem[country=="UK", length(unique(city))] * 100 * 1e6) / sfc_uk)
+lc_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[6]])) / sfc_nl, 
+                    urban = (siem[country %in% c("Netherlands", "Belgium"), length(unique(city))] * 100 * 1e6) / sfc_nl)
+de_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[7]]) + 
+                             geosphere::areaPolygon(sqpols[[8]])) / sfc_de, 
+                    urban = (siem[country=="Germany", length(unique(city))] * 100 * 1e6) / sfc_de)
+
+al_sfc = data.frame(rural = sum(sapply(sqpols, geosphere::areaPolygon)) / (sfc_fr + sfc_de + sfc_nl + sfc_be + sfc_uk + sfc_ch),
+    urban = siem[country %in% c("France", "UK", "Netherlands", "Belgium", "Germany"), length(unique(city))] * 100 * 1e6 / 
+        (sfc_fr + sfc_de + sfc_nl + sfc_be + sfc_uk + sfc_ch))
+
+al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
+al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann_cmc, na.rm=T)), by = decade]
+al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
+al[, rural_mlp := (1 / al_sfc$rural * rural)]
+al[, combined := rural_mlp + urban]
+
+pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
+par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
+plot(rural ~ decade, data = al, type = 'l',
+    ylab = 'm3/decade', main = "Rural sample")
+plot(combined ~ decade, data = al, type = 'n',
+    ylab = 'm3/decade', main = "Urban")
+lines(urban ~ decade, data = al, type = 'l')
+plot(combined ~ decade, data = al, type = 'n',
+    ylab = 'm3/decade', main = "Combined")
+lines(combined ~ decade, data = al, type = 'l')
+dev.off()
+
+# population rasters
+
 p = raster::stack("~/downloads/data/hyde/700AD_pop/popc_700AD.asc",
     "~/downloads/data/hyde/800AD_pop/popc_800AD.asc",
     "~/downloads/data/hyde/900AD_pop/popc_900AD.asc",
@@ -167,12 +214,6 @@ uk_pop = data.frame(rural = britain / colSums(p[isor==826]),
 lc_pop = data.frame(rural = lowctr / colSums(p[isor==528 | isor==56]), 
     urban = siem[country %in% c("Netherlands", "Belgium") & year <= 1600, sum(inhab) * 1000, by=year][, V1] / colSums(p[isor==528 | isor==56]))
 
-sfc_fr = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==250, ])
-sfc_de = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==276, ])
-sfc_nl = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==528, ])
-sfc_be = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==56, ])
-sfc_uk = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==826, ])
-sfc_ch = geosphere::areaPolygon(wrld_simpl[wrld_simpl$UN==756, ])
 
 sfc_fr / 1e6
 sfc_de / 1e6
@@ -181,24 +222,6 @@ sfc_be / 1e6
 sfc_uk / 1e6
 sfc_ch / 1e6
 
-sqpols = lapply(sqrlist, as, "SpatialPolygons")
-
-fr_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[1]]) +  
-                             geosphere::areaPolygon(sqpols[[2]]) +
-                             geosphere::areaPolygon(sqpols[[3]])) / sfc_fr, 
-                    urban = (siem[country=="France", length(unique(city))] * 100 * 1e6) / sfc_fr)
-uk_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[4]]) + 
-                             geosphere::areaPolygon(sqpols[[5]])) / sfc_uk, 
-                    urban = (siem[country=="UK", length(unique(city))] * 100 * 1e6) / sfc_uk)
-lc_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[6]])) / sfc_nl, 
-                    urban = (siem[country %in% c("Netherlands", "Belgium"), length(unique(city))] * 100 * 1e6) / sfc_nl)
-de_sfc = data.frame(rural = (geosphere::areaPolygon(sqpols[[7]]) + 
-                             geosphere::areaPolygon(sqpols[[8]])) / sfc_de, 
-                    urban = (siem[country=="Germany", length(unique(city))] * 100 * 1e6) / sfc_de)
-
-al_sfc = data.frame(rural = sum(sapply(sqpols, geosphere::areaPolygon)) / (sfc_fr + sfc_de + sfc_nl + sfc_be + sfc_uk + sfc_ch),
-    urban = siem[country %in% c("France", "UK", "Netherlands", "Belgium", "Germany"), length(unique(city))] * 100 * 1e6 / 
-        (sfc_fr + sfc_de + sfc_nl + sfc_be + sfc_uk + sfc_ch))
 
 round(fr_pop, 3)
 round(fr_sfc, 3)
@@ -241,24 +264,7 @@ lc = fullobs_sp_urb[ctr=="nl" | ctr=="be", list(urban=base::sum(.SD, na.rm=T) / 
 # lc_cml = fullobs_sp_urb[ctr=="nl" | ctr=="be", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # lc[, urban := urban + lc_cml$urban]
 
-al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
-al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
-al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann_cmc, na.rm=T)), by = decade]
-al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
-al[, rural_mlp := (1 / al_sfc$rural * rural)]
-al[, combined := rural_mlp + urban]
 
-pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
-par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
-plot(rural ~ decade, data = al, type = 'l',
-    ylab = 'm3/decade', main = "Rural sample")
-plot(combined ~ decade, data = al, type = 'n',
-    ylab = 'm3/decade', main = "Urban")
-lines(urban ~ decade, data = al, type = 'l')
-plot(combined ~ decade, data = al, type = 'n',
-    ylab = 'm3/decade', main = "Combined")
-lines(combined ~ decade, data = al, type = 'l')
-dev.off()
 
 fr_rur = fullobs_sp_rur[centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # fr_rur_cml = fullobs_sp_rur[centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
