@@ -154,16 +154,19 @@ al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDc
 al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
 al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann_cmc, na.rm=T)), by = decade]
 al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
-al[, rural_mlp := (1 / al_sfc$rural * rural)]
+al[, rural_mlp := (1 / al_sfc$rural) * rural]
 al[, combined := rural_mlp + urban]
 
 pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
 par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
-plot(rural ~ decade, data = al, type = 'l',
-    ylab = 'm3/decade', main = "Rural sample")
 plot(combined ~ decade, data = al, type = 'n',
     ylab = 'm3/decade', main = "Urban")
 lines(urban ~ decade, data = al, type = 'l')
+lines(rural_mlp ~ decade, data = al, type = 'l', col = 'gray')
+plot(combined ~ decade, data = al, type = 'n',
+    ylab = 'm3/decade', main = "Rural sample x (1/sample area)")
+lines(rural_mlp ~ decade, data = al, type = 'l')
+lines(urban ~ decade, data = al, type = 'l', col = 'gray')
 plot(combined ~ decade, data = al, type = 'n',
     ylab = 'm3/decade', main = "Combined")
 lines(combined ~ decade, data = al, type = 'l')
