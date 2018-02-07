@@ -102,15 +102,16 @@ for (country in unique(x$ctr)){
 dev.off()
 
 # sumstats
-siem_cities = aggregate(city ~ ctr, data=siem[year==1500, ], length)
+siem_cities = aggregate(city ~ ctr, data=siem[year==1500 & ctr != 'it', ], length)
 church_cities = aggregate(city ~ ctr, data=unique(statobs[, list(city, ctr)]), length)
 phases_pre1000 = aggregate(city ~ ctr, data=dynobs_sp[year < 1000, ], length)
 phases_pre1200 = aggregate(city ~ ctr, data=dynobs_sp[year < 1200, ], length)
 phases_all = aggregate(city ~ ctr, data=dynobs_sp, length)
 churches_by_ctr = aggregate(osmid ~ ctr, data=statobs, length)
 
+
 ss_out = data.frame(siem_cities, 
-    cities_w_church=siem_cities / church_cities[,-1],
+    cities_w_church=church_cities[, -1],
     n_churches=churches_by_ctr[, -1], n_phases=phases_all[,-1],
     n_phases_pre1000=phases_pre1000[,-1], n_phases_pre1200=phases_pre1200[, -1])
 
@@ -265,7 +266,7 @@ abline(v=c(768, 1315, 1000, 1348), col='gray')
 lines(fullobs[data.table::between(decade, 700, 1500), sum(im3_ann, na.rm=T), by=decade], type='b', col=2, lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
-midcent = fullobs_sp
+midcent = copy(fullobs_sp)
 midcent[, year := round(year / 100)  * 100] # for compatability w. century
 midcent = midcent[data.table::between(year, 650, 1550), list(im3_cnt = base::sum(abs(.SD), na.rm=T) / M), by=list(city, year), .SDcols=impvrbs]
 pcitobs = merge(midcent, siem, by=c('city', 'year'), all.x=T)
@@ -374,17 +375,27 @@ dim(siem)
 
 # siem = pop[decade %% 100 == 0][siem[, c(.SD, list(decade = year))], on = c('ctr', 'decade')]
 
-x = fullobs_sp[!is.na(decade) & data.table:::between(decade, 700, 1500), ]
+# x = fullobs_sp[!is.na(decade) & data.table:::between(decade, 700, 1500), ]
+# first aggregate to city, then add siem
+citobs_dec = fullobs_sp[data.table::between(decade, 700, 1500), list(m3dec = base::sum(.SD, na.rm=T) / M), by=list(decade, city, ctr, ctr2, ctr3), .SDcols = impvrbs]
+dim(citobs_dec)
+citobs_dec = siem[, list(inhab, lat, lon, city, decade = year)][citobs_dec, on = c("city", "decade")]
+dim(citobs_dec)
 
-x1 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr), .SDcols = impvrbs]
-x1 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr, decade = year)][x1, on = c('ctr', 'decade')]
-# note: ctr2 & ctr3 siem urban inhab total are only for cities 
-x2 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr2), .SDcols = impvrbs]
-x2 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr2, decade = year)][x2, on = c('ctr2', 'decade')]
-x3 = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade, ctr3), .SDcols = impvrbs]
-x3 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr3, decade = year)][x3, on = c('ctr3', 'decade')]
-eu = x[, list(im3_dec = base::sum(.SD, na.rm=T) / M), by=list(decade), .SDcols = impvrbs]
-eu = siem[grep("fr|be|ch|uk|nl|de", ctr), list(urb_inhab = sum(inhab)), by = list(decade = year)][eu, on = c('decade')]
+x1 = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(decade, ctr)]
+x2 = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(decade, ctr2)]
+x3 = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(decade, ctr3)]
+eu = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(decade)]
+
+# for total urbpop
+# x1 = citobs_dec[, list(im3_dec = sum(m3dec)), by=list(decade, ctr)]
+# x1 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr, decade = year)][x1, on = c('ctr', 'decade')]
+# x2 = citobs_dec[, list(im3_dec = sum(m3dec)), by=list(decade, ctr2)]
+# x2 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr2, decade = year)][x2, on = c('ctr2', 'decade')]
+# x3 = citobs_dec[, list(im3_dec = sum(m3dec)), by=list(decade, ctr3)]
+# x3 = siem[, list(urb_inhab = sum(inhab)), by = list(ctr3, decade = year)][x3, on = c('ctr3', 'decade')]
+# eu = citobs_dec[, list(im3_dec = sum(m3dec)), by=list(decade)]
+# eu = siem[grep("fr|be|ch|uk|nl|de", ctr), list(urb_inhab = sum(inhab)), by = list(decade = year)][eu, on = c('decade')]
 
 x1[decade %% 100!=0, urb_inhab:=NA] # fix zeroes
 x2[decade %% 100!=0, urb_inhab:=NA]
@@ -398,6 +409,11 @@ eu[, urb_inhab_i := round(exp(zoo::na.approx(log(urb_inhab))))]
 pop = data.table::fread("dat/totpop.csv", encoding = "UTF-8")
 x1 = pop[x1, on = c('ctr', 'decade')]
 eu = pop[, list(totpop = sum(totpop)), by = decade][eu, on = 'decade']
+
+x1[, sum(urb_inhab_i) / sum(totpop), by = ctr]
+x1[, sum(urb_inhab_i) / sum(totpop), by = list(ctr, decade)][ctr=='nl']
+x1[, sum(urb_inhab_i) / sum(totpop), by = list(ctr, decade)][ctr=='be']
+x1[!is.na(urb_inhab), sum(urb_inhab) / sum(totpop), by = ctr]
 
 write.csv(x3, "~/dropbox/cathedrals/dat/countryseries.csv", row.names=F)
 
@@ -423,32 +439,39 @@ dev.off()
 pdf("figs/pucpanel.pdf", width=8)
 par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='fr', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='France', col=2)
+    bty='l', ylab='m3/dec', xlab='', main='France')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
-plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='de', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='Germany', col=2)
+# plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='de', ], type='l',
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr %in% c('de', 'ch'), list(im3_dec = sum(im3_dec), urb_inhab_i = sum(urb_inhab_i)), by = decade], type='l',
+    bty='l', ylab='m3/dec', xlab='', main='Germany (incl. Switz.)')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
 plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='uk', ], type='l',
-    bty='l', ylab='m3/dec', main='Britain', col=2)
+    bty='l', ylab='m3/dec', main='Britain')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
 plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='lc', ], type='l',
-    bty='l', ylab='m3/dec', main='Low Countries', col=2)
+    bty='l', ylab='m3/dec', main='Low Countries')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
 dev.off()
 
-pdf("figs/pcpanel.pdf", width=8)
-par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
+pdf("figs/pcpanel.pdf", height = 11, width = 8)
+par(mfrow=c(3, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(im3_dec / totpop ~ decade, data=x1[ctr=='fr', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='France', col=2)
+    bty='l', ylab='m3/dec', xlab='', main='France')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
-plot(im3_dec / totpop ~ decade, data=x1[ctr=='de', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='Germany', col=2)
+plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('de'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+    bty='l', ylab='m3/dec', xlab='', main='Germany')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('ch'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+    bty='l', ylab='m3/dec', xlab='', main='Switzerland')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
 plot(im3_dec / totpop ~ decade, data=x1[ctr=='uk', ], type='l',
-    bty='l', ylab='m3/dec', main='Britain', col=2)
+    bty='l', ylab='m3/dec', main='Britain')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
-plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
-    bty='l', ylab='m3/dec', main='Low Countries', col=2)
+plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+    bty='l', ylab='m3/dec', main='Belgium')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+    bty='l', ylab='m3/dec', main='Netherlands')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
 dev.off()
 
