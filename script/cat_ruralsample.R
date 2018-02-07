@@ -79,37 +79,21 @@ bel = raster::getData("GADM", country='BEL', level=0)
 gbr = raster::getData("GADM", country='GBR', level=0)
 deu = raster::getData("GADM", country='DEU', level=0)
 
-sqrs = siem[city == "Peterborough (Medeshamstede)" | 
-            city == "Chester" |
-            city == "Amiens" |
-            city == "Toulouse" |
-            city == "Dijon" |
-            city == "Maastricht" |
-            city == "Osnabrueck (Osnabrück)" |
-            city == "Nuernberg (Nürnberg)"]
+rurcit = c("Peterborough (Medeshamstede)", "Chester", "Amiens",
+    "Toulouse", "Dijon", "Maastricht", "Osnabrueck (Osnabrück)",
+    "Nuernberg (Nürnberg)")
+sqrs = siem[city %in% rurcit]
 sqrs = sqrs[, .SD[1, ], by="city"]
 
 sqrs[, top := lat + km2lat(50)]
 sqrs[, bot := lat - km2lat(50)]
 sqrs[, lft := lon - km2lon(50, lat=lat)]
 sqrs[, rgt := lon + km2lon(50, lat=lat)]
-rurcit = c("Peterborough (Medeshamstede)", "Chester", "Amiens",
-    "Toulouse", "Dijon", "Maastricht", "Osnabrueck (Osnabrück)",
-    "Nuernberg (Nürnberg)")
-# siem[, sqr := ifelse(city %in% rurcit, 50, 5)]
+
 siem[, top := lat + km2lat(5)]
 siem[, bot := lat - km2lat(5)]
 siem[, lft := lon - km2lon(5, lat=lat)]
 siem[, rgt := lon + km2lon(5, lat=lat)]
-
-siem[city == "Peterborough (Medeshamstede)" | 
-            city == "Chester" |
-            city == "Amiens" |
-            city == "Toulouse" |
-            city == "Dijon" |
-            city == "Maastricht" |
-            city == "Osnabrueck (Osnabrück)" |
-            city == "Nuernberg (Nürnberg)"]
 
 png('figs/researcharea.png', width=720, height=720)
 proj4string(rur) = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
@@ -124,9 +108,8 @@ lines(bel, lwd = 0.5)
 lines(gbr, lwd = 0.5)
 lines(deu, lwd = 0.5)
 
+points(lat ~ lon, data=fullobs_sp_urb, pch = 20, cex = 0.7, col = 'gray')
 points(coordinates(rur), pch = 20, cex = 0.8)
-# points(lat ~ lon, data=fullobs_sp_urb, pch='.')
-# points(lat ~ lon, data=siem, pch=3)
 rect(xleft = siem$lft[siem$country!="Italy"], ybottom = siem$bot[siem$country!="Italy"], 
      xright = siem$rgt[siem$country!="Italy"], ytop = siem$top[siem$country!="Italy"], 
      lwd=NA, border='gray', col = 'gray')
