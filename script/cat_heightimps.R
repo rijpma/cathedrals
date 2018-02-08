@@ -16,14 +16,17 @@ hgt[, fcentury:=as.factor(century)]
 m_base = lm(nave_height ~ ground_surface_m2, data=hgt)
 m_sq = lm(nave_height ~ sqrt(ground_surface_m2), data=hgt)
 m_ll = lm(log(nave_height) ~ log(ground_surface_m2), data=hgt)
-m_l = lm(log(nave_height) ~ log(ground_surface_m2) + start, data=hgt)
-m_lld = lm(log(nave_height) ~ log(ground_surface_m2) + start + ctr, data=hgt)
+m_l = lm(log(nave_height) ~ log(ground_surface_m2) + I(start/100), data=hgt)
+m_lld = lm(log(nave_height) ~ log(ground_surface_m2) + I(start/100) + ctr, data=hgt)
+# eb's model
+m_sq_or = lm(nave_height ~ sqrt(ground_surface_m2) - 1, data=hgt)
 
 summary(m_base)
 summary(m_sq)
 summary(m_l)
 summary(m_ll)
 summary(m_lld)
+summary(m_sq_or)
 
 # interactions don't add much
 AIC(m_base)
@@ -31,17 +34,17 @@ AIC(m_sq)
 AIC(m_l)
 AIC(m_ll)
 AIC(m_lld)
+AIC(m_sq_or)
 
-# eb's model
-m_sq_or = lm(nave_height ~ sqrt(ground_surface_m2) - 1, data=hgt)
 
 pdf("figs/height_surface_sq_ci.pdf")
-plot(nave_height ~ ground_surface_m2, data=hgt, bty='l', type='n')
+plot(nave_height ~ ground_surface_m2, data=hgt, bty='l', type='n',
+    xlab = 'Ground sfc. (m2)', ylab = 'Nave hgt. (m2)')
 fit = predict(m_sq_or, newdata=data.frame(ground_surface_m2=0:8000), 
     se=TRUE, interval='confidence')
 # polygon(x=c(0:8000, 8000:0), y=c(fit$fit[,'lwr'], rev(fit$fit[,'upr'])), col='pink', border=NA)
-lines(x=0:8000, fit$fit[, 'fit'], col=2, lwd=2)
-points(nave_height ~ ground_surface_m2, data=hgt, bty='l')
+lines(x=0:8000, fit$fit[, 'fit'], lwd=1.5)
+points(nave_height ~ ground_surface_m2, data=hgt, bty='l', col = 'gray30')
 dev.off()
 
 pdf("figs/height_surface_sq_pi.pdf")
