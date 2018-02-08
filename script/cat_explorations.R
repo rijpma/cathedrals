@@ -272,25 +272,23 @@ midcent = midcent[data.table::between(year, 650, 1550), list(im3_cnt = base::sum
 pcitobs = merge(midcent, siem, by=c('city', 'year'), all.x=T)
 
 pdf("figs/geography_hc.pdf", height=3, width=8)
-par(mfrow=c(1, 3), font.main=1)
+par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 # why mean? already total by city, now take mean for kind of city per
-plot(pcitobs[year <=1500 & rivercanal==1, mean(im3_cnt), by=year],
-    type='n', col='lightgray', ylab='mean ann. city m3')
-lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='red')
+plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year],
+    type='n', col='gray', ylab='mean ann. city m3')
+lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
 title(main='Coastal')
-plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year],
-    type='n', col='lightgray', ylab='mean ann. city m3')
-lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='red')
+plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='n', col='gray', ylab = '')
+lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
 title(main='River/canal')
-plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year],
-    type='n', col='lightgray', ylab='mean ann. city m3')
-lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='lightgray')
-lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='red')
+plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='n', col='gray', ylab = '')
+lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='gray')
+lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
 title(main='Landlocked')
 dev.off()
 
