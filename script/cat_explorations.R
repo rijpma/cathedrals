@@ -167,46 +167,46 @@ lines(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), s
 text(c(1200, 1050), c(4e5, 11.5e5), c('cathedrals', 'other churches'), col=2:1)
 dev.off()
 
-pdf("figs/bytype_hc.pdf")
+pdf("figs/bytype_hc.pdf", width = 8)
 bytype = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=list(decade, category), .SDcols = impvrbs]
 # cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
 # bytype[, V1 := V1 + cmladd$V1]
-par(mfrow=c(2, 2), mar=c(4,3,1.5,0.5), font.main=1)
+par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(V1 ~ decade, data=bytype[category=="cathedral", ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
 title(main="cathedral", line=-1)
 plot(V1 ~ decade, data=bytype[category=="conventual", ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
 title(main="conventual", line=-1)
 plot(V1 ~ decade, data=bytype[category=="parish", ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
 title(main="parish", line=-1)
 plot(V1 ~ decade, data=bytype[category=="other", ],
-    type='l', ylim=range(bytype$V1), bty='l', col=2, lwd=1.5, ylab = 'm3/ann')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/ann')
+            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
 title(main="other", line=-1)
 dev.off()
 
