@@ -256,7 +256,8 @@ pdf('figs/europetotal_hc.pdf', height=6)
 plot(fullobs[data.table::between(decade, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols = impvrbs],
     type='n', bty='l', ylab = 'm3/20 year')
 abline(v=c(768, 1315, 1000, 1348), col='gray')
-lines(fullobs[data.table::between(decade, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols = impvrbs], type='b', col=2, lwd=1.5, pch=1, cex=0.9)
+lines(fullobs[data.table::between(decade, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols = impvrbs], 
+    type='b', lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
 pdf('figs/europetotal.pdf', height=6)
@@ -436,41 +437,40 @@ dev.off()
 
 pdf("figs/pucpanel.pdf", width=8)
 par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
-plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='fr', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='France')
-lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
-# plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='de', ], type='l',
-plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr %in% c('de', 'ch'), list(im3_dec = sum(im3_dec), urb_inhab_i = sum(urb_inhab_i)), by = decade], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='Germany (incl. Switz.)')
-lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
-plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='uk', ], type='l',
-    bty='l', ylab='m3/dec', main='Britain')
-lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
-plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='lc', ], type='l',
-    bty='l', ylab='m3/dec', main='Low Countries')
-lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray70')
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='fr', ], type='l', lwd = 1.5,
+    bty='l', ylab='m3/20y', xlab='', main='France')
+lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr %in% c('de', 'ch'), list(im3_dec = sum(im3_dec), urb_inhab_i = sum(urb_inhab_i)), by = decade], type='l', lwd = 1.5,
+    bty='l', ylab='m3/20y', xlab='', main='Germany (incl. Switz.)')
+lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='uk', ], type='l', lwd = 1.5,
+    bty='l', ylab='m3/20y', main='Britain')
+lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='lc', ], type='l', lwd = 1.5,
+    bty='l', ylab='m3/20y', main='Low Countries')
+lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
 dev.off()
 
 pdf("figs/pcpanel.pdf", height = 11, width = 8)
 par(mfrow=c(3, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(im3_dec / totpop ~ decade, data=x1[ctr=='fr', ], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='France')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='France')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('de'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='Germany')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='Germany')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('ch'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
-    bty='l', ylab='m3/dec', xlab='', main='Switzerland')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='Switzerland')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr=='uk', ], type='l',
-    bty='l', ylab='m3/dec', main='Britain')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', main='Britain')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
-    bty='l', ylab='m3/dec', main='Belgium')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', main='Belgium')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
-    bty='l', ylab='m3/dec', main='Netherlands')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray70')
+    lwd = 1.5, bty='l', ylab='m3/dec', main='Netherlands')
+lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 dev.off()
 
 data.table::fwrite(rbindlist(list(x1, x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], eu[, c(.SD, list(ctr = 'eu'))]), 

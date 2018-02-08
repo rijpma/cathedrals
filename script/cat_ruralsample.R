@@ -159,16 +159,16 @@ al[, combined := rural_mlp + urban]
 
 pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
 par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
-plot(combined ~ decade, data = al, type = 'n',
-    ylab = 'm3/decade', main = "Urban")
+plot(combined ~ decade, data = al, type = 'n', bty = 'l',
+    ylab = 'm3/20y', xlab = '', main = "Urban")
 lines(urban ~ decade, data = al, type = 'l')
 lines(rural_mlp ~ decade, data = al, type = 'l', col = 'gray')
-plot(combined ~ decade, data = al, type = 'n',
-    ylab = 'm3/decade', main = "Rural sample x (1/sample area)")
+plot(combined ~ decade, data = al, type = 'n', bty = 'l',
+    ylab = '', main = "Rural sample x (1/sample area)")
 lines(rural_mlp ~ decade, data = al, type = 'l')
 lines(urban ~ decade, data = al, type = 'l', col = 'gray')
-plot(combined ~ decade, data = al, type = 'n',
-    ylab = 'm3/decade', main = "Combined")
+plot(combined ~ decade, data = al, type = 'n', bty = 'l',
+    ylab = '', xlab = '', main = "Combined")
 lines(combined ~ decade, data = al, type = 'l')
 dev.off()
 

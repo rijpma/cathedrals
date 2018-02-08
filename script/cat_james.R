@@ -65,20 +65,21 @@ jamesdata = melt(james[, yrs[-20], with = F], measure.vars = yrs[-20],
 jamesdata = jamesdata[, list(JU = sum(JU, na.rm=T)), by = list(decade = as.numeric(decade))]
 comp = ourdata[jamesdata, on = 'decade']
 
+matplot(comp[, list((JU - min(JU)) / (max(JU) - min(JU)), (m3dec - min(m3dec)) / (max(m3dec) - min(m3dec)))])
+
+comp[, JU_sc := scale(JU) * sd(m3dec) + mean(m3dec)]
+comp[, m3_sc := scale(m3dec) * sd(JU) + mean(JU)]
+
 pdf("figs/james_v_osm_series_hc.pdf", height=5, width = 9)
 par(mfrow=c(1, 2), font.main=1)
 plot(m3dec ~ decade, data = comp,
-    type='l', col=1, bty='l', xlim=c(1060, 1250),
+    type='l', lwd = 1.5, bty='l', xlim=c(1060, 1250),
     xlab='decade', ylab='m3/decade', main='OSM-EE')
-lines(comp[, list(decade, JU * (mean(m3dec) / mean(JU)))])
+lines(JU_sc ~ decade ,data = comp, col = 'gray')
 plot(JU ~ decade, data = comp,
-    type='l', col=1, bty='l', xlim=c(1060, 1250),
+    type='l', lwd = 1.5, bty='l', xlim=c(1060, 1250),
     xlab='decade', ylab="James cost estimate/decade", main='James')
-plot(x=names(james)[yrs[-20]], colSums(james[, yrs[-20], with=F], na.rm=T), 
-    type='l', col=1, bty='l', xlim=c(1060, 1250),
-    xlab='decade', ylab="James cost estimate/decade", main='James')
-lines(fullobs_sp[lon %between% lonrange & lat %between% latrange & year > 1050 & year < 1260, 
-    base::sum(.SD, na.rm=T) / M, by=floor(year / 10)*10, .SDcols = grepr('m3_ann_cmc\\d', names(fullobs_sp))], col = 'gray')
+lines(m3_sc ~ decade ,data = comp, col = 'gray')
 dev.off()
 
 james_mtchd = merge(james[mtchs$ll1, ], fullobs[year==1250, list(osmid, im2_cml, im3_cml)], by="osmid")
@@ -87,9 +88,9 @@ james_mtchd = james_mtchd[!id_james %in% c("Synopsis.php?id=EVREUX",
 
 pdf('figs/james_v_catdat1250_m3.pdf')
 par(mfrow=c(1, 1), font.main=1)
-plot(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0], 
+plot(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0], bty = 'l',
     xlab='log(m3)', ylab= "log(James cost estimate)")
-abline(lm(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0]), col=2)
+abline(lm(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0]), lwd = 1.5)
 dev.off()
 
 

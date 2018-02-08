@@ -35,13 +35,13 @@ m = lm(log1p(activity) ~ log1p(endsize), data = stock)
 m_lag = lm(log1p(activity) ~ log1p(endsize_lag), data = stock)
 
 pdf("figs/completedstock_activity.pdf", width = 10, height = 6)
-par(mfrow = c(1, 2))
-plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray50', bty = 'l',
+par(mfrow=c(1, 2), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
+plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray30', bty = 'l',
     xlab = "compl. stock (log m3)", ylab = "activity (log m3/century)")
-abline(m, col = 1)
-plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray50', bty = 'l',
-    xlab = "lag compl. stock (log m3)", ylab = "activity (log m3/century)")
-abline(m_lag, col = 1)
+abline(m, col = 1, lwd = 1.5)
+plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = 'l',
+    xlab = "lag compl. stock (log m3)", ylab = "")
+abline(m_lag, col = 1, lwd = 1.5)
 dev.off()
 
 m_city = lm(log1p(activity) ~ log1p(endsize) + factor(century) + factor(city), data = stock)
