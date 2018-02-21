@@ -1,5 +1,9 @@
 thinmargins <- c(4, 4, 3, 0.5)
 
+annualised_growth = function(series, delta = 1){
+    (series / data.table::shift(series)) ^ (1 / (delta)) - 1
+}
+
 add_loess = function(frm, dat, span=0.7, res=100, ...){
     # cannot handle NA atm
     pred = loess(frm, data=dat, span=span)
