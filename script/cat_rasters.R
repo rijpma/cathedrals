@@ -18,6 +18,10 @@ fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 
+M = 9 # number of imputations
+impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
+
+
 isor = raster::raster("~/downloads/data/hyde/iso_cr.asc")
 
 nld = raster::getData("GADM", country='NLD', level=0)
@@ -48,18 +52,6 @@ rhigh = disaggregate(r, 2)
 
 ### population data ###
 #######################
-# u = raster::stack("~/downloads/data/hyde/urbc_700AD.asc",
-#     "~/downloads/data/hyde/urbc_800AD.asc",
-#     "~/downloads/data/hyde/urbc_900AD.asc",
-#     "~/downloads/data/hyde/urbc_1000AD.asc",
-#     "~/downloads/data/hyde/urbc_1100AD.asc",
-#     "~/downloads/data/hyde/urbc_1200AD.asc",
-#     "~/downloads/data/hyde/urbc_1300AD.asc",
-#     "~/downloads/data/hyde/urbc_1400AD.asc",
-#     "~/downloads/data/hyde/urbc_1500AD.asc",
-#     "~/downloads/data/hyde/urbc_1600AD.asc")
-# u = raster::crop(u, raster::extent(-10, 20, 40, 60))
-# u = raster::aggregate(u, fact=6, fun=sum, na.rm=T)
 
 p = raster::stack("~/downloads/data/hyde/700AD_pop/popc_700AD.asc",
     "~/downloads/data/hyde/800AD_pop/popc_800AD.asc",
@@ -72,12 +64,14 @@ p = raster::stack("~/downloads/data/hyde/700AD_pop/popc_700AD.asc",
     "~/downloads/data/hyde/1500AD_pop/popc_1500AD.asc",
     "~/downloads/data/hyde/1600AD_pop/popc_1600AD.asc")
 p = raster::crop(p, raster::extent(-10, 20, 40, 60))
-# p = raster::aggregate(p, fact=6, fun=sum, na.rm=T)
 isor = raster::crop(isor, raster::extent(-10, 20, 40, 60))
-# isor = raster::aggregate(isor, fact=6, fun=calcMode)
-dim(p)
-dim(isor)
 
+rastpop = cbind(as.data.table(getValues(p)),
+    as.data.table(getValues(isor)))[, lapply(.SD, function(x) round(sum(x, na.rm = T))), by = V1]
+rastpop[, ctr := countrycode::countrycode(rastpop$V1, "iso3n", "iso3c")]
+data.table::fwrite(rastpop[ctr %in% c("NLD", "FRA", "CHE", "BEL", "GBR", "DEU")][order(-popc_700AD)], "dat/totpop_hyde.csv")
+
+# insert NAs for interpolation
 pip = raster::setValues(p[[1]], NA)
 pip = raster::stack(replicate(4, pip))
 pip = raster::addLayer(p, pip)
@@ -89,6 +83,7 @@ pip = exp(raster::approxNA(log(pip)))
 # eng pop kees v. broadberry et al.
 plot(seq(from=700, to=1600, by=20), colSums(pip[isor==826], na.rm=T))
 lines(population ~ V1, data=ukgdp)
+
 
 ### urb pop ###
 ###############
@@ -104,6 +99,7 @@ for (i in seq(from=700, to=1800, by=100)){
 rsiem = raster::brick(rsiem)
 rsiem = raster::crop(rsiem, raster::extent(-10, 20, 40, 60))
 
+# interpolate
 rsiem_ip = setValues(rsiem[[1]], NA)
 rsiem_ip = raster::stack(replicate(4, rsiem_ip))
 rsiem_ip = addLayer(rsiem, rsiem_ip)
@@ -115,16 +111,15 @@ rsiem_ip = exp(approxNA(log(rsiem_ip)))
 
 ### churches data ###
 #####################
-fullobs_sp[!is.na(phase) & firstobs!=TRUE, newbuild:=m2]
+fullobs_sp[!is.na(phase) & firstobs != TRUE, newbuild := m2]
 
 rch = list()
 for (i in seq(from=700, to=1480, by=20)){
     dcd = i:(i + 19)
-    # spdf = sp::SpatialPointsDataFrame(coords=fullobs_sp[year %in% dcd, list(lon, lat)], data=fullobs_sp[year %in% dcd, list(im2_ann, im3_ann, newbuild)], proj4str=wgs)
-    tosp = fullobs_sp[year %in% dcd, list(im2_ann = base::sum(.SD, na.rm=T) / 9), by=list(lon, lat), .SDcols=grep("im2_ann\\d", names(fullobs_sp))]
-    spdf = sp::SpatialPointsDataFrame(coords=tosp[, list(lon, lat)], data=tosp[, list(im2_ann)], proj4str=wgs)
-    spdf = spdf[!is.na(spdf$im2_ann) & spdf$im2_ann!=0, ]
-    rch[[as.character(i)]] = raster::rasterize(spdf, p, field="im2_ann", fun=sum, na.rm=T)
+    tosp = fullobs_sp[year %in% dcd, list(im3y20 = base::sum(.SD, na.rm=T) / M), by=list(lon, lat), .SDcols=impvrbs]
+    spdf = sp::SpatialPointsDataFrame(coords=tosp[, list(lon, lat)], data=tosp[, list(im3y20)], proj4str=wgs)
+    spdf = spdf[!is.na(spdf$im3y20) & spdf$im3y20!=0, ]
+    rch[[as.character(i)]] = raster::rasterize(spdf, p, field="im3y20", fun=sum, na.rm=T)
 }
 rch = raster::brick(rch)
 rch = raster::crop(rch, raster::extent(-10, 20, 40, 60))
@@ -137,6 +132,7 @@ pips = raster::subset(pip, which(names(pip) %in% names(rch)))
 plot(gsub('[^0-9]', '', names(pips)), colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
 plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T) / colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
 abline(v=1348)
+
 
 rchm = list()
 periods = list(700:1000, 1001:1200, 1201:1347, 1348:1500)
@@ -155,6 +151,8 @@ rchm = raster::crop(rchm, raster::extent(-10, 20, 40, 60))
 
 # express values per square km2
 rchm = rchm / area(rchm)
+
+sum(geosphere::areaPolygon(wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ])) / (1e3^2)
 
 range(rchm)
 range(rchm[[1]])
@@ -175,41 +173,38 @@ dev.off()
 ### influence neigbours ###
 ###########################
 # wm = raster::pointDistance(as.matrix(fullobs_sp[year==700, list(lon, lat)][1:10, ]), lonlat=T)
-wm = sp::spDists(as.matrix(fullobs_sp[year==700, list(lon, lat)]))
+cityear = fullobs_sp[year <= 1500, list(im3_dec=sum(im3, na.rm=T), lat=mean(lat), lon=mean(lon)), by=list(city, decade)]
+wm = sp::spDists(as.matrix(cityear[decade==700, list(lon, lat)]))
 wm = 1/wm
 diag(wm) = 0
-x = fullobs_sp[year <= 1500, list(im2_dec=sum(im2, na.rm=T), lat=mean(lat), lon=mean(lon)), by=list(city, decade)]
-wm = sp::spDists(as.matrix(x[decade==700, list(lon, lat)]))
-wm = 1/wm
-diag(wm) = 0
-x[, nbim2:=im2_dec %*% wm, by=decade]
-x = x[order(city, decade), ]
-x[, paste0("nbim2_lag", 1:10*20):=data.table::shift(nbim2, 1:10), by=city]
+cityear[, nbim3:=im3_dec %*% wm, by=decade]
+cityear = cityear[order(city, decade), ]
+cityear[, paste0("nbim3_lag", 1:10*20) := data.table::shift(nbim3, 1:10), by = city]
 
-m0 = lm(log(im2_dec) ~ log(nbim2), data=x[im2_dec > 0, ])
-m20 = lm(log(im2_dec) ~ log(nbim2) + log(nbim2_lag20), data=x[im2_dec > 0, ])
-m40 = lm(log(im2_dec) ~ log(nbim2) + log(nbim2_lag20) 
-    + log(nbim2_lag40), data=x[im2_dec > 0, ])
-m60 = lm(log(im2_dec) ~ log(nbim2) + log(nbim2_lag20) 
-    + log(nbim2_lag40) + log(nbim2_lag60), data=x[im2_dec > 0, ])
-m80 = lm(log(im2_dec) ~ log(nbim2) + log(nbim2_lag20) 
-    + log(nbim2_lag40) + log(nbim2_lag60) + log(nbim2_lag80), data=x[im2_dec > 0, ])
-m100 = lm(log(im2_dec) ~ log(nbim2) + log(nbim2_lag20) 
-    + log(nbim2_lag40) + log(nbim2_lag60) + log(nbim2_lag80) 
-    + log(nbim2_lag100), data=x[im2_dec > 0, ])
+m0 = lm(log1p(im3_dec) ~ log1p(nbim3), data = cityear)
+m20 = lm(log1p(im3_dec) ~ log1p(nbim3) + log1p(nbim3_lag20), data = cityear)
+m40 = lm(log1p(im3_dec) ~ log1p(nbim3) + log1p(nbim3_lag20) 
+    + log1p(nbim3_lag40), data = cityear)
+m60 = lm(log1p(im3_dec) ~ log1p(nbim3) + log1p(nbim3_lag20) 
+    + log1p(nbim3_lag40) + log1p(nbim3_lag60), data = cityear)
+m80 = lm(log1p(im3_dec) ~ log1p(nbim3) + log1p(nbim3_lag20) 
+    + log1p(nbim3_lag40) + log1p(nbim3_lag60) + log1p(nbim3_lag80), data = cityear)
+m100 = lm(log1p(im3_dec) ~ log1p(nbim3) + log1p(nbim3_lag20) 
+    + log1p(nbim3_lag40) + log1p(nbim3_lag60) + log1p(nbim3_lag80) 
+    + log1p(nbim3_lag100), data = cityear)
 
 texreg::screenreg(list(m0, m20, m40, m60, m80, m100), stars=0) #, file='tab/spatialreg.html')
 texreg::texreg(list(m0, m20, m40, m60, m80, m100), stars=0, file='tab/spatialreg.tex')
-sapply(list(m0, m20, m40, m60, m80, m100), AIC)
+lapply(list(m0, m20, m40, m60, m80, m100), AIC)
 
 
 
 
 
 # pdf('figs/pcm2_20y.pdf')
-# animate(rchpc, n=1)
+# rch[is.na(rch)] = 0
+# animate(rch, n = 1, col = magma(256))
 # dev.off()
-
 
 nldurb = (colSums(raster::extract(rsiem_ip, nld)[[1]], na.rm=T)*1e3)
 fraurb = (colSums(raster::extract(rsiem_ip, fra)[[1]], na.rm=T)*1e3)
@@ -243,6 +238,7 @@ d$urbrate = ((d$urb*1e3) / d$pop ) * 100
 
 eur = aggregate(cbind(m2, pop, urb) ~ year, sum, data=d)
 
+# per capita series based on rastered population data
 pdf('figs/pc_panel_big_hc.pdf', height=6)
 par(mfrow=c(2, 2), mar=c(4, 4, 2.5, 0.5), font.main=1)
 plot((m2 / pop)*1e3 ~ year, data=aggregate(cbind(m2, pop, urb) ~ year, sum, data=d[d$ctr=='deu' | d$ctr == "che", ]), type='l', 
@@ -260,18 +256,17 @@ lines((m2 / pop)*1e3 ~ year, data=eur, col='gray80')
 dev.off()
 
 
-
-
 pdf('figs/puc_panel_big.pdf', height=4, width=9)
 par(mfrow=c(1, 3), mar=c(4, 4, 2.5, 0.5), font.main=1)
-plot((m2 / urb) ~ year, data=d[d$ctr=='deu', ], type='l', 
-    bty='l', ylab='m2/1000 cap', ylim=c(0, 100), main='Germany')
+yl = range(d$m2 / d$urb)
+plot((m2 / urb) ~ year, data=d[d$ctr=='deu', ], type='l', ylim = yl,
+    bty='l', ylab='m2/1000 cap', main='Germany')
 lines((m2 / urb) ~ year, data=eur, col='gray80')
-plot((m2 / urb) ~ year, data=d[d$ctr=='fra', ], type='l', 
-    bty='l', ylab='m2/1000 cap', ylim=c(0, 100), main='France')
+plot((m2 / urb) ~ year, data=d[d$ctr=='fra', ], type='l', ylim = yl,
+    bty='l', ylab='m2/1000 cap', main='France')
 lines((m2 / urb) ~ year, data=eur, col='gray80')
-plot((m2 / urb) ~ year, data=d[d$ctr=='gbr', ], type='l', 
-    bty='l', ylab='m2/1000 cap', ylim=c(0, 100), main='Britain')
+plot((m2 / urb) ~ year, data=d[d$ctr=='gbr', ], type='l', ylim = yl,
+    bty='l', ylab='m2/1000 cap', main='Britain')
 lines((m2 / urb) ~ year, data=eur, col='gray80')
 dev.off()
 
