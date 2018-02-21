@@ -14,6 +14,7 @@ fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
 impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
+impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
@@ -155,6 +156,9 @@ pdf("figs/bytype_hc.pdf", width = 8)
 bytype = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=list(decade, category), .SDcols = impvrbs]
 # cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
 # bytype[, V1 := V1 + cmladd$V1]
+bytype[, sum(V1), by = list(century = round(decade, -2), category)][, list(category, V1 / sum(V1)), by = century][category == "cathedral"]
+bytype[, sum(V1), by = list(century = round(decade, -2), category)][, list(category, V1 / sum(V1)), by = century][category == "other"]
+
 par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(V1 ~ decade, data=bytype[category=="cathedral", ],
     type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
@@ -210,14 +214,36 @@ dev.off()
 bytype[, dtotal := sum(V1), by=decade]
 bytype[category=="other", list(decade, category, V1 / dtotal)]
 
+eutotal = fullobs[data.table::between(decade, 700, 1500), list(im3y20 = base::sum(.SD, na.rm=T) / M), by=decade, .SDcols = impvrbs]
 # m3 per 20y period en country
 pdf('figs/europetotal_hc.pdf', height=6)
-plot(fullobs[data.table::between(decade, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols = impvrbs],
-    type='n', bty='l', ylab = 'm3/20 year')
+plot(eutotal, type='n', bty='l', ylab = 'm3/20 year')
 abline(v=c(768, 1315, 1000, 1348), col='gray')
-lines(fullobs[data.table::between(decade, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols = impvrbs], 
-    type='b', lwd=1.5, pch=1, cex=0.9)
+lines(eutotal, type='b', lwd=1.5, pch=1, cex=0.9)
 dev.off()
+
+out = fullobs[, list(im3c_imp = base::sum(.SD, na.rm=T) / M), by=list(T = (trunc((year - 1) / 100) + 1) * 100), .SDcols = impvrbs][
+    fullobs[, list(im3c_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = (trunc((year - 1) / 100) + 1) * 100)], 
+        on = 'T'][
+    fullobs[, list(im3y20_imp = base::sum(.SD, na.rm=T) / M), by=list(T = decade), .SDcols = impvrbs], 
+        on = 'T'][
+    fullobs[, list(im3y20_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = decade)], 
+        on = 'T']
+data.table::fwrite(out, "dat/eutotalcompare.csv")
+
+
+eutotal[, anngrowth := annualised_growth(im3y20, delta = 19)]
+plot(anngrowth*100 ~ decade, data = eutotal, type = 'b')
+abline(h = c(0.5, 1), v = c(920, 960, 1060, 1180), col = 'gray')
+annualised_growth(eutotal[decade == 920 | decade == 1320, im3y20], delta = 1320 - 921)
+annualised_growth(eutotal[decade == 960 | decade == 1040, im3y20], delta = 1040 - 961)
+annualised_growth(eutotal[decade == 1060 | decade == 1160, im3y20], delta = 1160 - 1061)
+annualised_growth(eutotal[decade == 1180 | decade == 1240, im3y20], delta = 1240 - 1181)
+annualised_growth(eutotal[decade == 1320 | decade == 1380, im3y20], delta = 1380 - 1321)
+annualised_growth(eutotal[decade == 1380 | decade == 1440, im3y20], delta = 1440 - 1381)
+annualised_growth(eutotal[decade == 1440 | decade == 1500, im3y20], delta = 1500 - 1441)
+
+data.table::fwrite(eutotal, "dat/eutotals.csv")
 
 midcent = copy(fullobs_sp)
 midcent[, year := round(year / 100)  * 100] # for compatability w. century
@@ -228,7 +254,7 @@ pdf("figs/geography_hc.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 # why mean? already total by city, now take mean for kind of city per
 plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year],
-    type='n', col='gray', ylab='mean ann. city m3')
+    type='n', col='gray', ylab='mean cent. city m3')
 lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
@@ -244,6 +270,13 @@ lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col
 lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
 title(main='Landlocked')
 dev.off()
+
+pcitobs[rivercanal==1, mean(im3_cnt), by=year][year %in% c(900, 1200), list(year, annualised_growth(V1, delta = 300))]
+pcitobs[coastal==1, mean(im3_cnt), by=year][year %in% c(900, 1200), list(year, annualised_growth(V1, delta = 300))]
+pcitobs[landlocked==1, mean(im3_cnt), by=year][year %in% c(900, 1200), list(year, annualised_growth(V1, delta = 300))]
+pcitobs[rivercanal==1, mean(im3_cnt), by=year][year %in% c(1200, 1500), list(year, annualised_growth(V1, delta = 300))]
+pcitobs[coastal==1, mean(im3_cnt), by=year][year %in% c(1200, 1500), list(year, annualised_growth(V1, delta = 300))]
+pcitobs[landlocked==1, mean(im3_cnt), by=year][year %in% c(1200, 1500), list(year, annualised_growth(V1, delta = 300))]
 
 # exploratory regs
 pcitobs = pcitobs[data.table::between(year, 700, 1500), ]
@@ -368,10 +401,10 @@ lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / totpop ~ decade, data=x1[ctr=='uk', ], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Britain')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+plot(im3_dec / totpop / 2 ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Belgium')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+plot(im3_dec / totpop  / 2~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Netherlands')
 lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
 dev.off()
