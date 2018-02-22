@@ -156,24 +156,27 @@ dynobs[, year_lead := data.table::shift(year, type='lead', fill=Inf), by=osmid]
 dynobs[, year_lag := data.table::shift(year, type='lag', fill=-Inf), by=osmid]
 dynobs[, dyear := data.table::shift(year, type='lead') - year, by=osmid]
 
+dynobs[, heap100 := (year %% 100 == 0) | (year %% 100 == 1)]
+dynobs[, heap20 := ((year - 20) %% 100 == 0) | ((year + 20) %% 100 == 0) ]
+dynobs[, heap25 := ((year - 25) %% 100 == 0) | ((year + 25) %% 100 == 0) | ((year - 50) %% 100 == 0) ]
+dynobs[, heap10 := (year %% 10 == 0) & (heap100 + heap20 + heap25) == 0]
+
+dynobs[heap100 == TRUE, sdev := 30]
+dynobs[heap20 == TRUE, sdev := 12]
+dynobs[heap25 == TRUE, sdev := 15]
+
+dynobs[heap100 == TRUE, delta := 50]
+dynobs[heap20 == TRUE, delta := 10]
+dynobs[heap25 == TRUE, delta := 12]
+dynobs[heap10 == TRUE, delta := 5]
+
+dynobs[, heap := FALSE]
+dynobs[heap100 == TRUE | heap10 == TRUE | heap25 == TRUE | heap20 == TRUE, heap := TRUE]
+
 set.seed(121314)
 M = 9
 for (j in 1:M){
     dynobs[, year_crc := year]
-
-    dynobs[, heap100 := year %% 100 == 0 | year %% 100 == 1]
-    dynobs[, heap20 := ((year - 20) %% 100 == 0) | ((year + 20) %% 100 == 0) ]
-    dynobs[, heap25 := ((year - 25) %% 100 == 0) | ((year + 25) %% 100 == 0) | ((year - 50) %% 100 == 0) ]
-    dynobs[, heap10 := (year %% 10 == 0) & (heap100 + heap20 + heap25) == 0]
-
-    dynobs[heap100 == TRUE, sdev := 30]
-    dynobs[heap20 == TRUE, sdev := 12]
-    dynobs[heap25 == TRUE, sdev := 15]
-
-    dynobs[heap100 == TRUE, delta := 50]
-    dynobs[heap20 == TRUE, delta := 10]
-    dynobs[heap25 == TRUE, delta := 12]
-    dynobs[heap10 == TRUE, delta := 5]
 
     rsmpl = rtnorm(n = nrow(dynobs[!is.na(sdev)]), 
                mean = dynobs[!is.na(sdev), year],
