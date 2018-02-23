@@ -12,6 +12,7 @@ fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 
 M = 9
+impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 # fullobs_sp[, century := ceiling(year / 100)  * 100] # for compatability w. century
 fullobs_sp[, century := round(year / 100)  * 100] # for compatability w. century
@@ -25,7 +26,7 @@ fullobs_sp = fullobs_sp[order(city, osmid, year)]
 fullobs_sp[, endsize := zoo::na.approx(endsize, method = 'constant', rule = 1:2, na.rm = F), by = osmid]
 
 endsizes = fullobs_sp[data.table::between(year, 701, 1500), mean(endsize, na.rm = T), by = list(city, osmid, century)][, list(endsize = sum(V1, na.rm = T)), by = list(city, century)]
-activity = fullobs_sp[data.table::between(year, 701, 1500), list(activity = sum(abs(im3_ann), na.rm = T)), by = list(city, century)]
+activity = fullobs_sp[data.table::between(year, 701, 1500), list(activity = base::sum(abs(.SD), na.rm = T)), .SDcols = impvrbs, by = list(city, century)]
 stock = endsizes[activity, on = list(city, century)]
 stock[, endsize_lag := data.table::shift(endsize), by = city]
 stock[, endsize_lag2 := data.table::shift(endsize, 2), by = city]

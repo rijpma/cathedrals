@@ -8,14 +8,16 @@ library(osmar)
 library(geosphere)
 library(texreg)
 
-M = 9
-
 setwd("~/dropbox/cathedrals")
 source("script/cat_functions.r")
+
 
 statobs = data.table::fread("dat/statobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
+
+M = 9
+impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 # add warning for timeouts
 # consider just getting all best matches
@@ -59,7 +61,7 @@ lonrange = range(james$Longitude)
 latrange = range(james$Latitude)
 ourdata = fullobs_sp[lon %between% lonrange & lat %between% latrange & year > 1050 & year < 1260, 
     list(m3dec = base::sum(.SD, na.rm=T) / M), 
-    by = list(decade = floor(year / 10)*10), .SDcols = grepr('m3_ann_cmc\\d', names(fullobs_sp))]
+    by = list(decade = floor(year / 10)*10), .SDcols = impvrbs]
 jamesdata = melt(james[, yrs[-20], with = F], measure.vars = yrs[-20], 
     variable.name = 'decade', value.name = 'JU', variable.factor = F)
 jamesdata = jamesdata[, list(JU = sum(JU, na.rm=T)), by = list(decade = as.numeric(decade))]

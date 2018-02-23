@@ -19,7 +19,7 @@ siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 
 M = 9 # number of imputations
-impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
+impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 
 isor = raster::raster("~/downloads/data/hyde/iso_cr.asc")
