@@ -13,12 +13,19 @@ citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
-impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
+# impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
 impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
+
+pop_mj = data.table::fread("dat/mcevedyjones.csv", encoding = "UTF-8")
+pop_mj[, decade := year]
+pop_mj = pop_mj[as.data.table(expand.grid(ctr = unique(pop_mj$ctr), decade = unique(fullobs$decade))), on = c("ctr", "decade")]
+pop_mj[ctr == 'uk', broadberry := ukgdp$population[match(decade, ukgdp$V1)]]
+pop_mj[!is.na(broadberry), pop := broadberry / 1e6]
+pop_mj[, pop := pop * 1e3]
 
 siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
@@ -233,8 +240,8 @@ data.table::fwrite(out, "dat/eutotalcompare.csv")
 
 
 eutotal[, anngrowth := annualised_growth(im3y20, delta = 19)]
-plot(anngrowth*100 ~ decade, data = eutotal, type = 'b')
-abline(h = c(0.5, 1), v = c(920, 960, 1060, 1180), col = 'gray')
+# plot(anngrowth*100 ~ decade, data = eutotal, type = 'b')
+# abline(h = c(0.5, 1), v = c(920, 960, 1060, 1180), col = 'gray')
 annualised_growth(eutotal[decade == 920 | decade == 1320, im3y20], delta = 1320 - 921)
 annualised_growth(eutotal[decade == 960 | decade == 1040, im3y20], delta = 1040 - 961)
 annualised_growth(eutotal[decade == 1060 | decade == 1160, im3y20], delta = 1160 - 1061)
@@ -280,7 +287,7 @@ pcitobs[landlocked==1, mean(im3_cnt), by=year][year %in% c(1200, 1500), list(yea
 
 # exploratory regs
 pcitobs = pcitobs[data.table::between(year, 700, 1500), ]
-plot(log(inhab) ~ log(im3_cnt), data=pcitobs)
+# plot(log(inhab) ~ log(im3_cnt), data=pcitobs)
 summary(lm(log1p(inhab) ~ log1p(im3_cnt), data=pcitobs))
 
 # yearinhab = dcast(pcitobs, year ~ inhab, mean, na.rm = T, value.var = 'im3_cnt')
@@ -332,6 +339,9 @@ eu = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(de
 # eu = citobs_dec[, list(im3_dec = sum(m3dec)), by=list(decade)]
 # eu = siem[grep("fr|be|ch|uk|nl|de", ctr), list(urb_inhab = sum(inhab)), by = list(decade = year)][eu, on = c('decade')]
 
+x1 = pop_mj[, list(ctr, decade, pop)][x1, on = c('ctr', 'decade')]
+eu = pop_mj[, list(ctr, decade, pop)][, list(pop = sum(pop)), by = decade][eu, on = 'decade']
+
 x1[decade %% 100!=0, urb_inhab:=NA] # fix zeroes
 x2[decade %% 100!=0, urb_inhab:=NA]
 x3[decade %% 100!=0, urb_inhab:=NA]
@@ -341,14 +351,16 @@ x2[, urb_inhab_i := round(exp(zoo::na.approx(log(urb_inhab)))), by=ctr2]
 x3[, urb_inhab_i := round(exp(zoo::na.approx(log(urb_inhab)))), by=ctr3]
 eu[, urb_inhab_i := round(exp(zoo::na.approx(log(urb_inhab))))]
 
-pop = data.table::fread("dat/totpop.csv", encoding = "UTF-8")
-x1 = pop[x1, on = c('ctr', 'decade')]
-eu = pop[, list(totpop = sum(totpop)), by = decade][eu, on = 'decade']
+x1[, pop_i := exp(zoo::na.approx(log(pop))), by=ctr]
+eu[, pop_i := exp(zoo::na.approx(log(pop)))]
 
-x1[, sum(urb_inhab_i) / sum(totpop), by = ctr]
-x1[, sum(urb_inhab_i) / sum(totpop), by = list(ctr, decade)][ctr=='nl']
-x1[, sum(urb_inhab_i) / sum(totpop), by = list(ctr, decade)][ctr=='be']
-x1[!is.na(urb_inhab), sum(urb_inhab) / sum(totpop), by = ctr]
+x1[, sum(urb_inhab_i) / sum(pop_i), by = ctr]
+x1[, sum(urb_inhab_i) / sum(pop_i), by = list(ctr, decade)][ctr=='nl']
+x1[, sum(urb_inhab_i) / sum(pop_i), by = list(ctr, decade)][ctr=='be']
+x1[!is.na(urb_inhab), sum(urb_inhab) / sum(pop), by = ctr]
+
+out = rbindlist(list(x1, cbind(eu, ctr = 'eu')), fill = T)
+writexl::write_xlsx(out, "excels/countryseries.xlsx")
 
 write.csv(x3, "~/dropbox/cathedrals/dat/countryseries.csv", row.names=F)
 
@@ -366,9 +378,9 @@ dev.off()
 
 pdf('figs/europetotal_pc_hc.pdf', height=6)
 par(mfrow=c(1, 1))
-plot(im3_dec / totpop ~ decade, data=eu, type='n', bty='l')
+plot(im3_dec / pop_i ~ decade, data=eu, type='n', bty='l')
 abline(v=c(768, 1315, 1000, 1348), col='gray')
-lines(im3_dec / totpop ~ decade, data=eu, type='b', col=2, lwd=1.5, pch=1, cex=0.9)
+lines(im3_dec / pop_i ~ decade, data=eu, type='b', col=2, lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
 pdf("figs/pucpanel.pdf", width=8)
@@ -389,27 +401,27 @@ dev.off()
 
 pdf("figs/pcpanel.pdf", height = 11, width = 8)
 par(mfrow=c(3, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
-plot(im3_dec / totpop ~ decade, data=x1[ctr=='fr', ], type='l',
+plot(im3_dec / pop_i ~ decade, data=x1[ctr=='fr', ], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='France')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('de'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i ~ decade, data=x1[ctr %in% c('de'), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='Germany')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop ~ decade, data=x1[ctr %in% c('ch'), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i ~ decade, data=x1[ctr %in% c('ch'), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='Switzerland')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop ~ decade, data=x1[ctr=='uk', ], type='l',
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i ~ decade, data=x1[ctr=='uk', ], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Britain')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop / 2 ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i / 2 ~ decade, data=x1[ctr %in% c("be"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Belgium')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
-plot(im3_dec / totpop  / 2~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], type='l',
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i  / 2~ decade, data=x1[ctr %in% c("nl"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
     lwd = 1.5, bty='l', ylab='m3/dec', main='Netherlands')
-lines(im3_dec / totpop ~ decade, data=eu, type='l', col='gray')
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
 dev.off()
 
-data.table::fwrite(rbindlist(list(x1, x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), totpop = sum(totpop)), by = decade], eu[, c(.SD, list(ctr = 'eu'))]), 
+data.table::fwrite(rbindlist(list(x1, x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], eu[, c(.SD, list(ctr = 'eu'))]), 
     fill = T), "dat/totpcpuc.csv")
 data.table::fwrite(x3, "dat/totpuc_regions.csv")
 
