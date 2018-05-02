@@ -32,8 +32,11 @@ siem_de = data.table::fread("dat/siem_de.csv")[, -1, with=F]
 data.table::setnames(siem_de, 1:ncol(siem), names(siem))
 siem_it = data.table::fread("dat/siem_it.csv")[, -1, with=F]
 data.table::setnames(siem_it, 1:ncol(siem), names(siem))
+siem_lu = data.table::fread('dat/siem_lu.csv')[, -1, with = F]
+data.table::setnames(siem_lu, 1:ncol(siem), names(siem))
 
-siem = data.table::rbindlist(list(siem_fr, siem_be, siem_ch, siem_uk, siem_nl, siem_de, siem_it))
+siem = data.table::rbindlist(
+    list(siem_fr, siem_be, siem_ch, siem_uk, siem_nl, siem_de, siem_it, siem_lu))
 siem = siem[, !sapply(siem, function(x) all(is.na(x))), with=F]
 
 measures = unique(gsub('\\d.*', '', names(siem)[grep('\\d{3}', names(siem))]))
@@ -47,30 +50,8 @@ siem[, (measures):=lapply(.SD, as.numeric), .SDcols=measures]
 
 # citobs = data.table::rbindlist(list(citobs_fr, citobs_ch, citobs_be, citobs_gb, citobs_nl, citobs_de))
 
-
-
-# siem = data.table::fread("dat/siem.csv", header=T)
-# data.table::setnames(siem, names(siem)[!grepl('^V\\d+$', names(siem))], 
-#     c('inhab', 'coord', 'yr', 'cargoratio', 'rivercanal', 'rivertoll', 
-#     'sqrtsetdens', 'parliament', 'manuscript', 'commune', 'bishopric',
-#     'arcbishopric', 'seatoll', 'coastal', 'riverXcoast', 'landlocked', 
-#     'atlantic', 'whitesea', 'blacksea', 'northsea', 'caspian', 'mediterranean', 'baltic'))
-# for (i in 5:ncol(siem)){
-#     if (grepl("^V\\d+$", names(siem)[i])) names(siem)[i] = names(siem)[i - 1]
-# }
-# names(siem) = paste0(gsub('^V\\d+$', '', names(siem)), siem[2, ])
-# siem = siem[3:nrow(siem), ]
-
-# measures = unique(gsub('\\d.*', '', names(siem)[grep('\\d{3}', names(siem))]))
-# measureslist = lapply(measures, function(x) grepr(paste0('^', x), names(siem)))
-# siem = data.table::melt(siem, measure=measureslist, 
-#     id.vars=setdiff(names(siem), unlist(measureslist)),
-#     variable.name="year", variable.factor=F)
-# siem$year = 600 + as.numeric(siem$year) * 100
-# setnames(siem, grep('value', names(siem)), measures)
-# siem[, (measures):=lapply(.SD, as.numeric), .SDcols=measures]
-
-grep('xxx', siem$city)
+# encoding checks
+grep('xxx', siem$city) 
 # siem[, city:=iconv(city, from="macroman", to="utf8")]
 
 siem[grep("Tue", city), city]
@@ -82,4 +63,4 @@ siem[grep("√", city), city]
 # siem[, city:=gsub("√§", "ä", city)]
 # siem[, city:=gsub("√©", "é", city)]
 
-write.csv(siem[year <= 1800 & !is.na(year), ], "dat/siem_long.csv", row.names=F, fileEncoding="UTF-8")
+data.table::fwrite(siem[year <= 1800 & !is.na(year), ], "dat/siem_long.csv")
