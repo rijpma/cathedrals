@@ -150,9 +150,10 @@ al_sfc = data.frame(rural = sum(sapply(sqpols, geosphere::areaPolygon)) / (sfc_f
     urban = siem[country %in% c("France", "UK", "Netherlands", "Belgium", "Germany"), length(unique(city))] * 100 * 1e6 / 
         (sfc_fr + sfc_de + sfc_nl + sfc_be + sfc_uk + sfc_ch))
 
-al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
-al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
-al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann_cmc, na.rm=T)), by = decade]
+# al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+# al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
+al = fullobs_sp_urb[, list(urban=sum(im3_ann, na.rm=T)), by = decade]
+al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann, na.rm=T)), by = decade]
 al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
 al[, rural_mlp := (1 / al_sfc$rural) * rural]
 al[, combined := rural_mlp + urban]
