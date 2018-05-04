@@ -21,7 +21,6 @@ ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 M = 9 # number of imputations
 impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
-
 isor = raster::raster("~/downloads/data/hyde/iso_cr.asc")
 
 nld = raster::getData("GADM", country='NLD', level=0)
@@ -163,10 +162,18 @@ range(rchm[[4]])
 rchm[is.na(rchm)] = 0
 pdf("figs/4m3maps_smoothed.pdf", width=10, height=9)
 par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
-plot(rchm[[1]], main="700-1000", zlim = c(0, 15), col=magma(256), axes=F); add_borders(border='white')
-plot(rchm[[2]], main="1000-1200", zlim = c(0, 66), col=magma(256), axes=F); add_borders(border='white')
-plot(rchm[[3]], main="1200-1348", zlim = c(0, 66), col=magma(256), axes=F); add_borders(border='white')
-plot(rchm[[4]], main="1348-1500", zlim = c(0, 66), col=magma(256), axes=F); add_borders(border='white')
+plot(rchm[[1]], main="700-1000", zlim = c(0, 15), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 15, 5)))
+add_borders(border='white')
+plot(rchm[[2]], main="1000-1200", zlim = c(0, 66), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
+plot(rchm[[3]], main="1200-1348", zlim = c(0, 66), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
+plot(rchm[[4]], main="1348-1500", zlim = c(0, 66), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
 dev.off()
 
 
