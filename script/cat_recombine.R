@@ -9,77 +9,113 @@ library("stringi")
 library("plm")
 library("raster") # for spatial splitting of data
 
-chr = data.table::fread("dat/checkedchurches_eb_7.csv", 
-    header=T, encoding="UTF-8", colClasses = "character")
-chr = chr[, 1:29, with=F]
-hgt = data.table::fread("dat/heights.csv", encoding="UTF-8")
-sfc = data.table::fread("dat/backproj.csv", encoding="UTF-8")
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
-cathedrals = read.csv("dat/cathedral_osmids.csv", header=F)
 
+chr = data.table::fread("dat/checkedchurches_eb_7.csv", 
+    header = T, encoding = "UTF-8", colClasses = "character")
+chr = chr[, 1:29, with=F]
+firstm2col_chr = 14
+setnames(chr, firstm2col_chr:ncol(chr), paste0("y", 1:(ncol(chr) - firstm2col_chr + 1)))
+
+
+# encoding, do before chr_it which has no encoding issues
+chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
+chr[, osmname := iconv(osmname, from='macroman', to='utf8')]
+chr[, osmlink := iconv(osmlink, from='macroman', to='utf8')]
+chr[, city := iconv(city, from='macroman', to='utf8')]
+
+# because there was mixed encoding, fix the new mistakes
+chr[, osmname := gsub("√©", "é", osmname)]
+chr[, osmwikipedia := gsub("√©", "é", osmwikipedia)]
+# checked below whether there are others
+
+chr_it = data.table::fread("dat/churches_italy.csv",
+    header = T, encoding = "UTF-8", colClasses = "character")
+chr_it = chr_it[, 1:21]
+firstm2col_chr_it = 9
+setnames(chr_it, firstm2col_chr_it:ncol(chr_it), paste0("y", 1:(ncol(chr_it) - firstm2col_chr_it + 1)))
+
+
+chr_it[, ctr := "it"]
+
+chr = rbindlist(list(chr, chr_it), fill = T)
+
+# maybe the fact that the V\\d+ don't match up doesn't matter, 
+# let's find out
+# otherwise make some sort of similar name and make sure recombine is fixed
+
+# no longer needed?
 nanames = which(names(chr)=="NA")
 setnames(chr, nanames, paste0("V", nanames))
 
-# encoding
-chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
-chr[, osmname := iconv(osmname, from='macroman', to='utf8')]
-chr[, city := iconv(city, from='macroman', to='utf8')]
-
-# should not give encoding errors
-chr$city[grep("√", chr$city)]
-grep("xyz", chr$osmname)
-grep("xyz", chr$city)
-grep("xyz", chr$osmwikipedia)
-
-chr[, city := gsub("√∂", "ö", city)]
-chr[, city := gsub("√º", "ü", city)]
-chr[, city := gsub("√§", "ä", city)]
-chr[, city := gsub("√©", "é", city)]
-chr[, osmname := gsub("√©", "é", osmname)]
-chr[, osmwikipedia := gsub("√©", "é", osmwikipedia)]
-
-chr$osmname[grep("√", chr$osmname)]
-chr$osmwikipedia[grep("√", chr$osmwikipedia)]
-sample(chr$osmname[grep("é", chr$osmname)], 5)
-sample(chr$osmname[grep("è", chr$osmname)], 5)
-sample(chr$osmname[grep("ü", chr$osmname)], 5)
-# etc.
-
-# check for duplicate osmids
-table(table(chr$osmid[chr$osmid!='']))
-duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) > 6]
-# chr[osmid %in% duplids, ]
-duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) < 6]
-match(duplids, chr$osmid)
- # chr[osmid %in% duplids, ]
+# check 
+if (!all(sapply(chr, validUTF8))){
+    warning("Encoding issue in ", deparse(substitute(chr)))
+}
+if (any(sapply(chr, function(x) any(grep(x, pattern = "√"))))){
+    warning("Encoding issue in ", deparse(substitute(chr)))
+}
+# gsub("√∂", "ö"
+# gsub("√º", "ü"
+# gsub("√§", "ä"
+# gsub("√©", "é"
+stopifnot(any(grepl("ö", chr$osmname)),
+    any(grepl("ü", chr$osmname)),
+    any(grepl("ä", chr$osmname)),
+    any(grepl("è", chr$osmname)),
+    any(grepl("é", chr$osmname)))
 
 # manual fixes
-chr[osmid == "2322752", "lat"][1] = 46.4349 # cluny
-
-chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
-chr[osmid == "66636479", "osmwikipedia"][1] <- ""
+# middelburg should have one id
+chr[city=="Middelburg", osmid := osmid[1]]
 # halle should be two churches with unique osmids
 chr[osmid=="217546683", "osmid"] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
 
-# middelburg should have one id
-chr[city=="Middelburg", osmid := osmid[1]]
+# drop duplicated churches in nearby italian towns
+chr = chr[!(osmid == "166506824" & city == "Calascibetta") & 
+    !(osmid == "201681493" & city == "Maddaloni") & 
+    !(osmid == "275036771" & city == "Cava de' Tirreni") & 
+    !(osmid == "93662475" & city == "Cava de' Tirreni") & 
+    !(osmid == "330535041" & city == "Torre del Greco") &  # check with eb
+    !(osmid == "315026102" & city == "Portici")]
+
+# check for duplicate osmids
+stopifnot(
+    all(chr[osmid != "", table(osmid)] == 6)
+)
+
+# table(table(chr$osmid[chr$osmid!='']))
+# duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) > 6]
+# chr[osmid %in% duplids, unique(osmid)]
+
+duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) < 6]
+match(duplids, chr$osmid)
+chr[osmid %in% duplids, ]
+
+# various typos
+chr[osmid == "2322752", "lat"][1] = 46.4349 # cluny
+chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
+chr[osmid == "66636479", "osmwikipedia"][1] <- "https://fr.wikipedia.org/wiki/Cathédrale_Saint-Pierre_de_Condom"
 
 # table(table(chr$osmid[chr$osmid!='']))
 
 chr[city=="reading", city := "Reading"]
 chr[city=="norwich", city := "Norwich"]
 
-# fix height typos
-chr[osmid == "32530870" & surface == "height", V19 := "15.8"]
-chr[osmid == "69972010" & surface == "year", V17 := "1000"] # guess for now
-chr[osmid == "136200148" & surface == "year", V23 := "1450"] # guess for now
+# fix height and year typos
+chr[osmid == "32530870" & surface == "height", y6 := "15.8"]
+chr[osmid == "69972010" & surface == "year", y4 := "1000"] # guess for now
+chr[osmid == "136200148" & surface == "year", y10 := "1450"] # guess for now
 
-chrlist = recombine_churches(churches=chr, guesses=NULL, firstm2col = 14)
+# Italian churches look ok
+
+chrlist = recombine_churches(churches = chr, guesses = NULL, firstm2col = 14)
 
 statobs = do.call(rbind, lapply(chrlist, `[[`, 'static')) 
 statobs = data.table::as.data.table(statobs)
 
 ### fix statobs city names to match siem
+# seemingly no problems with Italian cities
 fixes = lapply(gsub('-', ' ', setdiff(statobs$city, siem$city)), function(x) unique(siem$city)[grep(x, gsub('-', ' ', unique(siem$city)))])
 fixes[sapply(fixes, length) == 0] = NA
 fixes = unlist(fixes)
@@ -92,7 +128,10 @@ unique(statobs[!is.na(city2), list(city, city2)])
 statobs[!is.na(city2), city:=city2][, city2:=NULL]
 
 setdiff(statobs$city, siem$city)
-all(unique(statobs$city) %in% siem$city)
+
+if (!all(unique(statobs$city) %in% siem$city)){
+    warning("names mismatch between statobs and siem")
+}
 
 # different city names in siem check, should be zero rows
 statobs[!city %in% siem$city, ]
@@ -109,6 +148,24 @@ statobs[lat > 53 & ctr=="uk", ctr2:="uk_north"]
 statobs[lat <= 53 & ctr=="uk", ctr2:="uk_south"]
 statobs[lat > 50.5 & ctr=="de", ctr2:="de_north"]
 statobs[lat <= 50.5 & ctr=="de", ctr2:="de_south"]
+
+# select southern Italy based on today's provinces
+ita = raster::getData("GADM", country='ITA', level=1)
+# locates perfectly: only Chiesa di San Vitale, Como and St Peter in Rome
+# are exluded, both actually not in Italy and can be circumvented by 
+# selecting south first, calling rest north
+library("sf")
+ita_south = sf::st_as_sf(ita[ita$NAME_1 %in% c("Abruzzo", "Molise",
+    "Campania", "Apulia", "Basilicata", "Calabria", "Sicily", "Sardegna"), ])
+
+statobsf = sf::st_as_sf(statobs, coords = c("lon", "lat"))
+sf::st_crs(statobsf) = 4326
+statobs_in_ita_south = sf::st_join(statobsf, ita_south, join = sf::st_intersects, left = F)
+
+# planar warning can be ignored it seems
+statobs[osmid %in% statobs_in_ita_south$osmid, ctr2 := "it_south"]
+statobs[ctr2 == "it", ctr2 := "it_north"]
+table(statobs$ctr2)
 
 # country splits natural
 statobs[ctr=="nl" | ctr == "be" | ctr == "lu", ctr3 := "lc"]
@@ -133,6 +190,7 @@ deregions = over(cds, deu)[, 'region']
 statobs[!is.na(deregions), ctr3 := na.omit(deregions)]
 statobs[ctr=="ch", ctr3 := "de_sw"]
 
+statobs[ctr == "it", ctr3 := ctr2]
 
 doubles = c("Strasbourg", "Strasbourg (Strassburg)", 
     "St Omer", "St Omer (Saint-Omer (Pas-de-Calais))", 
@@ -223,10 +281,12 @@ for (j in 1:M){
     setnames(dynobs, 'year_crc', paste0("year_crc", j))
 }
 
-fullobs = to_annual_obs(dyn=dynobs, churchlist=chrlist)
+fullobs = to_annual_obs(dyn = dynobs, churchlist = chrlist)
 
-unique(table(fullobs[, osmid]))
-unique(table(fullobs[, year]))
+if ((length(fullobs[, .N, by = osmid][, unique(N)]) != 1) | 
+    (length(fullobs[, .N, by = year][, unique(N)]) != 1)){
+    warning("unbalanced dataset")
+}
 
 fullobslist = list()
 for (j in 1:M){
@@ -266,8 +326,11 @@ fullobs_sp = merge(fullobs, statobs, by="osmid", all=T)
 dim(fullobs_sp)
 dynobs[fullobs_sp[is.na(year), osmid], ] # are one obs churches in 700
 fullobs_sp = fullobs_sp[!is.na(year), ]
-unique(table(fullobs_sp$year, useNA='ifany'))
 
+if ((length(fullobs_sp[, .N, by = osmid][, unique(N)]) != 1) | 
+    (length(fullobs_sp[, .N, by = year][, unique(N)]) != 1)){
+    warning("unbalanced dataset")
+}
 
 write.csv(dynobs, "dat/dynobs.csv", row.names=F)
 write.csv(statobs, "dat/statobs.csv", row.names=F)
