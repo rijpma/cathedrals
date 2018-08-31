@@ -1,5 +1,14 @@
 thinmargins <- c(4, 4, 3, 0.5)
 
+coefse = function(m, regex, ...){
+    cft = data.frame(lmtest::coeftest(m, ...)[])
+    cft = cft[stringi::stri_subset_regex(rownames(cft), regex), 1:2]
+    cft$up = cft[, 1] + 2*cft[, 2]
+    cft$lo = cft[, 1] - 2*cft[, 2]
+
+    return(cft)
+}
+
 annualised_growth = function(series, delta = 1){
     (series / data.table::shift(series)) ^ (1 / (delta)) - 1
 }
@@ -101,7 +110,7 @@ add_borders = function(border=1, add=T){
     data(wrld_simpl)
     eur = wrld_simpl[wrld_simpl$REGION==150, ]
     eur = wrld_simpl[wrld_simpl$SUBREGION %in% c(39, 154, 155), ]
-    eur = wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ]
+    eur = wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR", "ITA"), ]
     plot(eur, add=add, lwd=0.5, border=border)
 }
 
@@ -153,46 +162,59 @@ to_city_obs = function(statobs, fullobs, res=100){
 }
 
 to_annual_obs = function(dyn, churchlist){
-    full = as.data.table(expand.grid(year=600:1800, osmid=names(churchlist), stringsAsFactors=FALSE))
+    # setting this to 100 rather than 600 would fix most issues,
+    # can just cut later?
+
+    full = as.data.table(expand.grid(year = 100:1800, osmid = names(churchlist), stringsAsFactors = FALSE))
     data.table::setkey(full, osmid, year)
     data.table::setkey(dyn, osmid, year)
     full = dyn[full]
 
     full = full[order(osmid, -year), ]
-    full[, m2obs:=sum(!is.na(m2)), by=osmid]
-    full[, hgtobs:=sum(!is.na(hgt)), by=osmid]
-    full[, m3obs:=sum(!is.na(m3)), by=osmid]
-    full = full[!(m2obs <=1 | hgtobs <=1 | m3obs <= 1), ]
 
-    full[m2obs > 1, im2:=zoo::na.approx(m2, method='constant', na.rm=F), by=osmid]
-    full[hgtobs > 1, ihgt:=zoo::na.approx(hgt, method='constant', na.rm=F), by=osmid]
-    full[m3obs > 1, im3:=zoo::na.approx(m3, method='constant', na.rm=F), by=osmid]
+    # number of observations per phase for safe interpolation
+    full[, m2obs := sum(!is.na(m2)), by=osmid]
+    full[, hgtobs := sum(!is.na(hgt)), by=osmid]
+    full[, m3obs := sum(!is.na(m3)), by=osmid]
+    full = full[!(m2obs <= 1 | hgtobs <= 1 | m3obs <= 1), ]
 
-    full[, inobs:=zoo::na.approx(nobs, method='constant', rule=1, na.rm=F), by=osmid]
-    full[m2obs > 1 & !is.na(inobs), iphaselength:=zoo::na.approx(phaselength, method='constant', na.rm=F, rule=2:1), by=osmid]
+    # interpolation
+    full[m2obs > 1, im2 := zoo::na.approx(m2, method = 'constant', na.rm = F), by = osmid]
+    full[hgtobs > 1, ihgt :=  zoo::na.approx(hgt, method = 'constant', na.rm = F), by = osmid]
+    full[m3obs > 1, im3 :=  zoo::na.approx(m3, method = 'constant', na.rm = F), by = osmid]
+
+    full[, inobs := zoo::na.approx(nobs, method='constant', rule = 1, na.rm = F), by = osmid]
+    full[m2obs > 1 & !is.na(inobs), iphaselength := zoo::na.approx(phaselength, method='constant', na.rm=F, rule=2:1), by=osmid]
     # create a valid data range and then use rule=2 ?
     # no
     # zoo::na.approx does not work on nobs=2
-    full[, irestphase:=zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), by=osmid]
-    full[, im2_ann:=im2 / iphaselength]
-    full[irestphase==1, im2_ann:=0]
-    full[firstobs==TRUE & !is.na(firstobs), im2_ann:=0]
+    full[, irestphase := zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), by=osmid]
+    full[, im2_ann := im2 / iphaselength]
+    full[irestphase==1, im2_ann := 0]
+    full[firstobs==TRUE & !is.na(firstobs), im2_ann := 0]
 
     # check m3 treatment
-    full[, im3_ann:=im3/iphaselength]
-    full[irestphase==1, im3_ann:=0]
-    full[firstobs==TRUE & !is.na(firstobs), im3_ann:=0]
+    full[, im3_ann := im3/iphaselength]
+    full[irestphase == 1, im3_ann := 0]
+    full[firstobs == TRUE & !is.na(firstobs), im3_ann := 0]
     
     full = full[order(osmid, year), ]
-    full[, ibldindex:=zoo::na.approx(bldindex, method='constant', rule=1, na.rm=F), by=osmid]
-    full[is.na(newbld), newbld:=FALSE]
-    full[, osmid_buildindex:=paste(osmid, ibldindex, sep='_')]
 
-    full[!is.na(im2_ann), im2_cml:=cumsum(im2_ann) + im2[newbld==TRUE], by=osmid_buildindex]
+    full[, ibldindex := zoo::na.approx(bldindex, method = 'constant', rule = 1, na.rm = F), by = osmid]
+    full[is.na(newbld), newbld := FALSE]
+    full[, osmid_buildindex := paste(osmid, ibldindex, sep = '_')]
+
+    as.data.frame(full[!is.na(im2_ann) & osmid == 37717, 
+        list(im2_ann, m2, im2, year, newbld, 
+            cumsum(im2_ann) + im2), 
+        by = osmid_buildindex])
+    full[!is.na(im2_ann) & osmid == 37717, cumsum(im2_ann) + im2[newbld==TRUE], by = osmid_buildindex]
+
+    full[!is.na(im2_ann), im2_cml := cumsum(im2_ann) + im2[newbld==TRUE], by = osmid_buildindex]
     # full[!is.na(im2_ann), im2_cml:=im2_cml + im2[newbld==TRUE], by=osmid_buildindex]
-    full[, im2_cml:=zoo::na.approx(im2_cml, method='constant', rule=1:2, yleft=0, na.rm=F), by=osmid]
-    full[!is.na(im3_ann), im3_cml:=cumsum(im3_ann) + im3[newbld==TRUE], by=osmid_buildindex]
-    full[, im3_cml:=zoo::na.approx(im3_cml, method='constant', rule=1:2, yleft=0, na.rm=F), by=osmid]
+    full[, im2_cml := zoo::na.approx(im2_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), by = osmid]
+    full[!is.na(im3_ann), im3_cml := cumsum(im3_ann) + im3[newbld == TRUE], by = osmid_buildindex]
+    full[, im3_cml := zoo::na.approx(im3_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), by = osmid]
 
     return(full)
 }
@@ -307,6 +329,7 @@ recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
         temp$year = unlist(as.numeric(church[2, dynvrbs]))
         temp$m2 = unlist(as.numeric(church[3, dynvrbs]))
         temp$hgt = unlist(as.numeric(church[4, dynvrbs]))
+
         if (is.null(guesses)){
             temp$gss_m2 = unlist(as.logical(as.numeric(church[6, dynvrbs])))
             temp$gss_hgt = unlist(as.logical(as.numeric(church[6, dynvrbs])))
@@ -316,7 +339,7 @@ recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
         }
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
-        fill[[id]][["static"]] = church[1, -grep('V\\d+', names(churches))]
+        fill[[id]][["static"]] = church[1, 1:firstm2col]
         fill[[id]][["dynamic"]] = temp
     }
     return(fill)

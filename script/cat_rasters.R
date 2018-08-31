@@ -29,6 +29,7 @@ che = raster::getData("GADM", country='CHE', level=0)
 bel = raster::getData("GADM", country='BEL', level=0)
 gbr = raster::getData("GADM", country='GBR', level=0)
 deu = raster::getData("GADM", country='DEU', level=0)
+ita = raster::getData("GADM", country='ITA', level=0)
 
 ### drought atlas ###
 #####################
@@ -146,7 +147,7 @@ for (i in 1:length(periods)){
     print(sum(getValues(rchm[[i]]), na.rm=T))
 }
 rchm = raster::stack(rchm)
-rchm = raster::crop(rchm, raster::extent(-10, 20, 40, 60))
+rchm = trim(rchm)
 
 # express values per square km2
 rchm = rchm / area(rchm)
@@ -154,16 +155,13 @@ rchm = rchm / area(rchm)
 sum(geosphere::areaPolygon(wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ])) / (1e3^2)
 
 range(rchm)
-range(rchm[[1]])
-range(rchm[[2]])
-range(rchm[[3]])
-range(rchm[[4]])
+cellStats(rchm, 'range')
 
 rchm[is.na(rchm)] = 0
 pdf("figs/4m3maps_smoothed.pdf", width=10, height=9)
 par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
-plot(rchm[[1]], main="700-1000", zlim = c(0, 15), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 15, 5)))
+plot(rchm[[1]], main="700-1000", zlim = c(0, 30), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 30, 5)))
 add_borders(border='white')
 plot(rchm[[2]], main="1000-1200", zlim = c(0, 66), col=magma(256), axes=F,
     axis.args=list(at=seq(0, 60, 20)))

@@ -10,7 +10,7 @@ dynobs = data.table::fread("dat/dynobs.csv")
 statobs = data.table::fread("dat/statobs.csv")
 dynobs_sp = merge(dynobs, statobs, by="osmid")
 citobs = data.table::fread("dat/citobs.csv")
-fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
+fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
 # impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
@@ -18,6 +18,25 @@ impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
+
+gdp_new = readxl::read_excel("excels/mpd2018.xlsx", sheet = "Full data")
+setDT(gdp_new)
+gdp_new = gdp_new[year <= 1500]
+gdp_new[, iso2c := ifelse(countrycode == 'GBR', "UK",
+    countrycode::countrycode(countrycode, 'iso3c', 'iso2c'))]
+gdp_new = gdp_new[iso2c %in% toupper(unique(fullobs_sp$ctr)), ]
+holland_england = readxl::read_excel("excels/mpd2018.xlsx",
+    sheet = "Partial countries", skip = 1)
+setDT(holland_england)
+holland_england = holland_england[year <= 1500]
+holland_england = rbindlist(list(
+    holland_england[, list(
+        year = year, iso2c = "UK", cgdppc_part = cgdppc_England, rgdpnapc_part = rgdpnapc_England)],
+    holland_england[, list(
+        year = year, iso2c = "NL", cgdppc_part = cgdppc_Holland, rgdpnapc_part = rgdpnapc_Holland)]))
+
+gdp_new = merge(gdp_new, holland_england, on = c("iso2c", "year"), all = T)
+
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 
 pop_mj = data.table::fread("dat/mcevedyjones.csv", encoding = "UTF-8")
@@ -47,33 +66,35 @@ axis(2, labels = c(1, 10, 100), at = log(c(1, 10, 100)))
 # hist(imps, uniqueN(imps), main='heaping resampled average')
 dev.off()
 
-pdf("figs/heap_v_noheap_ann.pdf", height=6)
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T) * 1.1, by=year], type='n', ylab='m3/ann')
-abline(v=(7:15)*100, col='gray70', lwd=0.8)
-abline(v=c(1315, 1348), col='gray70', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year], col='gray')
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2)
-legend('topleft', legend=c("heaping", "heaping corrected"), fill=c('gray70', 'red'))
-dev.off()
-
 pdf("figs/heap_v_noheap.pdf", width=11)
 par(mfrow=c(1, 2))
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year], type='n', xlab = 'm3/year')
-abline(v=(7:15)*100, col='gray', lwd=0.8)
-abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year])
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2)
+heaping_annual = fullobs[data.table::between(year, 700, 1500),
+    list(heaping_corrected = sum(.SD, na.rm=T) / M,
+        heaped = sum(im3_ann, na.rm=T)),
+    by=year,
+    .SDcols=grep("im3_ann\\d", names(fullobs))]
+heaping_20y = fullobs[data.table::between(year, 700, 1500),
+    list(heaping_corrected = sum(.SD, na.rm=T) / M,
+        heaped = sum(im3_ann, na.rm=T)),
+    by=decade,
+    .SDcols=grep("im3_ann\\d", names(fullobs))]
 
-plot(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=decade], type='n', xlab = 'm3/dec')
+plot(heaping_annual[, max(heaping_corrected, heaped), by = year], type='n', xlab = 'm3/year')
 abline(v=(7:15)*100, col='gray', lwd=0.8)
 abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=decade], type='b')
-lines(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=decade, .SDcols=grep("im3_ann\\d", names(fullobs))], col=2, type='b')
+lines(heaped ~ year, data =heaping_annual)
+lines(heaping_corrected ~ year, data =heaping_annual, col = 'red')
+
+plot(heaping_20y[, max(heaping_corrected, heaped), by = decade], type='n', xlab = 'm3/20y')
+abline(v=(7:15)*100, col='gray', lwd=0.8)
+abline(v=c(1315, 1348), col='gray', lwd=0.8)
+lines(heaped ~ decade, data =heaping_20y, type = 'b')
+lines(heaping_corrected ~ decade, data =heaping_20y, col = 'red', type = 'b')
 
 legend('topleft', legend=c("heaping", "heaping corrected"), fill=1:2)
 dev.off()
 
-# total diffs
+# total difference between heaped and non-heaped series
 sum(fullobs[data.table::between(year, 700, 1500), sum(im3_ann, na.rm=T), by=year])
 sum(fullobs[data.table::between(year, 700, 1500), sum(.SD, na.rm=T) / M, by=year, .SDcols=grep("im3_ann\\d", names(fullobs))])
 
@@ -82,25 +103,25 @@ dynobs[, list(m3_end=sum(m3, na.rm=T)), by=paste(osmid, bldindex)][, mean(m3_end
 dynobs[, list(m3_end=sum(m3[bldindex==max(bldindex)], na.rm=T)), by=osmid][, mean(m3_end)]
 
 # distribution observations
-pdf('figs/phasedistr_hc.pdf', height=6, width=8)
-par(mfrow=c(2, 3), mar=c(4,4,3,1), font.main=1)
-x = dynobs_sp[, grep('ctr$|year_crc', names(dynobs_sp)), with=F]
+pdf('figs/phasedistr_hc.pdf', height = 6, width = 10)
+par(mfrow=c(2, 4), mar=c(4, 4, 2, 1), font.main = 1)
+x = dynobs_sp[, grep('ctr$|year_crc', names(dynobs_sp)), with = F]
 for (country in unique(x$ctr)){
-    histmat = as.matrix(x[ctr == country, grep("year", names(x)), with=F])
+    histmat = as.matrix(x[ctr == country, grep("year", names(x)), with = F])
     histmat[histmat < 700] = 700
     histmat[histmat > 1600] = 1600
-    hi = hist(histmat, breaks=M, plot=F)
+    hi = hist(histmat, breaks = M, plot = F)
     hi$counts = hi$counts / M
     plot(hi, main='', xlab = 'year')
     title(main=country, line = -0.1)
 }
 dev.off()
 
-pdf('figs/phasedistr.pdf', height=6, width=8)
-par(mfrow=c(2, 3), mar=c(2,2,3,1), font.main=1)
+pdf('figs/phasedistr.pdf', height = 6, width = 10)
+par(mfrow=c(2, 4), mar = c(2, 2, 3, 1), font.main = 1)
 x = dynobs_sp[, list(ctr, year)]
-x[year > 1600, year:=1600]
-x[year < 700, year:=700]
+x[year > 1600, year := 1600]
+x[year < 700, year := 700]
 for (country in unique(x$ctr)){
     hist(x[ctr == country, year], breaks = 9, main = '')
     title(main = country, line = -0.1)
@@ -108,14 +129,14 @@ for (country in unique(x$ctr)){
 dev.off()
 
 # sumstats
-siem_cities = aggregate(city ~ ctr, data=siem[year==1500 & ctr != 'it' & ctr != 'lu', ], length)
+siem_cities = aggregate(city ~ ctr, data=siem[year==1500 & ctr != 'lu', ], length)
 church_cities = aggregate(city ~ ctr, data=unique(statobs[, list(city, ctr)]), length)
 phases_pre1000 = aggregate(city ~ ctr, data=dynobs_sp[year < 1000, ], length)
 phases_pre1200 = aggregate(city ~ ctr, data=dynobs_sp[year < 1200, ], length)
 phases_all = aggregate(city ~ ctr, data=dynobs_sp, length)
 churches_by_ctr = aggregate(osmid ~ ctr, data=statobs, length)
 
-ss_out = data.frame(siem_cities, 
+ss_out = data.frame(siem_cities,
     cities_w_church=church_cities[, -1],
     n_churches=churches_by_ctr[, -1], n_phases=phases_all[,-1],
     n_phases_pre1000=phases_pre1000[,-1], n_phases_pre1200=phases_pre1200[, -1])
@@ -125,27 +146,72 @@ ss_out = rbind(ss_out, c('all', colSums(ss_out[, -1])))
 
 write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
 
+writeLines(
+    knitr::kable(ss_out, format = "html", row.names = FALSE),
+    "tab/sumstats.html")
+
 byctr = Reduce(merge, list(
-    siem[year == 1500 & ctr != 'it', .N, by = ctr],
-    unique(statobs[, list(city, 1)])[siem[year == 1500 & ctr != 'it'], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2))), by = ctr],
-    unique(statobs[, list(city, osmid)])[siem[year == 1500 & ctr != 'it'], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch)), by = ctr],
-    dynobs_sp[, .N, by = list(osmid, ctr)][, list(`Building phases / church` = mean(N)), by = ctr],
-    dynobs_sp[, list(`% phases < 1000` = mean(year < 1000)), by = ctr],
-    dynobs_sp[, list(`% phases < 1200` = mean(year < 1200)), by = ctr]))
+    siem[year == 1500,
+        .N,
+        by = ctr],
+    unique(statobs[, list(city, 1)])[
+        siem[year == 1500],
+        on = c("city")][,
+            list(`% cities w. large church` = mean(!is.na(V2))),
+            by = ctr],
+    unique(statobs[, list(city, osmid)])[
+        siem[year == 1500],
+        on = c("city"),
+        allow.cartesian = T][,
+            list(nchurch = sum(!is.na(osmid))),
+            by = list(city, ctr)][,
+                list(`Large churches/city` = mean(nchurch)),
+                by = ctr],
+    dynobs_sp[,
+        .N,
+        by = list(osmid, ctr)][,
+            list(`Building phases / church` = mean(N)),
+            by = ctr],
+    dynobs_sp[,
+        list(`% phases < 1000` = mean(year < 1000)),
+        by = ctr],
+    dynobs_sp[,
+        list(`% phases < 1200` = mean(year < 1200)),
+        by = ctr]))
 tot = Reduce(merge, list(
-    siem[year == 1500 & ctr != 'it', .N],
-    unique(statobs[, list(city, 1)])[siem[year == 1500 & ctr != 'it'], on = c("city")][, list(`% cities w. large church` = mean(!is.na(V2)))],
-    unique(statobs[, list(city, osmid)])[siem[year == 1500 & ctr != 'it'], on = c("city"), allow.cartesian = T][, list(nchurch = sum(!is.na(osmid))), by = list(city, ctr)][, list(`Large churches/city` = mean(nchurch))],
-    dynobs_sp[, .N, by = list(osmid, ctr)][, list(`Building phases / church` = mean(N))],
+    siem[year == 1500, .N],
+    unique(statobs[, list(city, 1)])[
+        siem[year == 1500 ],
+        on = c("city")][,
+            list(`% cities w. large church` = mean(!is.na(V2)))],
+    unique(statobs[, list(city, osmid)])[
+        siem[year == 1500 ],
+        on = c("city"),
+        allow.cartesian = T][,
+            list(nchurch = sum(!is.na(osmid))),
+            by = list(city, ctr)][,
+                list(`Large churches/city` = mean(nchurch))],
+    dynobs_sp[,
+        .N,
+        by = list(osmid, ctr)][,
+            list(`Building phases / church` = mean(N))],
     dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
     dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]))
+setnames(tot, 'x', "N")
 out = rbind(byctr, tot, fill = T)
-# out[, grep('\\%', names(out)) := round(.SD * 100), .SDcols = grep('\\%', names(out))]
 out[, grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), .SDcols = grep('\\%', names(out))]
-# out[, grep('\\%', names(out), invert = T) := round(.SD, 1), .SDcols = grep('\\%', names(out), invert = T)]
-write.csv(format(out[order(-N)], digits = 1, nsmall = 1), "tab/sumstats_perc.csv", row.names = F)
+writeLines(knitr::kable(out, digits = 1, format = 'html'), "tab/sumstats_perc.html")
 
+data.table::fwrite(
+    statobs[city %in% siem[year <= 1500, city[bishopric == 1 | arcbishopric == 1]] & ctr == 'it'][order(city)],
+    "tab/italianbishoprics.csv")
+
+source("dat/itcathedrals.R")
 # catheral building v. other churches
+
+fullobs_sp[osmid %in% itcathedrals, category := "cathedral"]
+fullobs_sp[is.na(category), category := ""]
+
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
 plot(fullobs_sp[category=="cathedral" & data.table::between(year, 700, 1500), base::sum(.SD, na.rm=T) / M, by=decade, .SDcols=impvrbs],
@@ -168,40 +234,40 @@ bytype[, sum(V1), by = list(century = round(decade, -2), category)][, list(categ
 
 par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(V1 ~ decade, data=bytype[category=="cathedral", ],
-    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20 year')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
 title(main="cathedral", line=-1)
 plot(V1 ~ decade, data=bytype[category=="conventual", ],
-    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20 year')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
 title(main="conventual", line=-1)
 plot(V1 ~ decade, data=bytype[category=="parish", ],
-    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20 year')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="other", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='gray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='gray')
 title(main="parish", line=-1)
 plot(V1 ~ decade, data=bytype[category=="other", ],
-    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20y')
+    type='l', ylim=range(bytype$V1), bty='l', lwd=1.5, ylab = 'm3/20 year')
     lines(V1 ~ decade, data=bytype[category=="parish", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='lightgray')
     lines(V1 ~ decade, data=bytype[category=="cathedral", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='lightgray')
     lines(V1 ~ decade, data=bytype[category=="conventual", ],
-            type='l', ylim=range(bytype$V1), col='lightgray', ylab = 'm3/20y')
+            type='l', ylim=range(bytype$V1), col='lightgray')
 title(main="other", line=-1)
 dev.off()
 
@@ -231,11 +297,11 @@ lines(eutotal, type='b', lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
 out = fullobs[, list(im3c_imp = base::sum(.SD, na.rm=T) / M), by=list(T = (trunc((year - 1) / 100) + 1) * 100), .SDcols = impvrbs][
-    fullobs[, list(im3c_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = (trunc((year - 1) / 100) + 1) * 100)], 
+    fullobs[, list(im3c_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = (trunc((year - 1) / 100) + 1) * 100)],
         on = 'T'][
-    fullobs[, list(im3y20_imp = base::sum(.SD, na.rm=T) / M), by=list(T = decade), .SDcols = impvrbs], 
+    fullobs[, list(im3y20_imp = base::sum(.SD, na.rm=T) / M), by=list(T = decade), .SDcols = impvrbs],
         on = 'T'][
-    fullobs[, list(im3y20_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = decade)], 
+    fullobs[, list(im3y20_noimp = base::sum(im3_ann, na.rm = T)), by=list(T = decade)],
         on = 'T']
 data.table::fwrite(out, "dat/eutotalcompare.csv")
 
@@ -261,22 +327,24 @@ pcitobs = merge(midcent, siem, by=c('city', 'year'), all.x=T)
 pdf("figs/geography_hc.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 # why mean? already total by city, now take mean for kind of city per
-plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year],
-    type='n', col='gray', ylab='mean cent. city m3')
+plot(pcitobs[coastal==1, mean(im3_cnt), by=year],
+    bty = 'l', type='n', col='gray', ylab='mean m3/century', xlab = '')
 lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
-title(main='Coastal')
-plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='n', col='gray', ylab = '')
+title(main='Coastal', line = -0.3)
+plot(pcitobs[coastal==1, mean(im3_cnt), by=year],
+    bty = 'l', type='n', col='gray', ylab = '', xlab = 'century')
 lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
-title(main='River/canal')
-plot(pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='n', col='gray', ylab = '')
+title(main='River/canal', line = -0.3)
+plot(pcitobs[coastal==1, mean(im3_cnt), by=year],
+    bty = 'l', type='n', col='gray', ylab = '', xlab = '')
 lines(V1 ~ year, data=pcitobs[rivercanal==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[coastal==1, mean(im3_cnt), by=year], type='b', col='gray')
 lines(V1 ~ year, data=pcitobs[landlocked==1, mean(im3_cnt), by=year], type='b', lwd = 1.5)
-title(main='Landlocked')
+title(main='Landlocked', line = -0.3)
 dev.off()
 
 pcitobs[rivercanal==1, mean(im3_cnt), by=year][year %in% c(900, 1200), list(year, annualised_growth(V1, delta = 300))]
@@ -294,8 +362,8 @@ summary(lm(log1p(inhab) ~ log1p(im3_cnt), data=pcitobs))
 
 # yearinhab = dcast(pcitobs, year ~ inhab, mean, na.rm = T, value.var = 'im3_cnt')
 # yearinhab[sapply(yearinhab, is.nan)] = 0
-# filled.contour(as.numeric(as.character(yearinhab[, 1])), 
-#     log1p(as.numeric(colnames(yearinhab)[-1])), 
+# filled.contour(as.numeric(as.character(yearinhab[, 1])),
+#     log1p(as.numeric(colnames(yearinhab)[-1])),
 #     log1p(as.matrix(yearinhab[, -1])))
 
 pcitobs = plm::pdata.frame(pcitobs, c("city", "year"))
@@ -326,7 +394,7 @@ citobs_dec = fullobs_sp[data.table::between(decade, 700, 1500), list(m3dec = bas
 # d = citobs_dec_cml[citobs_dec, on = c('decade', 'city', 'ctr', 'ctr2', 'ctr3')]
 # d[, stock := (m3cml - m3dec) * 200] # check citobs madness
 
-siem]
+# siem]
 dim(citobs_dec)
 citobs_dec = siem[, list(inhab, lat, lon, city, decade = year)][citobs_dec, on = c("city", "decade")]
 dim(citobs_dec)
@@ -351,6 +419,10 @@ eu = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(de
 
 x1 = pop_mj[, list(ctr, decade, pop)][x1, on = c('ctr', 'decade')]
 eu = pop_mj[, list(ctr, decade, pop)][, list(pop = sum(pop)), by = decade][eu, on = 'decade']
+
+x1 = gdp_new[year %% 20 == 0, list(ctr = tolower(iso2c), decade = year, cgdppc, rgdpnapc,
+    pop_madison = pop, cgdppc_part, rgdpnapc_part)][
+    x1, on = c('ctr', 'decade')]
 
 x1[decade %% 100!=0, urb_inhab:=NA] # fix zeroes
 x2[decade %% 100!=0, urb_inhab:=NA]
@@ -399,55 +471,90 @@ eucompare[, 2:4] = eucompare[, lapply(.SD, function(x) x / x[decade==1200]), .SD
 pdf("figs/eucompare.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 matplot(eucompare[, decade], eucompare[, 2:4], main = "Total",
-    type = 'l', lty = 1, col = 'gray', ylab = 'Building activity (index 1200 = 1)', xlab = 'decade')
+    type = 'l', lty = 1, col = 'gray', bty = 'l',
+    ylab = 'Building activity (index 1200 = 1)', xlab = 'decade')
 lines(im3_dec ~ decade, data = eucompare, lwd = 1.5)
 matplot(eucompare[, decade], eucompare[, 2:4], main = "Per capita",
-    type = 'l', lty = 1, col = 'gray', ylab = '', xlab = 'decade')
+    type = 'l', lty = 1, col = 'gray', bty = 'l',
+    ylab = '', xlab = 'decade')
 lines(im3_dec_per_capita ~ decade, data = eucompare, lwd = 1.5)
 matplot(eucompare[, decade], eucompare[, 2:4], main = "Per urban capita",
-    type = 'l', lty = 1, col = 'gray', ylab = '', xlab = 'decade')
+    type = 'l', lty = 1, col = 'gray', bty = 'l',
+    ylab = '', xlab = 'decade')
 lines(im3_dec_per_urb_capita ~ decade, data = eucompare, lwd = 1.5)
 dev.off()
 
 yl = range(x1[ctr %in% c("fr", "de"), im3_dec / urb_inhab_i],
            x3[ctr3 %in% c("lc"), im3_dec / urb_inhab_i])
-pdf("figs/pucpanel.pdf", width=8)
-par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
+pdf("figs/pucpanel.pdf", width=8, height = 5)
+par(mfrow=c(2, 3), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='fr', ], type='l', lwd = 1.5,
-    bty='l', ylab='m3/20y', xlab='', main='France', ylim = yl)
+    bty='l', ylab='m3/20 year', xlab='', main='France', ylim = yl)
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr %in% c('de', 'ch'), list(im3_dec = sum(im3_dec), urb_inhab_i = sum(urb_inhab_i)), by = decade], type='l', lwd = 1.5,
-    bty='l', ylab='', xlab='', main='Germany (incl. Switz.)', ylim = yl)
+    bty='l', ylab='', xlab='', main='Germany (incl. Switzerland)', ylim = yl)
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='uk', ], type='l', lwd = 1.5,
-    bty='l', ylab='m3/20y', main='Great Britain')
+    bty='l', ylab='m3/20 year', main='Great Britain')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='lc', ], type='l', lwd = 1.5,
     bty='l', ylab='', main='Low Countries', ylim = yl)
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='it', ], type='l', lwd = 1.5,
+    bty='l', ylab='m3/20 year', xlab='', main='Italy', ylim = yl)
+lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='l', col='gray')
 dev.off()
 
 yl1 = x1[ctr %in% c("fr", "de", "ch", "uk"), range(im3_dec / pop_i)]
-yl2 = x1[!ctr %in% c("fr", "de", "ch", "uk"), range(im3_dec / pop_i)]
-pdf("figs/pcpanel.pdf", width=8)
-par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
+# yl2 = x1[!ctr %in% c("fr", "de", "ch", "uk"), range(im3_dec / pop_i)]
+yl2 = c(0, 320)
+pdf("figs/pcpanel.pdf", width=8, height = 5)
+par(mfrow=c(2, 3), mar=c(4, 4, 1.5, 0.5), font.main=1)
 plot(im3_dec / pop_i ~ decade, data=x1[ctr=='fr', ], type='l',
-    ylim = yl1, lwd = 1.5, bty='l', ylab='m3/dec', xlab='', main='France')
+    ylim = yl1, lwd = 1.5, bty='l',
+    ylab='m3/20 years', xlab='', main='France')
 lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / pop_i ~ decade, data=x1[ctr %in% c('de', "ch"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
-    ylim = yl1, lwd = 1.5, bty='l', xlab='', ylab = '', main='Germany (incl. Switz.)')
+    ylim = yl1, lwd = 1.5, bty='l',
+    xlab='', ylab = '', main='Germany (incl. Switzerland)')
 lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / pop_i ~ decade, data=x1[ctr=='uk', ], type='l',
-    ylim = yl1, lwd = 1.5, bty='l', xlab = '', ylab = 'm3/dec', main='Great Britain')
+    ylim = yl1, lwd = 1.5, bty='l',
+    xlab = 'decade', ylab = 'm3/20 years', main='Great Britain')
 lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
 plot(im3_dec / pop_i ~ decade, data=x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], type='l',
-    ylim = yl2, lwd = 1.5, bty='l', main='Low Countries')
+    ylim = yl2, lwd = 1.5, bty='l',
+    xlab = 'decade', ylab = '', main='Low Countries')
+lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
+plot(im3_dec / pop_i ~ decade, data=x1[ctr=='it', ], type='l',
+    ylim = yl2, lwd = 1.5, bty='l',
+    ylab='m3/20 years', xlab='', main='Italy')
 lines(im3_dec / pop_i ~ decade, data=eu, type='l', col='gray')
 dev.off()
 
-data.table::fwrite(rbindlist(list(x1, x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], eu[, c(.SD, list(ctr = 'eu'))]), 
+data.table::fwrite(rbindlist(list(x1, x1[ctr %in% c("nl", "be"), list(im3_dec = sum(im3_dec), pop_i = sum(pop_i)), by = decade], eu[, c(.SD, list(ctr = 'eu'))]),
     fill = T), "dat/totpcpuc.csv")
 data.table::fwrite(x3, "dat/totpuc_regions.csv")
+
+pdf('figs/italy_panel_hc.pdf', height=4, width=9)
+par(mfrow=c(1, 3), font.main=1)
+yl = c(0, max(x1[ctr=='it', im3_dec]))
+plot(im3_dec ~ decade, data=x1[ctr=='it', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, total', col=2)
+plot(im3_dec ~ decade, data=x3[ctr3=='it_south', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, south', col=2)
+lines(im3_dec ~ decade, data=x1[ctr=='it', ], col='gray70')
+plot(im3_dec ~ decade, data=x3[ctr3=='it_north', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, north', col=2)
+lines(im3_dec ~ decade, data=x1[ctr=='fr', ], col='gray70')
+dev.off()
+
+pdf('figs/italy_panel_puc_hc.pdf', height=4, width=9)
+par(mfrow=c(1, 3), font.main=1)
+yl = range(x3[grep('it', ctr3), im3_dec / urb_inhab_i])
+plot(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='it', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, total', col=2)
+plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='it_south', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, south', col=2)
+lines(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='it', ], col='gray70')
+plot(im3_dec / urb_inhab_i ~ decade, data=x3[ctr3=='it_north', ], type='l', ylim=yl, bty='l', ylab='m3/dec', main='Italy, north', col=2)
+lines(im3_dec / urb_inhab_i ~ decade, data=x1[ctr=='fr', ], col='gray70')
+dev.off()
 
 pdf('figs/france_panel_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
