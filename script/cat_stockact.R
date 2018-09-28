@@ -38,14 +38,28 @@ m_lag = lm(log1p(activity) ~ log1p(endsize_lag), data = stock)
 pdf("figs/completedstock_activity.pdf", width = 10, height = 6)
 par(mfrow=c(1, 2), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray30', bty = 'l',
-    xlab = "compl. stock (log m3)", ylab = "activity (log m3/century)")
+    xlab = "completed stock (log m3)", ylab = "activity (log m3/century)")
 abline(m, col = 1, lwd = 1.5)
 plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = 'l',
-    xlab = "lag compl. stock (log m3)", ylab = "")
+    xlab = "lag completed stock (log m3)", ylab = "")
 abline(m_lag, col = 1, lwd = 1.5)
 dev.off()
 
-m_city = lm(log1p(activity) ~ log1p(endsize) + factor(century) + factor(city), data = stock)
-m_lag_city = lm(log1p(activity) ~ log1p(endsize_lag) + factor(century), data = stock)
+texreg::screenreg(list(m, m_lag, m_city, m_lag_city), omit.coef = 'city')
+
+stock = siem[, list(city, century = year, inhab)][stock, on = c("city", "century")]
+
+m = lm(log1p(activity / inhab) ~ log1p(endsize / inhab), data = stock)
+m_lag = lm(log1p(activity / inhab) ~ log1p(endsize_lag / inhab), data = stock)
+
+pdf("figs/completedstock_activity_puc.pdf", width = 10, height = 6)
+par(mfrow=c(1, 2), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
+plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray30', bty = 'l',
+    xlab = "completed stock (log m3)", ylab = "activity (log m3/century)")
+abline(m, col = 1, lwd = 1.5)
+plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = 'l',
+    xlab = "lag completed stock (log m3)", ylab = "")
+abline(m_lag, col = 1, lwd = 1.5)
+dev.off()
 
 texreg::screenreg(list(m, m_lag, m_city, m_lag_city), omit.coef = 'city')

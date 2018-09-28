@@ -95,7 +95,19 @@ siem[, bot := lat - km2lat(5)]
 siem[, lft := lon - km2lon(5, lat=lat)]
 siem[, rgt := lon + km2lon(5, lat=lat)]
 
-png('figs/researcharea.png', width=720, height=720)
+png('figs/researcharea_norural.png', width=1080, height=1080)
+plot(nld, lwd = 0.8, 
+    xlim = range(fullobs_sp_urb$lon),
+    ylim = range(fullobs_sp_urb$lat))
+lines(fra, lwd = 0.8)
+lines(che, lwd = 0.8)
+lines(bel, lwd = 0.8)
+lines(gbr, lwd = 0.8)
+lines(deu, lwd = 0.8)
+points(siem[year == 1500 & tld != "IT", list(lon, lat)], pch = 19, col = 2)
+dev.off()
+
+png('figs/researcharea.png', width=1080, height=1080)
 proj4string(rur) = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
 # plot(rur, border=1)
 # points(lat ~ lon, data=siem, pch=3)
@@ -108,6 +120,7 @@ lines(bel, lwd = 0.5)
 lines(gbr, lwd = 0.5)
 lines(deu, lwd = 0.5)
 
+rect(xleft = -8.3, ybottom = 54, xright = -5.3, ytop = 55.3, col = 'white', border = NA)
 points(lat ~ lon, data=fullobs_sp_urb, pch = 20, cex = 0.7, col = 'gray')
 points(coordinates(rur), pch = 20, cex = 0.8)
 rect(xleft = siem$lft[siem$country!="Italy"], ybottom = siem$bot[siem$country!="Italy"], 
@@ -161,7 +174,7 @@ al[, combined := rural_mlp + urban]
 pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
 par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
 plot(combined ~ decade, data = al, type = 'n', bty = 'l',
-    ylab = 'm3/20y', xlab = '', main = "Urban")
+    ylab = 'm3 / 20 years', xlab = '', main = "Urban")
 lines(urban ~ decade, data = al, type = 'l')
 lines(rural_mlp ~ decade, data = al, type = 'l', col = 'gray')
 plot(combined ~ decade, data = al, type = 'n', bty = 'l',

@@ -82,14 +82,14 @@ heaping_20y = fullobs[data.table::between(year, 700, 1500),
 plot(heaping_annual[, max(heaping_corrected, heaped), by = year], type='n', xlab = 'm3/year')
 abline(v=(7:15)*100, col='gray', lwd=0.8)
 abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(heaped ~ year, data =heaping_annual)
-lines(heaping_corrected ~ year, data =heaping_annual, col = 'red')
+lines(heaped ~ year, data = heaping_annual)
+lines(heaping_corrected ~ year, data = heaping_annual, col = 'red')
 
 plot(heaping_20y[, max(heaping_corrected, heaped), by = decade], type='n', xlab = 'm3/20y')
 abline(v=(7:15)*100, col='gray', lwd=0.8)
 abline(v=c(1315, 1348), col='gray', lwd=0.8)
-lines(heaped ~ decade, data =heaping_20y, type = 'b')
-lines(heaping_corrected ~ decade, data =heaping_20y, col = 'red', type = 'b')
+lines(heaped ~ decade, data = heaping_20y, type = 'b')
+lines(heaping_corrected ~ decade, data = heaping_20y, col = 'red', type = 'b')
 
 legend('topleft', legend=c("heaping", "heaping corrected"), fill=1:2)
 dev.off()

@@ -21,6 +21,7 @@ nweur = rbind(belgium,
     swiss,
     unitedkingdom)
 
+# N churches in cities
 length(unique(nweur$osmid))
 
 nweur$surface = geosphere::areaPolygon(as_Spatial(st_geometry(nweur)))
@@ -31,6 +32,8 @@ hist(surfaces$surface)
 hist(log(surfaces$surface))
 abline(v = log(1e3), col = 2)
 
+# N churches > 1000ms
+sum(surfaces$surface > 1000)
 table(surfaces$surface > 1000)
 prop.table(table(surfaces$surface > 1000))
 

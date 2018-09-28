@@ -42,6 +42,9 @@ for (i in 236:nrow(siem_it)){
     Sys.sleep(30)
 }
 
+# checked Calascibetta, all correct
+# check cagliari = 63
+
 # combine two lists 
 # or later as dataframe?
 polys_way_it = polylist2df(polylist_way_it)

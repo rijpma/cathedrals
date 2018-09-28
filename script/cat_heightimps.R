@@ -39,10 +39,10 @@ AIC(m_sq_or)
 
 pdf("figs/height_surface_sq_ci.pdf")
 plot(nave_height ~ ground_surface_m2, data=hgt, bty='l', type='n',
-    xlab = 'Ground sfc. (m2)', ylab = 'Nave hgt. (m)')
-fit = predict(m_sq_or, newdata=data.frame(ground_surface_m2=0:8000), 
+    xlab = 'Ground surface (m2)', ylab = 'Nave height (m)')
+fit = predict(m_sq_or, 
+    newdata = data.frame(ground_surface_m2 = 0:8000), 
     se=TRUE, interval='confidence')
-# polygon(x=c(0:8000, 8000:0), y=c(fit$fit[,'lwr'], rev(fit$fit[,'upr'])), col='pink', border=NA)
 lines(x=0:8000, fit$fit[, 'fit'], lwd=1.5)
 points(nave_height ~ ground_surface_m2, data=hgt, bty='l', col = 'gray30')
 dev.off()
