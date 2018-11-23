@@ -520,13 +520,16 @@ aggregate_multipolys = function(polys, by="Group.1"){
     return(out)
 }
 
-filter_prox = function(ctr_gcd, siem_ctr){
+filter_prox = function(ctr_gcd, siem_ctr, 
+    xcoords = c("lon", "lat"),
+    ycoords = c("east", "north")){
     failed = sapply(ctr_gcd, nrow) > 1
     ctr_2nd = ctr_gcd
     for (i in 1:sum(failed)){
         dsts = sp::spDistsN1(
-            as.matrix(ctr_gcd[failed][[i]][, c("lon", "lat")]),
-            as.matrix(siem_ctr[failed, ][i, c("east", "north")]), longlat=T)
+            as.matrix(as.data.frame(ctr_gcd[failed][[i]])[, xcoords]),
+            as.matrix(as.data.frame(siem_ctr[failed, ])[i, ycoords]), 
+            longlat = T)
         if (min(dsts) < 2){
             ctr_gcd[failed][[i]] = ctr_gcd[failed][[i]][which.min(dsts), ]
         } else {
@@ -535,14 +538,18 @@ filter_prox = function(ctr_gcd, siem_ctr){
     }
     return(ctr_gcd)
 }
-check_geocodes = function(siem_ctr, ctr_gcd){
+
+check_geocodes = function(siem_ctr, ctr_gcd,
+                          xcoords = c("lon", "lat"), 
+                          ycoords = c("east", "north")){
     cmpr = data.frame(siem_ctr, do.call(rbind, ctr_gcd))
     dstmat = sp::spDists(
-        as.matrix(cmpr[, c("lon", "lat")]),
-        as.matrix(cmpr[, c("east", "north")]), longlat=T)
+        as.matrix(as.data.frame(cmpr)[, xcoords]),
+        as.matrix(as.data.frame(cmpr)[, ycoords]), longlat=T)
     cmpr$distance = diag(dstmat)
     return(cmpr)
 }
+
 grepr <- function(pattern, x, ...){
     idx <- grep(pattern, x, ...)
     return(x[idx])
@@ -644,6 +651,10 @@ get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2,
 geocode <- function(loc, reg='', bounds='', apikey = NA){
     # barebones version of  geocode function on:
     # https://github.com/dkahle/ggmap
+
+    # my api key
+    # 
+    # sigh
 
     require(jsonlite)
     if (length(loc) > 1) loc <- loc[1] # geocode api takes only one location
