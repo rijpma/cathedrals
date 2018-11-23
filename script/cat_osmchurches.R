@@ -25,6 +25,59 @@ siem_ch = data.table::fread("dat/siem_swiss.csv")
 siem_de = data.table::fread("dat/siem_de.csv")
 siem_nl = data.table::fread("dat/siem_nl.csv")
 siem_lu = data.table::fread("dat/siem_lu.csv")
+siem_ad = data.table::fread("dat/siem_add.csv")
+
+# additional siem
+# ---------------
+
+polylist_rel_ad = list()
+for (i in 1:nrow(siem_ad)){
+    cty = siem_ad[i, ]
+    polylist_rel_ad[[cty$city]] = get_osm_data(cty, what='relation', block=FALSE)
+    Sys.sleep(30)
+}
+polylist_way_ad = list()
+for (i in 1:nrow(siem_ad)){
+    cty = siem_ad[i, ]
+    polylist_way_ad[[cty$city]] = get_osm_data(cty, what='way', block=FALSE)
+    Sys.sleep(30)
+}
+
+polys_way_ad = polylist2df(polylist_way_ad)
+polys_way_ad@data$surface = geosphere::areaPolygon(polys_way_ad)
+polys_way_ad@data$lon = sp::coordinates(polys_way_ad)[, 1]
+polys_way_ad@data$lat = sp::coordinates(polys_way_ad)[, 2]
+
+polys_rel_ad = polylist2df(polylist_rel_ad, what='relation')
+polys_rel_ad@data$surface = geosphere::areaPolygon(polys_rel_ad)
+polys_rel_ad@data$surface[polys_rel_ad@data$role=="inner"] = -1 * polys_rel_ad@data$surface[polys_rel_ad@data$role=="inner"]
+polys_rel_ad@data$lon = sp::coordinates(polys_rel_ad)[, 1]
+polys_rel_ad@data$lat = sp::coordinates(polys_rel_ad)[, 2]
+polys_rel_ad = aggregate_multipolys(polys=polys_rel_ad, by='osmid')
+
+plot(polys_way_ad)
+plot(polys_rel_ad, add=T, col=2)
+
+pdf('figs/ad_churches.pdf')
+plot_churches_by_city(c(polylist_way_ad, polylist_rel_ad), siem_it)
+# plot_churches_by_city(polylist_rel_pt, polylist_rel_pt), siem_pt)
+dev.off()
+
+out = sp_rbind(polys4merge=polys_way_ad, polys=polys_rel_ad)
+# out = rbindlist(list(polys_way_pt@data, polys_rel_pt@data), use.names=TRUE, fill=TRUE)
+
+
+dim(out)
+out = out[out$surface >= 1e3, ]
+dim(out)
+
+max(nchar(unlist(out@data)), na.rm = T) < 254
+out@data$timestamp = as.character(out@data$timestamp)
+maptools::writeSpatialShape(out, "dat/gis/it")
+
+out = out[order(out$city, out$surface), ]
+
+write_filltable(out, outfile="dat/adcities.csv")
 
 # italy
 #---------
@@ -86,8 +139,6 @@ maptools::writeSpatialShape(out, "dat/gis/it")
 out = out[order(out$city, out$surface), ]
 
 write_filltable(out, outfile="dat/itcities.csv")
-
-
 
 # rural squares
 #--------------

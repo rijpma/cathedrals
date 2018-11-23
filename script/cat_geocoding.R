@@ -3,10 +3,13 @@ options(stringsAsFactors=FALSE)
 
 setwd('~/dropbox/cathedrals/')
 
+library("data.table")
 library(countrycode)
 library(sp)
 
 source('script/cat_functions.r')
+
+apikey = readLines("dat/googleapikey.txt")
 
 hdr <- unlist(read.csv("dat/siem.csv", nrows=1))
 
@@ -17,6 +20,68 @@ siem$city <- iconv(siem$city, from='macroman', to='utf8')
 tld <- structure(countrycode(unique(siem$country), 'country.name', 'iso2c'), names=unique(siem$country))
 siem$tld <- tld[siem$country]
 mss = read.csv("dat/missing_bishoprics.csv", skip=1)
+
+# additions to siem dataset
+# -------------------------
+siem_new = readxl::read_excel("excels/urb pop 700 to 2000.xlsx",
+    skip = 2, sheet = "Sheet2")
+siem_old = data.table::fread("dat/siem_long.csv")
+
+setDT(siem_new)
+
+siem_new = siem_new[country %in% unique(siem_old$country)]
+
+new_not_in_old = setdiff(siem_new$city, siem_old$city)
+
+new_gc = lapply(new_not_in_old, geocode, reg = 'eu', apikey = apikey)
+new_gc[sapply(new_gc, nrow) > 1]
+
+# replace wrong reichen
+new_gc[[grep("Reichen", sapply(new_gc, `[`, 'loc'))]] = geocode("Reichenbach im Vogtland", apikey = apikey)
+
+new_gc_2nd = filter_prox(new_gc, siem_new[city %in% new_not_in_old],
+    ycoords = c("longtitude", "latitude"))
+new_gc_2nd[sapply(new_gc_2nd, nrow) > 1]
+
+# first quess always best here
+new_gc_3rd = lapply(new_gc_2nd, function(x) x[1, ])
+
+# stay in europe
+new_gc_3rd[sapply(new_gc_3rd, `[`, 'lon') < -40]
+new_gc_3rd[[grep("Le Blanc", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Le Blanc", reg = 'fr', apikey = apikey)
+new_gc_3rd[[grep("Newark", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Newark", reg = 'uk', apikey = apikey)
+
+# no matches, repair by fixing country
+new_gc_3rd[is.na(sapply(new_gc_3rd, `[`, 'lon'))]
+new_gc_3rd[[grep("Dour", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Dour", reg = 'fr', apikey = apikey)
+new_gc_3rd[[grep("Lens", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Lens", reg = 'fr', apikey = apikey)
+new_gc_3rd[[grep("Pirna", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Pirna", reg = 'de', apikey = apikey)
+new_gc_3rd[[grep("Alba", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Alba", reg = 'it', apikey = apikey)
+new_gc_3rd[[grep("Cavour", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Cavour, Piedmont", reg = 'it', apikey = apikey)
+new_gc_3rd[[grep("Este", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Este", reg = 'it', apikey = apikey)
+new_gc_3rd[[grep("Latina", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Latina", reg = 'it', apikey = apikey)
+new_gc_3rd[[grep("Oria", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Oria", reg = 'it', apikey = apikey)[1, ]
+new_gc_3rd[[grep("Trino", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Trino", reg = 'it', apikey = apikey)
+new_gc_3rd[[grep("Goes", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Goes", reg = 'nl', apikey = apikey)
+new_gc_3rd[[grep("Leek", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Leek", reg = 'uk', apikey = apikey)
+new_gc_3rd[[grep("Middlesborough", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Middlesborough", reg = 'uk', apikey = apikey)[1, ]
+new_gc_3rd[[grep("Rugby", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Rugby", reg = 'uk', apikey = apikey)
+new_gc_3rd[[grep("Sandwich", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Sandwich, Kent", reg = 'uk', apikey = apikey)
+new_gc_3rd[[grep("Sefton", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Sefton", reg = 'uk', apikey = apikey)
+new_gc_3rd[[grep("Windsor", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Windsor", reg = 'uk', apikey = apikey)
+new_gc_3rd[[grep("Schwytz", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Schwyz, Schwyz", reg = 'ch', apikey = apikey)
+new_gc_3rd[[grep("Ebersbach", sapply(new_gc_3rd, `[`, 'loc'))]] = geocode("Ebersbach, Görlitz", reg = 'de', apikey = apikey)
+new_gc_3rd[is.na(sapply(new_gc_3rd, `[`, 'lon'))]
+
+plot(do.call(rbind, new_gc_3rd)[, c("lon", "lat")])
+points(siem_new[city %in% new_not_in_old, .(longtitude, latitude)], col = 2, pch = 19, cex = 0.5)
+
+siem_new_gcd = check_geocodes(siem_ctr = siem_new[city %in% new_not_in_old], 
+    ctr_gcd = new_gc_3rd, ycoords = c("longtitude", "latitude"))
+
+tail(siem_new_gcd[order(siem_new_gcd$distance), c("city", "distance", "lon", "lat", "longtitude", "latitude")])
+
+data.table::fwrite(siem_new_gcd, "dat/siem_add.csv")
 
 # missing bishoprics
 # ------------------
