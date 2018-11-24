@@ -49,6 +49,11 @@ pop_mj[, pop := pop * 1e3]
 siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
 
+siem[, tokeep := any(inhab[year <= 1500] > 0), by = city]
+siem[, .N, by = tokeep]
+siem = siem[tokeep == T]
+siem[, tokeep := NULL]
+
 # heaping and its correction
 h_heap = hist(dynobs[, year], breaks=data.table::uniqueN(dynobs$year), plot = F)
 h_unheap = hist(dynobs[, year_crc1], breaks=data.table::uniqueN(dynobs$year_crc1), plot = F)
