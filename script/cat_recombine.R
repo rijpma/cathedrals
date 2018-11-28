@@ -6,8 +6,8 @@ source("script/cat_functions.r")
 
 library("data.table")
 library("stringi")
-library("plm")
 library("raster") # for spatial splitting of data
+library("sf")
 
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 
@@ -16,7 +16,6 @@ chr = data.table::fread("dat/checkedchurches_eb_7.csv",
 chr = chr[, 1:29, with=F]
 firstm2col_chr = 14
 setnames(chr, firstm2col_chr:ncol(chr), paste0("y", 1:(ncol(chr) - firstm2col_chr + 1)))
-
 
 # encoding, do before chr_it which has no encoding issues
 chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
@@ -35,7 +34,6 @@ chr_it = chr_it[, 1:21]
 firstm2col_chr_it = 9
 setnames(chr_it, firstm2col_chr_it:ncol(chr_it), paste0("y", 1:(ncol(chr_it) - firstm2col_chr_it + 1)))
 
-
 chr_it[, ctr := "it"]
 
 chr = rbindlist(list(chr, chr_it), fill = T)
@@ -43,10 +41,6 @@ chr = rbindlist(list(chr, chr_it), fill = T)
 # maybe the fact that the V\\d+ don't match up doesn't matter, 
 # let's find out
 # otherwise make some sort of similar name and make sure recombine is fixed
-
-# no longer needed?
-nanames = which(names(chr)=="NA")
-setnames(chr, nanames, paste0("V", nanames))
 
 # check 
 if (!all(sapply(chr, validUTF8))){
@@ -97,8 +91,6 @@ chr[osmid == "2322752", "lat"][1] = 46.4349 # cluny
 chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
 chr[osmid == "66636479", "osmwikipedia"][1] <- "https://fr.wikipedia.org/wiki/Cathédrale_Saint-Pierre_de_Condom"
 
-# table(table(chr$osmid[chr$osmid!='']))
-
 chr[city=="reading", city := "Reading"]
 chr[city=="norwich", city := "Norwich"]
 
@@ -133,34 +125,43 @@ if (!all(unique(statobs$city) %in% siem$city)){
     warning("names mismatch between statobs and siem")
 }
 
-# different city names in siem check, should be zero rows
-statobs[!city %in% siem$city, ]
-siem[, .SD[1], by = city][city %in% unique(statobs$city), ][duplicated(city)]
+if (nrow(statobs[!city %in% siem$city, ]) > 0 |
+    nrow(siem[, .SD[1], by = city ][ city %in% unique(statobs$city) ][ duplicated(city)]) > 0){
+    warning("different city names in siem compared to statobs")
+}
+
+# check for cities spelt in multiple ways
+doubles = c("Strasbourg", "Strasbourg (Strassburg)", 
+    "St Omer", "St Omer (Saint-Omer (Pas-de-Calais))", 
+    "Chalons-sur-Marne", "Chalons-sur-Marne (Châlons-en-Champagne)")
+if (!all.equal(target = statobs[city %in% doubles, unique(city)],
+               current = siem[city %in% doubles, unique(city)])){
+    warning("Spelling mismatch ", deparse(substitute(chr)))
+}
+
 
 statobs[, lat := as.numeric(lat)]
 statobs[, lon := as.numeric(lon)]
 
 ## country splits north/south
-statobs[, ctr2:=ctr]
-statobs[lat > 46 & ctr=="fr", ctr2:="fr_north"]
-statobs[lat <= 46 & ctr=="fr", ctr2:="fr_south"]
-statobs[lat > 53 & ctr=="uk", ctr2:="uk_north"]
-statobs[lat <= 53 & ctr=="uk", ctr2:="uk_south"]
-statobs[lat > 50.5 & ctr=="de", ctr2:="de_north"]
-statobs[lat <= 50.5 & ctr=="de", ctr2:="de_south"]
+statobs[, ctr2 := ctr]
+statobs[lat >  46.0 & ctr == "fr", ctr2 := "fr_north"]
+statobs[lat <= 46.0 & ctr == "fr", ctr2 := "fr_south"]
+statobs[lat >  53.0 & ctr == "uk", ctr2 := "uk_north"]
+statobs[lat <= 53.0 & ctr == "uk", ctr2 := "uk_south"]
+statobs[lat >  50.5 & ctr == "de", ctr2 := "de_north"]
+statobs[lat <= 50.5 & ctr == "de", ctr2 := "de_south"]
 
 # select southern Italy based on today's provinces
 ita = raster::getData("GADM", country='ITA', level=1)
-# locates perfectly: only Chiesa di San Vitale, Como and St Peter in Rome
-# are exluded, both actually not in Italy and can be circumvented by 
-# selecting south first, calling rest north
-library("sf")
+# locates perfectly: only Chiesa di San Vitale, Como and St Peter in Rome are
+# exluded, both actually not in Italy and can be circumvented by  selecting
+# south first, calling rest north
 ita_south = sf::st_as_sf(ita[ita$NAME_1 %in% c("Abruzzo", "Molise",
     "Campania", "Apulia", "Basilicata", "Calabria", "Sicily", "Sardegna"), ])
 
-statobsf = sf::st_as_sf(statobs, coords = c("lon", "lat"))
-sf::st_crs(statobsf) = 4326
-statobs_in_ita_south = sf::st_join(statobsf, ita_south, join = sf::st_intersects, left = F)
+statob_sf = sf::st_as_sf(statobs, coords = c("lon", "lat"), crs = 4326)
+statobs_in_ita_south = sf::st_join(statob_sf, ita_south, join = sf::st_intersects, left = F)
 
 # planar warning can be ignored it seems
 statobs[osmid %in% statobs_in_ita_south$osmid, ctr2 := "it_south"]
@@ -168,47 +169,36 @@ statobs[ctr2 == "it", ctr2 := "it_north"]
 table(statobs$ctr2)
 
 # country splits natural
-statobs[ctr=="nl" | ctr == "be" | ctr == "lu", ctr3 := "lc"]
-statobs[lat > 46 & ctr=="fr", ctr3:="fr_north"]
-statobs[lat <= 46 & ctr=="fr", ctr3:="fr_south"]
-
-lat2 = siem[city=="York", lat[1]] + km2lat(5)
-lon2 = siem[city=="York", lon[1]] - km2lon(5, siem[city=="York", lat[1]])
-lat1 = siem[city=="Bristol", lat[1]] + km2lat(5)
-lon1 = siem[city=="Bristol", lon[1]] - km2lon(5, siem[city=="Bristol", lat[1]])
-ln = lm(lat ~ lon, data=data.frame(lat=c(lat1, lat2), lon=c(lon1, lon2)))
-north = predict(ln, newdata=statobs) < statobs[, lat]
-statobs[ctr=='uk' & north==TRUE, ctr3 := "uk_nw"]
-statobs[ctr=='uk' & north==FALSE, ctr3 := "uk_se"]
-
-deu = raster::getData("GADM", country='DEU', level=1)
+deu = raster::getData("GADM", country = 'DEU', level = 1)
 deu$region[grep("Bay|Thü|Sach|Bra|Ber|Meck", deu$NAME_1)] = "de_ne"
 deu$region[is.na(deu$region)] = "de_sw"
-cds = SpatialPoints(statobs[, list(lon, lat)])
-proj4string(cds) = CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0") # , +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0)
-deregions = over(cds, deu)[, 'region']
-statobs[!is.na(deregions), ctr3 := na.omit(deregions)]
+
+statobs_in_de = sf::st_intersects(statob_sf, st_as_sf(deu))
+statobs_in_de[sapply(statobs_in_de, length) == 0] = NA
+statobs$ctr3 = deu$region[unlist(statobs_in_de)]
+
 statobs[ctr=="ch", ctr3 := "de_sw"]
 
+
+lat_york = siem[city == "York", lat[1]] + km2lat(5)
+lon_york = siem[city == "York", lon[1]] - km2lon(5, siem[city == "York", lat[1]])
+lat_bris = siem[city == "Bristol", lat[1]] + km2lat(5)
+lon_bris = siem[city == "Bristol", lon[1]] - km2lon(5, siem[city=="Bristol", lat[1]])
+york2bristol = lm(lat ~ lon, 
+    data = data.frame(lat = c(lat_bris, lat_york), lon = c(lon_bris, lon_york)))
+north = predict(york2bristol, newdata = statobs) < statobs[, lat]
+statobs[ctr == 'uk' & north == TRUE, ctr3 := "uk_nw"]
+statobs[ctr == 'uk' & north == FALSE, ctr3 := "uk_se"]
+
+statobs[ctr=="nl" | ctr == "be" | ctr == "lu", ctr3 := "lc"]
+statobs[lat >  46.0 & ctr == "fr", ctr3 := "fr_north"]
+statobs[lat <= 46.0 & ctr == "fr", ctr3 := "fr_south"]
+
 statobs[ctr == "it", ctr3 := ctr2]
-
-doubles = c("Strasbourg", "Strasbourg (Strassburg)", 
-    "St Omer", "St Omer (Saint-Omer (Pas-de-Calais))", 
-    "Chalons-sur-Marne", "Chalons-sur-Marne (Châlons-en-Champagne)")
-
-doubles[!doubles %in% siem$city] # only worry about !
-statobs[city %in% doubles[!doubles %in% siem$city], ]
-siem[city %in% doubles, list(lat, lon, city, year)][order(city)]
-siem[city %in% doubles, list(lat[1], lon[1]), by=city]
 
 dynobs = to_dynobs(churchlist=chrlist)
 
 # correct date heaping
-
-pdf('figs/heaping2dig.pdf', height=6)
-par(mfrow=c(1, 1))
-hist(as.numeric(stringi::stri_sub(dynobs$year, -2)), breaks=100)
-dev.off()
 
 dynobs[, year_lead := data.table::shift(year, type='lead', fill=Inf), by=osmid]
 dynobs[, year_lag := data.table::shift(year, type='lag', fill=-Inf), by=osmid]
@@ -230,6 +220,8 @@ dynobs[heap10 == TRUE, delta := 5]
 
 dynobs[, heap := FALSE]
 dynobs[heap100 == TRUE | heap10 == TRUE | heap25 == TRUE | heap20 == TRUE, heap := TRUE]
+
+dynobs[, year := as.numeric(year)] # prevent assign complaints
 
 set.seed(121314)
 M = 9
