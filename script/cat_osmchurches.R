@@ -73,7 +73,7 @@ dim(out)
 
 max(nchar(unlist(out@data)), na.rm = T) < 254
 out@data$timestamp = as.character(out@data$timestamp)
-maptools::writeSpatialShape(out, "dat/gis/it")
+maptools::writeSpatialShape(out, "dat/gis/ad")
 
 out = out[order(out$city, out$surface), ]
 
