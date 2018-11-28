@@ -280,7 +280,7 @@ if ((length(fullobs[, .N, by = osmid][, unique(N)]) != 1) |
     warning("unbalanced dataset")
 }
 
-fullobslist = list()
+impvarmat = matrix(NA, length(unique(fullobs$year)), M)
 for (j in 1:M){
     dynobs_rs = data.table::copy(dynobs)
     dynobs_rs[, year := dynobs[, paste0("year_crc", j), with=F]]
@@ -288,13 +288,35 @@ for (j in 1:M){
     dynobs_rs[, prb := duplicated(year, fromLast=T), by=osmid]
     dynobs_rs[prb == TRUE & data.table::shift(year) != year, year := year - 1]
 
-    tomerge = to_annual_obs(dyn = dynobs_rs, churchlist = chrlist)
+    
+    tomerge = to_annual_obs(
+        dyn = dynobs_rs[, .SD, .SDcols = ! like(names(dynobs_rs), "year_crc")],
+        churchlist = chrlist)
 
+    # for imputations var plot do
+    # impvarmat[, j] = tomerge[, .(im3_ann = sum(im3_ann, na.rm = T)), by = year]$im3_ann
+
+    # else do
     fullobs = merge(fullobs, tomerge[, list(osmid, year, im2_ann, im3_ann, im2_cml, im3_cml)], all.x=T, all.y=F, by=c("osmid", "year"), suffixes=c("", j))
+
     cat(j, ' - ', dim(fullobs), '\n')
     rm("tomerge")
     rm("dynobs_rs")
 }
+
+matplot(impvarmat)
+
+# pdf("figs/imputations_var.pdf")
+# yrdex = between(unique(fullobs$year), 700, 1500)
+# matplot(x = 700:1500, y = impvarmat[yrdex, ], 
+#     type = 'l', lty = 1, col = gray(0.5, alpha = 0.1))
+# lines(x = 700:1500, y = apply(impvarmat[yrdex, ], 1, median), col = 1)
+
+# matplot(
+#     x = 700:1500, 
+#     y = t(apply(impvarmat[yrdex, ], 1, quantile, c(0.1, 0.5, 0.9))), 
+#     type = 'l', lty = c(2, 1, 2), col = c("pink", "red", "pink"))
+# dev.off()
 
 im3crc = fullobs[, .SD, .SDcols = grep('im3_ann\\d', names(fullobs))] +
     fullobs[, .SD * 0.005, .SDcols = grep('im3_cml\\d', names(fullobs))]
