@@ -11,27 +11,26 @@ library("sf")
 
 siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 
-chr = data.table::fread("dat/checkedchurches_eb_7.csv", 
+chr = data.table::fread("dat/checkedchurches_eb_8_2018sep4.csv", 
     header = T, encoding = "UTF-8", colClasses = "character")
 chr = chr[, 1:29, with=F]
 firstm2col_chr = 14
 setnames(chr, firstm2col_chr:ncol(chr), paste0("y", 1:(ncol(chr) - firstm2col_chr + 1)))
 
-# encoding, do before chr_it which has no encoding issues
-chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
-chr[, osmname := iconv(osmname, from='macroman', to='utf8')]
-chr[, osmlink := iconv(osmlink, from='macroman', to='utf8')]
-chr[, city := iconv(city, from='macroman', to='utf8')]
+# chr[, osmwikipedia := iconv(osmwikipedia, from='macroman', to='utf8')]
+# chr[, osmname := iconv(osmname, from='macroman', to='utf8')]
+# chr[, osmlink := iconv(osmlink, from='macroman', to='utf8')]
+# chr[, city := iconv(city, from='macroman', to='utf8')]
 
-# because there was mixed encoding, fix the new mistakes
+# because there was mixed encoding at some point, fix mistakes
 chr[, osmname := gsub("√©", "é", osmname)]
 chr[, osmwikipedia := gsub("√©", "é", osmwikipedia)]
 # checked below whether there are others
 
-chr_it = data.table::fread("dat/churches_italy.csv",
+chr_it = data.table::fread("dat/churches_italy_2_2018oct2.csv",
     header = T, encoding = "UTF-8", colClasses = "character")
-chr_it = chr_it[, 1:21]
-firstm2col_chr_it = 9
+chr_it = chr_it[, 1:23]
+firstm2col_chr_it = 11
 setnames(chr_it, firstm2col_chr_it:ncol(chr_it), paste0("y", 1:(ncol(chr_it) - firstm2col_chr_it + 1)))
 
 chr_it[, ctr := "it"]
@@ -66,12 +65,19 @@ chr[city=="Middelburg", osmid := osmid[1]]
 chr[osmid=="217546683", "osmid"] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
 
 # drop duplicated churches in nearby italian towns
+# now redundant
 chr = chr[!(osmid == "166506824" & city == "Calascibetta") & 
     !(osmid == "201681493" & city == "Maddaloni") & 
     !(osmid == "275036771" & city == "Cava de' Tirreni") & 
     !(osmid == "93662475" & city == "Cava de' Tirreni") & 
     !(osmid == "330535041" & city == "Torre del Greco") &  # check with eb
     !(osmid == "315026102" & city == "Portici")]
+
+# Konstanz Dreifaltichkeitskirche should not have Vlaardingen Grote Kerk osmid
+chr[city == "Konstanz" & osmid == "273129012", osmid := "66771121"]
+
+# ¯\_(ツ)_/¯
+chr[osmid == '\r', osmid := ""]
 
 # check for duplicate osmids
 stopifnot(
@@ -119,7 +125,11 @@ statobs[!is.na(city2), city:=city2]
 unique(statobs[!is.na(city2), list(city, city2)])
 statobs[!is.na(city2), city:=city2][, city2:=NULL]
 
+statobs[city == "temse", city := "Temse"]
+
+
 setdiff(statobs$city, siem$city)
+# Konstanz is in dataset additions, TBA
 
 if (!all(unique(statobs$city) %in% siem$city)){
     warning("names mismatch between statobs and siem")
@@ -139,11 +149,11 @@ if (!all.equal(target = statobs[city %in% doubles, unique(city)],
     warning("Spelling mismatch ", deparse(substitute(chr)))
 }
 
-
 statobs[, lat := as.numeric(lat)]
 statobs[, lon := as.numeric(lon)]
 
-## country splits north/south
+# country splits
+# ---------------
 statobs[, ctr2 := ctr]
 statobs[lat >  46.0 & ctr == "fr", ctr2 := "fr_north"]
 statobs[lat <= 46.0 & ctr == "fr", ctr2 := "fr_south"]
@@ -179,7 +189,6 @@ statobs$ctr3 = deu$region[unlist(statobs_in_de)]
 
 statobs[ctr=="ch", ctr3 := "de_sw"]
 
-
 lat_york = siem[city == "York", lat[1]] + km2lat(5)
 lon_york = siem[city == "York", lon[1]] - km2lon(5, siem[city == "York", lat[1]])
 lat_bris = siem[city == "Bristol", lat[1]] + km2lat(5)
@@ -196,10 +205,12 @@ statobs[lat <= 46.0 & ctr == "fr", ctr3 := "fr_south"]
 
 statobs[ctr == "it", ctr3 := ctr2]
 
+# plot(sf::st_as_sf(statobs, coords = c("lon", "lat"), crs = 4326)[, c("ctr", "ctr2", "ctr3")])
+
 dynobs = to_dynobs(churchlist=chrlist)
 
 # correct date heaping
-
+# --------------------
 dynobs[, year_lead := data.table::shift(year, type='lead', fill=Inf), by=osmid]
 dynobs[, year_lag := data.table::shift(year, type='lag', fill=-Inf), by=osmid]
 dynobs[, dyear := data.table::shift(year, type='lead') - year, by=osmid]
@@ -303,8 +314,6 @@ for (j in 1:M){
     rm("tomerge")
     rm("dynobs_rs")
 }
-
-matplot(impvarmat)
 
 # pdf("figs/imputations_var.pdf")
 # yrdex = between(unique(fullobs$year), 700, 1500)
