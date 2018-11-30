@@ -14,7 +14,7 @@ fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
 # impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
-impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
+impvrbs = names(fullobs_sp)[grepl('im3_ann\\d', names(fullobs_sp))]
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
@@ -45,6 +45,43 @@ pop_mj = pop_mj[as.data.table(expand.grid(ctr = unique(pop_mj$ctr), decade = uni
 pop_mj[ctr == 'uk', broadberry := ukgdp$population[match(decade, ukgdp$V1)]]
 pop_mj[!is.na(broadberry), pop := broadberry / 1e6]
 pop_mj[, pop := pop * 1e3]
+pop_mj[, bd := ifelse(decade < 1348, "pre", "post")]
+
+pop_mj[decade >= 500, pop_spl := exp(zoo::na.spline(log(pop), x = decade, na.rm = F)), by = .(ctr, bd)]
+pdf("figs/popinterpols.pdf", width = 9)
+par(mfrow = c(2, 3), mar = c(4,3,2,1))
+for (i in c("it", "fr", "de", "be", "nl", "uk")){
+    plot(pop ~ decade, data = pop_mj[ctr == i], main = i)
+    lines(pop_spl ~ decade, data = pop_mj[ctr == i], col = 2)
+    abline(v = c(700, 1348, 1500), col = 'gray')
+}
+dev.off()
+writexl::write_xlsx(pop_mj, "excels/popinterpols.xlsx")
+
+pop_mj[ctr=='nl']
+lines(pop_spl ~ decade, data = pop_mj[ctr == 'de'], col = 2)
+abline(v = 1348)
+
+plot(log(pop) ~ decade, data = pop_mj[ctr == 'nl'], type = 'b')
+lines(pop_mj[ctr=='nl' & bd == 'pre', .(decade, ap = na.spline(log(pop), x = decade, na.rm = F))])
+abline(v = 1348)
+lines(pop_mj[ctr=='nl' & bd == 'post', .(decade, ap = na.spline(log(pop), x = decade, na.rm = F))], col = 2)
+
+
+plot(pop_mj[ctr == 'nl' & bd == 'pre', exp(predict(loess(log(pop) ~ decade, surface = 'direct'), newdata = data.frame(decade)))])
+plot(pop_mj[ctr == 'nl' & bd == 'post', exp(predict(loess(log(pop) ~ decade, surface = 'direct', span = 0.8), newdata = data.frame(decade)))])
+
+pop_mj[, pop_l := exp(predict(loess(log(pop) ~ decade, surface = 'direct', span = 0.8), newdata = data.frame(decade))), by = .(ctr, bd)]
+
+plot(pop ~ decade, data = pop_mj[ctr == 'nl'], type = 'b')
+lines(pop_l ~ decade, data = pop_mj[ctr == 'nl'], type = 'l')
+pop_mj[ctr=='nl']
+
+lm(log(pop) ~ decade, data =)
+
+pop_mj[, pop_i := exp(predict(lm(log(pop) ~ decade), newdata = data.frame(decade))), by = .(ctr, bd)]
+
+lines(exp(crazy) ~ decade, data = pop_mj[ctr == 'nl'], type = 'l')
 
 siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
@@ -86,13 +123,13 @@ heaping_20y = fullobs[data.table::between(year, 700, 1500),
 
 plot(heaping_annual[, max(heaping_corrected, heaped), by = year], type='n', xlab = 'm3/year')
 abline(v=(7:15)*100, col='gray', lwd=0.8)
-abline(v=c(1315, 1348), col='gray', lwd=0.8)
+abline(v=c(1140, 1315, 1348), col='gray', lwd=0.8)
 lines(heaped ~ year, data = heaping_annual)
 lines(heaping_corrected ~ year, data = heaping_annual, col = 'red')
 
 plot(heaping_20y[, max(heaping_corrected, heaped), by = decade], type='n', xlab = 'm3/20y')
 abline(v=(7:15)*100, col='gray', lwd=0.8)
-abline(v=c(1315, 1348), col='gray', lwd=0.8)
+abline(v=c(1140, 1315, 1348), col='gray', lwd=0.8)
 lines(heaped ~ decade, data = heaping_20y, type = 'b')
 lines(heaping_corrected ~ decade, data = heaping_20y, col = 'red', type = 'b')
 
@@ -141,15 +178,15 @@ phases_pre1200 = aggregate(city ~ ctr, data=dynobs_sp[year < 1200, ], length)
 phases_all = aggregate(city ~ ctr, data=dynobs_sp, length)
 churches_by_ctr = aggregate(osmid ~ ctr, data=statobs, length)
 
-ss_out = data.frame(siem_cities,
-    cities_w_church=church_cities[, -1],
-    n_churches=churches_by_ctr[, -1], n_phases=phases_all[,-1],
-    n_phases_pre1000=phases_pre1000[,-1], n_phases_pre1200=phases_pre1200[, -1])
+ss_out = data.table(siem_cities,
+    `N cities w. large church` = church_cities[, -1],
+    `N churches` = churches_by_ctr[, -1],
+    `N phases` = phases_all[,-1],
+    `N phases pre1000` = phases_pre1000[,-1], 
+    `N phases pre1200` = phases_pre1200[, -1])
 
-ss_out = ss_out[order(-as.numeric(ss_out$city)), ]
-ss_out = rbind(ss_out, c('all', colSums(ss_out[, -1])))
-
-write.csv(ss_out, 'tab/sumstats.csv', row.names=F)
+ss_out = ss_out[order(-as.numeric(city)), ]
+ss_out = rbind(ss_out, c(ctr = 'all', as.list(colSums(ss_out[, -1]))))
 
 writeLines(
     knitr::kable(ss_out, format = "html", row.names = FALSE),
@@ -203,7 +240,7 @@ tot = Reduce(merge, list(
     dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
     dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]))
 setnames(tot, 'x', "N")
-out = rbind(byctr, tot, fill = T)
+out = rbind(byctr, data.table(ctr = 'all', tot))
 out[, grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), .SDcols = grep('\\%', names(out))]
 writeLines(knitr::kable(out, digits = 1, format = 'html'), "tab/sumstats_perc.html")
 
@@ -297,7 +334,7 @@ eutotal = fullobs[data.table::between(decade, 700, 1500), list(im3y20 = base::su
 # m3 per 20y period en country
 pdf('figs/europetotal_hc.pdf', height=6)
 plot(eutotal, type='n', bty='l', ylab = 'm3/20 year')
-abline(v=c(768, 1315, 1000, 1348), col='gray')
+abline(v=c(768, 1140, 1315, 1000, 1348), col='gray')
 lines(eutotal, type='b', lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
@@ -459,14 +496,14 @@ eu[, im3_dec_smth:=predict(loess(im3_dec / urb_inhab_i ~ decade), newdata=decade
 pdf('figs/europetotal_puc_hc.pdf', height=6)
 par(mfrow=c(1, 1))
 plot(im3_dec / urb_inhab_i ~ decade, data=eu, type='n', bty='l')
-abline(v=c(768, 1315, 1000, 1348), col='gray')
+abline(v=c(768, 1000, 1140, 1315, 1348), col='gray')
 lines(im3_dec / urb_inhab_i ~ decade, data=eu, type='b', col=2, lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
 pdf('figs/europetotal_pc_hc.pdf', height=6)
 par(mfrow=c(1, 1))
 plot(im3_dec / pop_i ~ decade, data=eu, type='n', bty='l')
-abline(v=c(768, 1315, 1000, 1348), col='gray')
+abline(v=c(768, 1000, 1140, 1315, 1348), col='gray')
 lines(im3_dec / pop_i ~ decade, data=eu, type='b', col=2, lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
