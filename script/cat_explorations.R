@@ -46,42 +46,10 @@ pop_mj[ctr == 'uk', broadberry := ukgdp$population[match(decade, ukgdp$V1)]]
 pop_mj[!is.na(broadberry), pop := broadberry / 1e6]
 pop_mj[, pop := pop * 1e3]
 pop_mj[, bd := ifelse(decade < 1348, "pre", "post")]
-
-pop_mj[decade >= 500, pop_spl := exp(zoo::na.spline(log(pop), x = decade, na.rm = F)), by = .(ctr, bd)]
-pdf("figs/popinterpols.pdf", width = 9)
-par(mfrow = c(2, 3), mar = c(4,3,2,1))
-for (i in c("it", "fr", "de", "be", "nl", "uk")){
-    plot(pop ~ decade, data = pop_mj[ctr == i], main = i)
-    lines(pop_spl ~ decade, data = pop_mj[ctr == i], col = 2)
-    abline(v = c(700, 1348, 1500), col = 'gray')
-}
-dev.off()
-writexl::write_xlsx(pop_mj, "excels/popinterpols.xlsx")
-
-pop_mj[ctr=='nl']
-lines(pop_spl ~ decade, data = pop_mj[ctr == 'de'], col = 2)
-abline(v = 1348)
-
-plot(log(pop) ~ decade, data = pop_mj[ctr == 'nl'], type = 'b')
-lines(pop_mj[ctr=='nl' & bd == 'pre', .(decade, ap = na.spline(log(pop), x = decade, na.rm = F))])
-abline(v = 1348)
-lines(pop_mj[ctr=='nl' & bd == 'post', .(decade, ap = na.spline(log(pop), x = decade, na.rm = F))], col = 2)
-
-
-plot(pop_mj[ctr == 'nl' & bd == 'pre', exp(predict(loess(log(pop) ~ decade, surface = 'direct'), newdata = data.frame(decade)))])
-plot(pop_mj[ctr == 'nl' & bd == 'post', exp(predict(loess(log(pop) ~ decade, surface = 'direct', span = 0.8), newdata = data.frame(decade)))])
-
-pop_mj[, pop_l := exp(predict(loess(log(pop) ~ decade, surface = 'direct', span = 0.8), newdata = data.frame(decade))), by = .(ctr, bd)]
-
-plot(pop ~ decade, data = pop_mj[ctr == 'nl'], type = 'b')
-lines(pop_l ~ decade, data = pop_mj[ctr == 'nl'], type = 'l')
-pop_mj[ctr=='nl']
-
-lm(log(pop) ~ decade, data =)
-
-pop_mj[, pop_i := exp(predict(lm(log(pop) ~ decade), newdata = data.frame(decade))), by = .(ctr, bd)]
-
-lines(exp(crazy) ~ decade, data = pop_mj[ctr == 'nl'], type = 'l')
+pop_mj[
+    decade >= 500, 
+    pop_spl := exp(zoo::na.spline(log(pop), x = decade, na.rm = F)), 
+    by = .(ctr, bd)]
 
 siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
