@@ -55,7 +55,6 @@ siem[, ctr:=tolower(siem$tld)]
 siem[ctr=='gb', ctr:="uk"]
 
 siem[, tokeep := any(inhab[year <= 1500] > 0), by = city]
-siem[, .N, by = tokeep]
 siem = siem[tokeep == T]
 siem[, tokeep := NULL]
 
@@ -211,16 +210,6 @@ setnames(tot, 'x', "N")
 out = rbind(byctr, data.table(ctr = 'all', tot))
 out[, grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), .SDcols = grep('\\%', names(out))]
 writeLines(knitr::kable(out, digits = 1, format = 'html'), "tab/sumstats_perc.html")
-
-data.table::fwrite(
-    statobs[city %in% siem[year <= 1500, city[bishopric == 1 | arcbishopric == 1]] & ctr == 'it'][order(city)],
-    "tab/italianbishoprics.csv")
-
-source("dat/itcathedrals.R")
-# catheral building v. other churches
-
-fullobs_sp[osmid %in% itcathedrals, category := "cathedral"]
-fullobs_sp[is.na(category), category := ""]
 
 pdf('figs/cath_v_allchurches_hc.pdf', height=4, width=9)
 par(mfrow=c(1, 3), font.main=1)
