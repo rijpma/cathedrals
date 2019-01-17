@@ -59,8 +59,7 @@ plot(polys_way_ad)
 plot(polys_rel_ad, add=T, col=2)
 
 pdf('figs/ad_churches.pdf')
-plot_churches_by_city(c(polylist_way_ad, polylist_rel_ad), siem_it)
-# plot_churches_by_city(polylist_rel_pt, polylist_rel_pt), siem_pt)
+plot_churches_by_city(c(polylist_way_ad, polylist_rel_ad), siem_ad)
 dev.off()
 
 out = sp_rbind(polys4merge=polys_way_ad, polys=polys_rel_ad)
