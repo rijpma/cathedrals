@@ -9,7 +9,23 @@ library("stringi")
 library("raster") # for spatial splitting of data
 library("sf")
 
-siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
+# rasters for country ids where absent
+nld = raster::getData("GADM", country='NLD', level=0)
+fra = raster::getData("GADM", country='FRA', level=0)
+che = raster::getData("GADM", country='CHE', level=0)
+bel = raster::getData("GADM", country='BEL', level=0)
+gbr = raster::getData("GADM", country='GBR', level=0)
+deu = raster::getData("GADM", country='DEU', level=0)
+ita = raster::getData("GADM", country='ITA', level=0)
+nweu = rbind(sf::st_as_sf(nld),
+    sf::st_as_sf(fra),
+    sf::st_as_sf(che),
+    sf::st_as_sf(bel),
+    sf::st_as_sf(gbr),
+    sf::st_as_sf(deu),
+    sf::st_as_sf(ita))
+
+siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 
 chr = data.table::fread("dat/checkedchurches_eb_8_2018sep4.csv", 
     header = T, encoding = "UTF-8", colClasses = "character")
@@ -35,7 +51,22 @@ setnames(chr_it, firstm2col_chr_it:ncol(chr_it), paste0("y", 1:(ncol(chr_it) - f
 
 chr_it[, ctr := "it"]
 
-chr = rbindlist(list(chr, chr_it), fill = T)
+chr_ad = data.table::fread("dat/churches_add_2018nov30.csv",
+    header = T, encoding = "UTF-8")
+chr_ad = chr_ad[, 1:20]
+firstm2col_chr_ad = 11
+setnames(chr_ad, firstm2col_chr_ad:ncol(chr_ad), paste0("y", 1:(ncol(chr_ad) - firstm2col_chr_ad + 1)))
+
+ad_sf = st_as_sf(chr_ad[osmlink != "" & !is.na(lat)], coords = c("lon", "lat"), crs = 4326)
+chr_ad[osmlink != "" & !is.na(lat),
+    iso3 := sf::st_join(ad_sf, nweu, join = sf::st_intersects)$ISO]
+unique(chr_ad[osmlink != "", .(city, iso3)][order(iso3)])
+chr_ad[, ctr := tolower(substr(iso3, 1, 2))]
+chr_ad[, ctr := ifelse(ctr == "gb", "uk", ctr)]
+
+chr_ad[osmlink != "" & is.na(lat), .(city, osmid, osmlink)]
+
+chr = rbindlist(list(chr, chr_it, chr_ad), fill = T)
 
 # maybe the fact that the V\\d+ don't match up doesn't matter, 
 # let's find out
@@ -62,7 +93,7 @@ stopifnot(any(grepl("ö", chr$osmname)),
 # middelburg should have one id
 chr[city=="Middelburg", osmid := osmid[1]]
 # halle should be two churches with unique osmids
-chr[osmid=="217546683", "osmid"] = paste0(chr$osmid[chr$osmid=="217546683"], rep(c('a', 'b'), each=6))
+chr[osmid == "217546683", osmid := paste0(osmid, rep(c("a", "b"), each = 6))]
 
 # drop duplicated churches in nearby italian towns
 # now redundant
@@ -73,37 +104,141 @@ chr = chr[!(osmid == "166506824" & city == "Calascibetta") &
     !(osmid == "330535041" & city == "Torre del Greco") &  # check with eb
     !(osmid == "315026102" & city == "Portici")]
 
+# still necessary
+chr = chr[!(osmid == "1832902" & city == "Carrara")] # is in massa
+chr = chr[osmid != "91391781" | is.na(osmid)] # not enough inhab before 1500
+                                              # keep NA just to be safe
+
 # Konstanz Dreifaltichkeitskirche should not have Vlaardingen Grote Kerk osmid
 chr[city == "Konstanz" & osmid == "273129012", osmid := "66771121"]
 
 # ¯\_(ツ)_/¯
 chr[osmid == '\r', osmid := ""]
 
-# check for duplicate osmids
+# fix more duplicate osmids
+# extend lblink and rmlink to duplicates
+chr[osmid != "", lblink := lblink[1][lblink != "" & !is.na(lblink)], by = osmid]
+chr[osmid != "", rmlink := rmlink[1][rmlink != "" & !is.na(rmlink)], by = osmid]
+
+# duplicate list
+dpls = chr[osmid != "", .N, by = osmid][N != 6, osmid]
+# second one always better, so keep those
+chr[, tokeep := TRUE]
+chr[osmid %in% dpls, tokeep := rep(c(FALSE, TRUE), each = 6), by = osmid]
+chr = chr[tokeep == TRUE]
+chr[, tokeep := NULL]
+
 stopifnot(
     all(chr[osmid != "", table(osmid)] == 6)
 )
-
-# table(table(chr$osmid[chr$osmid!='']))
-# duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) > 6]
-# chr[osmid %in% duplids, unique(osmid)]
 
 duplids = names(table(chr$osmid[chr$osmid!='']))[table(chr$osmid[chr$osmid!='']) < 6]
 match(duplids, chr$osmid)
 chr[osmid %in% duplids, ]
 
 # various typos
-chr[osmid == "2322752", "lat"][1] = 46.4349 # cluny
+chr[osmid == "2322752", "lat"][1] = "46.4349" # cluny
 chr[osmid == "66636479", "osmlink"][1] <- "http://www.openstreetmap.org/way/66636479"
 chr[osmid == "66636479", "osmwikipedia"][1] <- "https://fr.wikipedia.org/wiki/Cathédrale_Saint-Pierre_de_Condom"
 
-chr[city=="reading", city := "Reading"]
-chr[city=="norwich", city := "Norwich"]
+chr[city == "reading", city := "Reading"]
+chr[city == "norwich", city := "Norwich"]
+chr[city == "bernburg", city:= "Bernburg"]
+chr[city == "bethune", city:= "Bethune"]
+chr[city == "biberach", city:= "Biberach"]
+chr[city == "colchester", city:= "Colchester"]
+chr[city == "diest", city:= "Diest"]
+chr[city == "dole", city:= "Dole"]
+chr[city == "dueren", city:= "Dueren"]
+chr[city == "dundee", city:= "Dundee"]
+chr[city == "emden", city:= "Emden"]
+chr[city == "gap", city:= "Gap"]
+chr[city == "geraardsbergen", city:= "Geraardsbergen"]
+chr[city == "grasse", city:= "Grasse"]
+chr[city == "husum", city:= "Husum"]
+chr[city == "joigny", city:= "Joigny"]
+chr[city == "lauingen", city:= "Lauingen"]
+chr[city == "leeuwarden", city:= "Leeuwarden"]
+chr[city == "mettmann", city:= "Mettmann"]
+chr[city == "montargis", city:= "Montargis"]
+chr[city == "morlaix", city:= "Morlaix"]
+chr[city == "northampton", city:= "Northampton"]
+chr[city == "roanne", city:= "Roanne"]
+chr[city == "rotherham", city:= "Rotherham"]
+chr[city == "siegen", city:= "Siegen"]
+chr[city == "st etienne", city:= "St Etienne"]
+chr[city == "temse", city:= "Temse"]
+chr[city == "zierikzee", city:= "Zierikzee"]
+chr[city == "zwickau", city:= "Zwickau"]
+
+# much more to be done here now...
+# chr[grep("^[a-z]", city), unique(city)]
+
+# choose one, I would suggest the first
+unique(chr[city %in% c("Chalons-sur-Marne", "Chalons-sur-Marne (Châlons-en-Champagne)"), .(city, ctr, osmid, osmname, lat, lon)])
+unique(chr[city %in% c("St Omer", "St Omer (Saint-Omer (Pas-de-Calais))"), .(city, ctr, osmid, osmname, lat, lon)])
+unique(chr[city %in% c("Strasbourg", "Strasbourg (Strassburg)"), .(city, ctr, osmid, osmname, lat, lon)])
+
+# more accurate coordinates
+chr[osmid == "293268847", `:=` (lon = "4.213874", lat = "51.12405")] # temse
+chr[osmid == "2322752",   `:=` (lon = "4.659411", lat = "46.43467")] # cluny (substituting with way/51548194)
+chr[osmid == "136677965", `:=` (lon = "2.638217", lat = "50.53216")] # bethune
+chr[osmid == "37128921",  `:=` (lon = "5.49472",   lat =  "47.0925")] # Dole
+chr[osmid == "90885376",  `:=` (lon = "6.078113", lat =  "44.5582")] # Gap
+chr[osmid == "63038103",  `:=` (lon = "3.395135", lat =  "47.9831")] # Joingy
+chr[osmid == "124614369", `:=` (lon = "4.071535", lat =  "46.0397")] # Roanne
+chr[osmid == "147917758", `:=` (lon = "10.53739", lat =  "52.16192")] # Wolfenbuettel
+chr[osmid == "34667153",  `:=` (lon = "12.49508", lat =  "50.7179")] # Zwickau 
+# remainder are broken, but coords good enough
+# chr[!is.na(lat) & lat != "" & nchar(lat) < 7, .(city, osmid, osmname, lat, lon)]
 
 # fix height and year typos
 chr[osmid == "32530870" & surface == "height", y6 := "15.8"]
-chr[osmid == "69972010" & surface == "year", y4 := "1000"] # guess for now
-chr[osmid == "136200148" & surface == "year", y10 := "1450"] # guess for now
+chr[osmid == "69972010" & surface == "year", y4 := "1000"]
+chr[osmid == "136200148" & surface == "year", y10 := "1450"]
+chr[osmid == "136677965" & surface == "year", y1 := "700"]
+chr[osmid == "94434589" & surface == "year", y6 := "1050"]
+
+# more checks
+yearvrbs = grep("y\\d", names(chr))
+
+if (any(unlist(
+    chr[surface %in% c("height", "surface", "year") ][, 
+        lapply(.SD, function(x) anyNA(as.numeric(x[!(is.na(x) | x == "")]))), 
+        .SDcols = yearvrbs]))){
+    warning("Values for height not convertable to numeric")
+}
+if (! any(unlist(
+    chr[surface == "year", 
+        lapply(.SD, function(x) all(grepl("^\\d{3,4}$", x[!(is.na(x) | x =="")]))), 
+        .SDcols = yearvrbs]))){
+    warning("Values for year not 3-4 digits")
+}
+if (! any(unlist(
+    chr[surface == "year", 
+        lapply(.SD, function(x) all(grepl("^1\\d{3}$|^[2-9]\\d{2}$|100", x[!(is.na(x) | x =="")]))), 
+        .SDcols = yearvrbs]))){
+    warning("Values for year not of form 1XXX or 2+XX or 100")
+}
+if (any(
+    (chr[surface == "year", lapply(.SD, as.numeric), .SDcols = yearvrbs][, -1] - 
+        chr[surface == "year", lapply(.SD, as.numeric), .SDcols = yearvrbs][, -length(yearvrbs), with = F]) < 0, 
+        na.rm = T)){
+    warning("years not chronological: year[n + 1] < year[n]")
+}
+
+if (any(unlist(
+    chr[surface == "surface", 
+        lapply(.SD, function(x) any(as.numeric(x[!(is.na(x) | x == "")]) > 1e4)), 
+        .SDcols = yearvrbs]))){
+    warning("Values for surface too high")
+}
+if (any(unlist(
+    chr[surface == "height", 
+        lapply(.SD, function(x) any(as.numeric(x[!(is.na(x) | x == "")]) > 1e3)), 
+        .SDcols = yearvrbs]))){
+    warning("Values for surface too high")
+}
 
 # Italian churches look ok
 
@@ -125,11 +260,7 @@ statobs[!is.na(city2), city:=city2]
 unique(statobs[!is.na(city2), list(city, city2)])
 statobs[!is.na(city2), city:=city2][, city2:=NULL]
 
-statobs[city == "temse", city := "Temse"]
-
-
 setdiff(statobs$city, siem$city)
-# Konstanz is in dataset additions, TBA
 
 if (!all(unique(statobs$city) %in% siem$city)){
     warning("names mismatch between statobs and siem")
@@ -204,8 +335,12 @@ statobs[lat >  46.0 & ctr == "fr", ctr3 := "fr_north"]
 statobs[lat <= 46.0 & ctr == "fr", ctr3 := "fr_south"]
 
 statobs[ctr == "it", ctr3 := ctr2]
+table(statobs$ctr3)
 
-# plot(sf::st_as_sf(statobs, coords = c("lon", "lat"), crs = 4326)[, c("ctr", "ctr2", "ctr3")])
+out = merge(statobs, unique(siem[, .(city, country)]), by = 'city', all.y = T)
+writexl::write_xlsx(
+    out[, sum(!is.na(osmid)), by = .(city, country)][order(country, city)],
+    "excels/cityoverview.xlsx")
 
 dynobs = to_dynobs(churchlist=chrlist)
 
