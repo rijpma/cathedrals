@@ -50,6 +50,81 @@ r = raster::flip(r, direction=2)
 
 rhigh = disaggregate(r, 2)
 
+
+### churches data ###
+#####################
+fullobs_sp[!is.na(phase) & firstobs != TRUE, newbuild := m2]
+
+rch = list()
+for (i in seq(from=700, to=1480, by=20)){
+    dcd = i:(i + 19)
+    tosp = fullobs_sp[year %in% dcd, 
+        list(im3y20 = base::sum(.SD, na.rm=T) / M), 
+        by=list(lon, lat), 
+        .SDcols=impvrbs]
+    spdf = sp::SpatialPointsDataFrame(
+        coords=tosp[, list(lon, lat)], 
+        data=tosp[, list(im3y20)], 
+        proj4str=wgs)
+    spdf = spdf[!is.na(spdf$im3y20) & spdf$im3y20!=0, ]
+    rch[[as.character(i)]] = raster::rasterize(spdf, p, 
+        field="im3y20", fun=sum, na.rm=T)
+}
+
+rch = raster::brick(rch)
+rch = raster::crop(rch, raster::extent(-10, 20, 40, 60))
+dim(rch)
+dim(p)
+par(mfrow=c(1, 3))
+plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T), type='b', col=2, bty='l')
+abline(v=1348)
+pips = raster::subset(pip, which(names(pip) %in% names(rch)))
+plot(gsub('[^0-9]', '', names(pips)), colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
+plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T) / colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
+abline(v=1348)
+
+
+rchm = list()
+periods = list(700:1000, 1001:1200, 1201:1347, 1348:1500)
+for (i in 1:length(periods)){
+    temp = fullobs_sp[year %in% periods[[i]], ]
+    spdf = sp::SpatialPointsDataFrame(coords=temp[, list(lon, lat)], 
+        data=temp[, list(im2_ann, im3_ann, newbuild)], proj4str=wgs)
+    spdf = spdf[!is.na(spdf$im3_ann) & spdf$im3_ann!=0, ]
+    r_temp = raster::rasterize(spdf, rhigh, field="im3_ann", fun=sum, na.rm=T)
+    rchm[[i]] = raster::focal(r_temp, w=raster::focalWeight(r_temp, 0.7, 'Gauss'), sum, na.rm=T)
+    print(sum(getValues(r_temp), na.rm=T))
+    print(sum(getValues(rchm[[i]]), na.rm=T))
+}
+rchm = raster::stack(rchm)
+rchm = trim(rchm)
+
+# express values per square km2
+rchm = rchm / area(rchm)
+
+sum(geosphere::areaPolygon(wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ])) / (1e3^2)
+
+range(rchm)
+cellStats(rchm, 'range')
+
+rchm[is.na(rchm)] = 0
+pdf("figs/4m3maps_smoothed.pdf", width=10, height=10)
+par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
+plot(rchm[[1]], main="700-1000", zlim = c(0, 31), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 31, 5)))
+add_borders(border='white')
+plot(rchm[[2]], main="1000-1200", zlim = c(0, 72), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
+plot(rchm[[3]], main="1200-1348", zlim = c(0, 72), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
+plot(rchm[[4]], main="1348-1500", zlim = c(0, 72), col=magma(256), axes=F,
+    axis.args=list(at=seq(0, 60, 20)))
+add_borders(border='white')
+dev.off()
+
+
 ### population data ###
 #######################
 
@@ -108,72 +183,6 @@ rsiem_ip = rsiem_ip[[c(1, 13:16, 2, 13:16, 3, 13:16, 4, 13:16,
                        9, 13:16, 10)]]#, 13:16, 11, 13:16, 12)]]
 names(rsiem_ip) = as.character(seq(from=700, to=1600, by=20))
 rsiem_ip = exp(approxNA(log(rsiem_ip)))
-
-### churches data ###
-#####################
-fullobs_sp[!is.na(phase) & firstobs != TRUE, newbuild := m2]
-
-rch = list()
-for (i in seq(from=700, to=1480, by=20)){
-    dcd = i:(i + 19)
-    tosp = fullobs_sp[year %in% dcd, list(im3y20 = base::sum(.SD, na.rm=T) / M), by=list(lon, lat), .SDcols=impvrbs]
-    spdf = sp::SpatialPointsDataFrame(coords=tosp[, list(lon, lat)], data=tosp[, list(im3y20)], proj4str=wgs)
-    spdf = spdf[!is.na(spdf$im3y20) & spdf$im3y20!=0, ]
-    rch[[as.character(i)]] = raster::rasterize(spdf, p, field="im3y20", fun=sum, na.rm=T)
-}
-rch = raster::brick(rch)
-rch = raster::crop(rch, raster::extent(-10, 20, 40, 60))
-dim(rch)
-dim(p)
-par(mfrow=c(1, 3))
-plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T), type='b', col=2, bty='l')
-abline(v=1348)
-pips = raster::subset(pip, which(names(pip) %in% names(rch)))
-plot(gsub('[^0-9]', '', names(pips)), colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
-plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T) / colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
-abline(v=1348)
-
-
-rchm = list()
-periods = list(700:1000, 1001:1200, 1201:1347, 1348:1500)
-for (i in 1:length(periods)){
-    temp = fullobs_sp[year %in% periods[[i]], ]
-    spdf = sp::SpatialPointsDataFrame(coords=temp[, list(lon, lat)], 
-        data=temp[, list(im2_ann, im3_ann, newbuild)], proj4str=wgs)
-    spdf = spdf[!is.na(spdf$im3_ann) & spdf$im3_ann!=0, ]
-    r_temp = raster::rasterize(spdf, rhigh, field="im3_ann", fun=sum, na.rm=T)
-    rchm[[i]] = raster::focal(r_temp, w=raster::focalWeight(r_temp, 0.7, 'Gauss'), sum, na.rm=T)
-    print(sum(getValues(r_temp), na.rm=T))
-    print(sum(getValues(rchm[[i]]), na.rm=T))
-}
-rchm = raster::stack(rchm)
-rchm = trim(rchm)
-
-# express values per square km2
-rchm = rchm / area(rchm)
-
-sum(geosphere::areaPolygon(wrld_simpl[wrld_simpl$ISO3 %in% c("NLD", "BEL", "CHE", "FRA", "DEU", "GBR"), ])) / (1e3^2)
-
-range(rchm)
-cellStats(rchm, 'range')
-
-rchm[is.na(rchm)] = 0
-pdf("figs/4m3maps_smoothed.pdf", width=10, height=9)
-par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
-plot(rchm[[1]], main="700-1000", zlim = c(0, 30), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 30, 5)))
-add_borders(border='white')
-plot(rchm[[2]], main="1000-1200", zlim = c(0, 66), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 60, 20)))
-add_borders(border='white')
-plot(rchm[[3]], main="1200-1348", zlim = c(0, 66), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 60, 20)))
-add_borders(border='white')
-plot(rchm[[4]], main="1348-1500", zlim = c(0, 66), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 60, 20)))
-add_borders(border='white')
-dev.off()
-
 
 ### influence neigbours ###
 ###########################
