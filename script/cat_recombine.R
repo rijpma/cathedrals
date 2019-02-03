@@ -419,7 +419,7 @@ for (j in 1:M){
     setnames(dynobs, 'year_crc', paste0("year_crc", j))
 }
 
-fullobs = to_annual_obs(dyn = dynobs, churchlist = chrlist)
+fullobs = to_annual_obs(dyn = dynobs)
 
 if ((length(fullobs[, .N, by = osmid][, unique(N)]) != 1) | 
     (length(fullobs[, .N, by = year][, unique(N)]) != 1)){
@@ -436,8 +436,7 @@ for (j in 1:M){
 
     
     tomerge = to_annual_obs(
-        dyn = dynobs_rs[, .SD, .SDcols = ! like(names(dynobs_rs), "year_crc")],
-        churchlist = chrlist)
+        dyn = dynobs_rs[, .SD, .SDcols = ! like(names(dynobs_rs), "year_crc")])
 
     # for imputations var plot do
     # impvarmat[, j] = tomerge[, .(im3_ann = sum(im3_ann, na.rm = T)), by = year]$im3_ann

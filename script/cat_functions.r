@@ -161,11 +161,11 @@ to_city_obs = function(statobs, fullobs, res=100){
     return(out)
 }
 
-to_annual_obs = function(dyn, churchlist){
+to_annual_obs = function(dyn){
     # setting this to 100 rather than 600 would fix most issues,
     # can just cut later?
 
-    full = as.data.table(expand.grid(year = 100:1800, osmid = names(churchlist), stringsAsFactors = FALSE))
+    full = as.data.table(expand.grid(year = 100:1800, osmid = unique(dynobs$osmid), stringsAsFactors = FALSE))
     data.table::setkey(full, osmid, year)
     data.table::setkey(dyn, osmid, year)
     full = dyn[full]
