@@ -1,5 +1,22 @@
 thinmargins <- c(4, 4, 3, 0.5)
 
+m3y10lbl = "Church building per 10 years (m³)"
+m3y20lbl = "Church building per 20 years (m³)"
+m2y20lbl = "Church building per 20 years (m²)"
+m3y20lblm = "Church building per 20 years (millions m³)"
+m3y20pclbl = "Per capita church building per 20 years (m³)"
+m3y20puclbl = "Per urban capita church building per 20 years (m³)"
+m3y100lbl = "Church building per century (m³)"
+
+axis1ks = function(side, ...){
+    axis(side = side, 
+        at = axTicks(2), 
+        labels = formatC(
+            x = axTicks(2),
+            format = "d", 
+            big.mark = ","))
+}
+
 coefse = function(m, regex, ...){
     cft = data.frame(lmtest::coeftest(m, ...)[])
     cft = cft[stringi::stri_subset_regex(rownames(cft), regex), 1:2]
@@ -165,7 +182,7 @@ to_annual_obs = function(dyn){
     # setting this to 100 rather than 600 would fix most issues,
     # can just cut later?
 
-    full = as.data.table(expand.grid(year = 100:1800, osmid = unique(dynobs$osmid), stringsAsFactors = FALSE))
+    full = as.data.table(expand.grid(year = 0:2000, osmid = unique(dyn$osmid), stringsAsFactors = FALSE))
     data.table::setkey(full, osmid, year)
     data.table::setkey(dyn, osmid, year)
     full = dyn[full]
@@ -179,9 +196,14 @@ to_annual_obs = function(dyn){
     full = full[!(m2obs <= 1 | hgtobs <= 1 | m3obs <= 1), ]
 
     # interpolation
+    # default na.approx is rule = 1, so no interpolation outside
+    # of date range. This means first m2/m3 obs are not
+    # used for im2 or im3, which is good because we don't 
+    # know when they started (or their zero, that is, starting dates)
     full[m2obs > 1, im2 := zoo::na.approx(m2, method = 'constant', na.rm = F), by = osmid]
     full[hgtobs > 1, ihgt :=  zoo::na.approx(hgt, method = 'constant', na.rm = F), by = osmid]
     full[m3obs > 1, im3 :=  zoo::na.approx(m3, method = 'constant', na.rm = F), by = osmid]
+
 
     full[, inobs := zoo::na.approx(nobs, method='constant', rule = 1, na.rm = F), by = osmid]
     full[m2obs > 1 & !is.na(inobs), iphaselength := zoo::na.approx(phaselength, method='constant', na.rm=F, rule=2:1), by=osmid]
@@ -197,6 +219,8 @@ to_annual_obs = function(dyn){
     full[, im3_ann := im3/iphaselength]
     full[irestphase == 1, im3_ann := 0]
     full[firstobs == TRUE & !is.na(firstobs), im3_ann := 0]
+    dyn[osmid == 60803772]
+    full[osmid == 60803772 & data.table::between(year, 1318, 1330)]
     
     full = full[order(osmid, year), ]
 
