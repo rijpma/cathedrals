@@ -409,9 +409,16 @@ for (j in 1:M){
     cat("Original: N swapped: ", sum(dynobs[, list(delta = diff(year_crc) < 0), by=osmid][, delta]), " - ")
     cat("N same: ",    sum(dynobs[, list(delta = diff(year_crc) == 0), by=osmid][, delta]), " - ")
 
-    dynobs[(((year_lead_crc - year_crc) < 0) | ((year_crc - year_lag_crc) < 0)), year_crc := round((year + year_crc) / 2), by=osmid]
-    dynobs[duplicated(paste0(osmid, year_crc)), year_crc := year_crc + 1]
-    dynobs[duplicated(paste0(osmid, year_crc), fromLast=TRUE), year_crc := year_crc - 1]
+
+    # dynobs[(((year_lead_crc - year_crc) < 0) | ((year_crc - year_lag_crc) < 0)), list(year_lag_crc, year_crc, year_lead_crc)]
+    # dynobs[(((year_lead_crc - year_crc) < 0) | ((year_crc - year_lag_crc) < 0)), year_crc := round((year + year_crc) / 2), by=osmid]
+    # above can be way off, so do more conservatively
+    dynobs[year_lead_crc - year_crc <= 0, year_crc := year_lead_crc - 1, by=osmid]
+    dynobs[year_crc - year_lag_crc <= 0, year_crc := year_lag_crc + 1, by=osmid]
+    # because that is the closest value to the original imputed value that is a non-swap
+
+    # dynobs[duplicated(paste0(osmid, year_crc)), year_crc := year_crc + 1]
+    # dynobs[duplicated(paste0(osmid, year_crc), fromLast=TRUE), year_crc := year_crc - 1]
 
     cat("After fix: N swapped: ", sum(dynobs[, list(delta = diff(year_crc) < 0), by=osmid][, delta]), " - ")
     cat("N same: ",    sum(dynobs[, list(delta = diff(year_crc) == 0), by=osmid][, delta]), "\n")
@@ -433,6 +440,9 @@ for (j in 1:M){
     # fullobslist[[j]] = to_annual_obs(dynobs_rs, chrlist)    
     dynobs_rs[, prb := duplicated(year, fromLast=T), by=osmid]
     dynobs_rs[prb == TRUE & data.table::shift(year) != year, year := year - 1]
+    dynobs_rs[, phaselength:=c(diff(year)[1], diff(year)), by=osmid]
+    # because otherwise the denominator to annualise in interpolations is the non-imputed one
+    # consider fixing this in to_annual_obs
 
     
     tomerge = to_annual_obs(
@@ -448,6 +458,16 @@ for (j in 1:M){
     rm("tomerge")
     rm("dynobs_rs")
 }
+
+sumcheck = fullobs[, 
+    lapply(.SD, sum, na.rm = TRUE), 
+    .SDcols = grep("im3_ann\\d|im3_ann$", names(fullobs)),
+    by = osmid]
+imps = as.list(sumcheck[, -"osmid"])
+if(!all(sapply(imps, all.equal, current = sumcheck$im3_ann))){
+    warning("differences in original and imputed by-church totals")
+}
+
 
 # pdf("figs/imputations_var.pdf")
 # yrdex = between(unique(fullobs$year), 700, 1500)
@@ -493,6 +513,7 @@ write.csv(dynobs, "dat/dynobs.csv", row.names=F)
 write.csv(statobs, "dat/statobs.csv", row.names=F)
 write.csv(citobs, "dat/citobs.csv", row.names=F)
 
+# isn't it better to just always merge fullobs and statobs where you need them?
 outfile = gzfile("dat/fullobs_sp.csv.gz", 'w')
 write.csv(fullobs_sp, outfile)
 close(outfile)
@@ -502,7 +523,6 @@ unique(stringi::stri_enc_mark(siem$city))
 unique(stringi::stri_enc_mark(citobs$city))
 
 # m3 per region
-
 out = fullobs_sp[data.table::between(year, 700, 1500), list(im2 = sum(im2_ann, na.rm=T), 
                                     im3 = sum(im3_ann, na.rm=T), 
                                     im2_tot = max(im2_cml, na.rm=T),
