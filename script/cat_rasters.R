@@ -111,7 +111,7 @@ rchm[is.na(rchm)] = 0
 pdf("figs/4m3maps_smoothed.pdf", width=10, height=10)
 par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
 plot(rchm[[1]], main="700-1000", zlim = c(0, 31), col=magma(256), axes=F,
-    axis.args=list(at=seq(0, 31, 5)))
+    axis.args=list(at=seq(0, 31, 10)))
 add_borders(border='white')
 plot(rchm[[2]], main="1000-1200", zlim = c(0, 72), col=magma(256), axes=F,
     axis.args=list(at=seq(0, 60, 20)))
