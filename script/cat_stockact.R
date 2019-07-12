@@ -38,10 +38,11 @@ m_lag = lm(log1p(activity) ~ log1p(endsize_lag), data = stock)
 pdf("figs/completedstock_activity.pdf", width = 10, height = 6)
 par(mfrow=c(1, 2), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
 plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray30', bty = 'l',
-    xlab = "completed stock (log m3)", ylab = "activity (log m3/century)")
+    xlab = "completed church stock (log m³)", 
+    ylab = "church building per century (log m³)")
 abline(m, col = 1, lwd = 1.5)
 plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = 'l',
-    xlab = "lag completed stock (log m3)", ylab = "")
+    xlab = "lag completed church stock (log m³)", ylab = "")
 abline(m_lag, col = 1, lwd = 1.5)
 dev.off()
 

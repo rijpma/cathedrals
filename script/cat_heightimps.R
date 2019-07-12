@@ -36,7 +36,7 @@ summary(m_l)
 summary(m_ll)
 summary(m_lld)
 summary(m_sq_or)
-summary(m_sq_or_it)
+summary(m_sq_it)
 summary(m_nl_it)
 
 # interactions don't add much
@@ -50,7 +50,7 @@ AIC(m_sq_or)
 
 pdf("figs/height_surface_sq_ci.pdf")
 plot(nave_height ~ ground_surface_m2, data=hgt, bty='l', type='n',
-    xlab = 'Ground surface (m2)', ylab = 'Nave height (m)')
+    xlab = 'Ground surface (m²)', ylab = 'Nave height (m)')
 fit = predict(m_sq_or, 
     newdata = data.frame(ground_surface_m2 = 0:8000), 
     se=TRUE, interval='confidence')
@@ -68,7 +68,8 @@ points(nave_height ~ ground_surface_m2, data=hgt, bty='l')
 dev.off()
 
 pdf("figs/height_surface_inclit.pdf")
-plot(facade_height ~ ground_surface_m2, data=hgt_ita, bty='l', type='n')
+plot(facade_height ~ ground_surface_m2, data=hgt_ita, bty='l', type='n',
+    xlab = 'Ground surface (m²)', ylab = 'Nave height (m)')
 points(nave_height ~ ground_surface_m2, data=hgt)
 points(facade_height ~ ground_surface_m2, data=hgt_ita, col = "blue")
 fit = predict(m_sq_or, newdata=data.frame(ground_surface_m2=0:10000), 
@@ -78,7 +79,7 @@ fit = predict(m_nl_it, newdata=data.frame(ground_surface_m2=0:10000),
     se=TRUE, interval='prediction', col = 2)
 lines(x=0:10000, fit, col='blue', lwd=1.5)
 text(x = c(7500, 8400), y = c(45, 38), 
-    labels = c("Italy", "NW EU"), col = c("blue", "black"))
+    labels = c("Italy", "Rest Europe"), col = c("blue", "black"))
 dev.off()
 
 # total observations for height imps
