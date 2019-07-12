@@ -55,35 +55,6 @@ rhigh = disaggregate(r, 2)
 #####################
 fullobs_sp[!is.na(phase) & firstobs != TRUE, newbuild := m2]
 
-rch = list()
-for (i in seq(from=700, to=1480, by=20)){
-    dcd = i:(i + 19)
-    tosp = fullobs_sp[year %in% dcd, 
-        list(im3y20 = base::sum(.SD, na.rm=T) / M), 
-        by=list(lon, lat), 
-        .SDcols=impvrbs]
-    spdf = sp::SpatialPointsDataFrame(
-        coords=tosp[, list(lon, lat)], 
-        data=tosp[, list(im3y20)], 
-        proj4str=wgs)
-    spdf = spdf[!is.na(spdf$im3y20) & spdf$im3y20!=0, ]
-    rch[[as.character(i)]] = raster::rasterize(spdf, p, 
-        field="im3y20", fun=sum, na.rm=T)
-}
-
-rch = raster::brick(rch)
-rch = raster::crop(rch, raster::extent(-10, 20, 40, 60))
-dim(rch)
-dim(p)
-par(mfrow=c(1, 3))
-plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T), type='b', col=2, bty='l')
-abline(v=1348)
-pips = raster::subset(pip, which(names(pip) %in% names(rch)))
-plot(gsub('[^0-9]', '', names(pips)), colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
-plot(gsub('[^0-9]', '', names(rch)), colSums(getValues(rch), na.rm=T) / colSums(getValues(pips), na.rm=T), type='b', col=2, bty='l')
-abline(v=1348)
-
-
 rchm = list()
 periods = list(700:1000, 1001:1200, 1201:1347, 1348:1500)
 for (i in 1:length(periods)){
