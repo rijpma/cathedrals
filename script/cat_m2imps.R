@@ -7,6 +7,9 @@ library("lme4")
 library("texreg")
 library("readxl")
 
+source("script/cat_functions.r")
+
+
 statobs = data.table::fread("dat/statobs.csv")
 dynobs = data.table::fread("dat/dynobs.csv")
 dynobs = dynobs[statobs[, .(osmid, ctr)], on = c("osmid")]
@@ -55,12 +58,21 @@ texreg::htmlreg(modlist, "tab/predecessors_utrylogs.html",
 modlist = list(
     `all` = lm(m2predecessor ~ m2successor - 1, data = sfc_all),
     `excl. italy` = lm(m2predecessor ~ m2successor - 1, data = sfc_all[ctr != 'it']),
-    `country split` = lm(m2predecessor ~ m2successor:(factor(ctr) - 1) - 1, data = sfc_all),
-    `century split` = lm(m2predecessor ~ m2successor:(factor(century) - 1) - 1, data = sfc_all),
-    `church split` = lm(m2predecessor ~ m2successor:(factor(category) - 1) - 1, data = sfc_all))
+    `country split` = lm(m2predecessor ~ m2successor:factor(ctr) - 1, data = sfc_all),
+    `century split` = lm(m2predecessor ~ m2successor:factor(century) - 1, data = sfc_all),
+    `church split` = lm(m2predecessor ~ m2successor:factor(category) - 1, data = sfc_all))
 texreg::screenreg(modlist)
 texreg::htmlreg(modlist, "tab/predecessors.html",
     custom.coef.names = unique(unlist(lapply(modlist, function(x) gsub("factor\\(.*\\)", "", names(coef(x)))))))
+
+modlist = list(
+    `all` = lm(m2predecessor ~ m2successor - 1, data = sfc_all),
+    `excl. italy` = lm(m2predecessor ~ m2successor - 1, data = sfc_all[ctr != 'it']),
+    `country split` = lm(m2predecessor ~ m2successor*factor(ctr) - 1, data = sfc_all),
+    `century split` = lm(m2predecessor ~ m2successor*factor(century) - 1, data = sfc_all),
+    `church split` = lm(m2predecessor ~ m2successor*factor(category) - 1, data = sfc_all))
+texreg::screenreg(modlist)
+
 
 # sample distribution
 ftable(sfc_all$century, sfc_all$ctr)
@@ -121,22 +133,23 @@ abline(v = c(-0.00005, 0.00335))
 
 # = predicted in buildings
 bldobs[, predicted := "no"]
-bldobs[ctr == "it" & between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
-bldobs[ctr != "it" & between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
+bldobs[ctr == "it" & data.table::between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
+bldobs[ctr != "it" & data.table::between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
 
 bldobs[, .N, by = predicted]
 bldobs[, mean(predicted != "no"), by = .(ctr == "it", bldindex)][order(ctr, bldindex)]
 
 # = predicted in dynobs
 dynobs[, predicted := "no"]
-dynobs[ctr == "it" & between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
-dynobs[ctr != "it" & between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
+dynobs[ctr == "it" & data.table::between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
+dynobs[ctr != "it" & data.table::between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
 
 library("brms")
 ncores = parallel::detectCores() -1
 options(mc.cores = ncores)
 
-m = brm(log(m2predecessor) ~ (log(m2successor) | ctr + century), data = sfc_all)
+m = brm(log(m2predecessor) ~ (log(m2successor) | ctr + century), 
+    data = sfc_all, chains = 3)
 preds = predict(m, 
     newdata = dynobs[, 
         list(m2successor = successor_endm2, 
@@ -158,25 +171,98 @@ fullobs_alt[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 fullobs = statobs[, list(osmid, ctr)][fullobs, on = "osmid"]
 fullobs_alt = statobs[, list(osmid, ctr)][fullobs_alt, on = "osmid"]
 
-pdf("figs/altbackprojs.pdf")
+pdf("figs/altbackprojs.pdf", height = 6)
 par(mfrow = c(1, 1), bty = 'l')
-plot(fullobs[between(year, 700, 1500), sum(im2_ann, na.rm = T), by = decade], 
-    type = 'b', ylab = "m2/20y", xlab = 'decade')
-lines(fullobs_alt[between(year, 700, 1500), sum(im2_ann, na.rm = T), by = decade], type = 'b', col = 2)
-text(c(900, 1100), c(75e3, 50e3), c("alternative", "current"), col = 2:1)
+plot(fullobs[data.table::between(year, 700, 1500), 
+        sum(im2_ann, na.rm = T), 
+        by = decade], 
+    type = 'b', ylab = m2y20lbl, xlab = 'decade', col = "gray")
+lines(fullobs_alt[data.table::between(year, 700, 1500), 
+        sum(im2_ann, na.rm = T), 
+        by = decade], 
+    type = 'b', col = 1)
+text(c(900, 1100), c(75e3, 50e3), c("alternative", "current"), col = c("black", "gray"))
 dev.off()
 
-pdf("figs/altbackprojs_panel.pdf", width = 9, height= 5)
-par(mfrow = c(2, 4), mar = c(4, 4, 2, 0.5), bty = 'l', font.main = 1)
-for (country in unique(fullobs$ctr)){
-    plot(fullobs_alt[between(year, 700, 1500) & ctr == country, 
-            sum(im2_ann, na.rm = T), by = decade], 
-        type = 'l', ylab = "m2/20y", xlab = 'decade', 
-        col = 2, main = country)
-    lines(fullobs[between(year, 700, 1500) & ctr == country, 
-            sum(im2_ann, na.rm = T), by = decade], type = 'l')
+ctrsalt = fullobs_alt[data.table::between(year, 700, 1500), 
+    list(
+        Italy = sum(im2_ann[ctr == "it"], na.rm = TRUE),
+        `Low Countries` = sum(im2_ann[ctr == "nl" | ctr == "be"], na.rm = TRUE),
+        `All` = sum(im2_ann, na.rm = TRUE),
+        `Germany` = sum(im2_ann[ctr == "de"], na.rm = TRUE),
+        `France` = sum(im2_ann[ctr == "fr"], na.rm = TRUE),
+        `Great Britain` = sum(im2_ann[ctr == "uk"], na.rm = TRUE)),
+    by = decade]
+ctrsold = fullobs[data.table::between(year, 700, 1500), 
+    list(
+        Italy = sum(im2_ann[ctr == "it"], na.rm = TRUE),
+        `Low Countries` = sum(im2_ann[ctr == "nl" | ctr == "be"], na.rm = TRUE),
+        `All` = sum(im2_ann, na.rm = TRUE),
+        `Germany` = sum(im2_ann[ctr == "de" | ctr == "ch"], na.rm = TRUE),
+        `France` = sum(im2_ann[ctr == "fr"], na.rm = TRUE),
+        `Great Britain` = sum(im2_ann[ctr == "uk"], na.rm = TRUE)),
+    by = decade]
 
+pdf("figs/altbackprojs_panel.pdf", width = 9, height= 6)
+par(mfrow = c(2, 3), mar = c(4, 4, 2, 0.5), bty = 'l', font.main = 1)
+plot(Italy ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "Italy", ylab = m2y20lbl)
+lines(Italy ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+plot(France ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "France", ylab = "")
+lines(France ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+plot(Germany ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "Germany, incl. Switzerland", ylab = "")
+lines(Germany ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+plot(`Low Countries` ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "Low Countries", ylab = m2y20lbl)
+lines(`Low Countries` ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+plot(`Great Britain` ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "Great Britain", ylab = "")
+lines(`Great Britain` ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+plot(All ~ decade, data = ctrsalt,
+        type = 'l', lwd = 1.5, col = 1,
+        yaxt = "n",
+        main = "All", ylab = "")
+lines(All ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
+axis1ks(side = 2)
+dev.off()
+
+ctrs = unique(fullobs$ctr)
+for (i in seq_along(ctrs)){
+    plot(fullobs_alt[between(year, 700, 1500) & ctr == ctrs[i], 
+            sum(im2_ann, na.rm = T), by = decade], 
+        type = 'l', 
+        ylab = ifelse(i %% 4 == 1, m2y20lbl, ""),
+        xlab = 'decade', 
+        col = 2, main = ctrs[i])
+    lines(fullobs[between(year, 700, 1500) & ctr == ctrs[i], 
+            sum(im2_ann, na.rm = T), by = decade], type = 'l')
 }
+plot(fullobs_alt[between(year, 700, 1500), 
+        sum(im2_ann, na.rm = T), by = decade], 
+    type = 'l', 
+    ylab = "", 
+    xlab = 'decade', 
+    col = 2, main = "all")
+lines(fullobs[between(year, 700, 1500), 
+        sum(im2_ann, na.rm = T), by = decade], type = 'l')
+dev.off()
 
 # eltjo's estimates
 1.879^(1:3)
