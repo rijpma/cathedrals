@@ -11,7 +11,6 @@ library(texreg)
 setwd("~/dropbox/cathedrals")
 source("script/cat_functions.r")
 
-
 statobs = data.table::fread("dat/statobs.csv")
 fullobs_sp = data.table::fread("gunzip -c  dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
@@ -76,23 +75,33 @@ pdf("figs/james_v_osm_series_hc.pdf", height=5, width = 9)
 par(mfrow=c(1, 2), font.main=1)
 plot(m3dec ~ decade, data = comp,
     type='l', lwd = 1.5, bty='l', xlim=c(1060, 1250),
-    xlab='decade', ylab='m3/decade', main='OSM-EE')
+    yaxt = "n",
+    xlab='decade', ylab = m3y10lbl, main='OSM-based data')
 lines(JU_sc ~ decade ,data = comp, col = 'gray')
+axis1ks(2)
 plot(JU ~ decade, data = comp,
     type='l', lwd = 1.5, bty='l', xlim=c(1060, 1250),
-    xlab='decade', ylab="James cost estimate/decade", main='James')
+    yaxt = "n",
+    xlab='decade', ylab="James's cost estimate per 10 years", 
+    main = "James's data")
 lines(m3_sc ~ decade ,data = comp, col = 'gray')
+axis1ks(2)
 dev.off()
 
-james_mtchd = merge(james[mtchs$ll1, ], fullobs[year==1250, list(osmid, im2_cml, im3_cml)], by="osmid")
+james_mtchd = merge(james[mtchs$ll1, ], fullobs[year==1250, list(osmid, im2_cml, im3_cml, im3_ann)], by="osmid")
 james_mtchd = james_mtchd[!id_james %in% c("Synopsis.php?id=EVREUX", 
     "Synopsis.php?id=ETMPES-B", "Synopsis.php?id=ETMPES-G"), ]
 
-pdf('figs/james_v_catdat1250_m3.pdf')
+pdf('figs/james_v_catdat1250_m3.pdf', width = 6, height = 6)
 par(mfrow=c(1, 1), font.main=1)
-plot(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0], bty = 'l',
-    xlab='log(m3)', ylab= "log(James cost estimate)")
-abline(lm(log(JU) ~ log(im3_cml), data=james_mtchd[JU > 0]), lwd = 1.5)
+plot(JU ~ im3_cml, # cml because comparison is completed church in 1250
+    data=james_mtchd[JU > 0], 
+    bty = 'l', log = 'xy',
+    xlab = "OSM-based completed church volume (m³ in 1250)",
+    ylab= "James's cost estimate")
+abline(lm(log(JU) ~ log(im3_cml), 
+    data = james_mtchd[JU > 0 & !is.na(im3_cml) & im3_cml > 0]), 
+    lwd = 1.5)
 dev.off()
 
 
