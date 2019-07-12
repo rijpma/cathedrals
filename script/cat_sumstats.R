@@ -35,12 +35,17 @@ byctr = Reduce(merge, list(
         by = list(osmid, ctr)][,
             list(`Building phases / church` = mean(N)),
             by = list(ctr)],
+    # dynobs_sp[,
+    #     list(`% phases < 1000` = mean(year < 1000)),
+    #     by = list(ctr)],
     dynobs_sp[,
-        list(`% phases < 1000` = mean(year < 1000)),
-        by = list(ctr)],
-    dynobs_sp[,
-        list(`% phases < 1200` = mean(year < 1200)),
-        by = list(ctr)]))
+        list(`% phases <= 1100` = mean(year <= 1100)),
+        by = list(ctr)]
+    # dynobs_sp[,
+    #     list(`% phases < 1200` = mean(year < 1200)),
+    #     by = list(ctr)]
+    )
+)
 
 tot = Reduce(merge, list(
     siem[year == 1500, .N],
@@ -56,8 +61,11 @@ tot = Reduce(merge, list(
         .N,
         by = list(osmid, ctr)][,
             list(`Building phases / church` = mean(N))],
-    dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
-    dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]))
+    # dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
+    dynobs_sp[, list(`% phases <= 1100` = mean(year <= 1100))]
+    # dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]
+    )
+)
 
 setnames(tot, 'x', "N")
 out = rbind(byctr, data.table(ctr = 'all', tot))
