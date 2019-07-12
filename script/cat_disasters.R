@@ -66,13 +66,18 @@ disasters[cause == "no"]
 disasters[, .N, by = cause][order(N)]
 
 
-disasters[, .N, by = cause][order(N)]
+disasters[, list(.N, paste0(range(year), collapse = "-")), by = cause][order(N)]
 disasters[, earthquake := grepl("earthquake", cause)]
 disasters[, war := grepl("vikings|saracens|war|riot|invasion|normans|plun?der|ravaged|raze|danes|rebellion|crusade|mag?yars", cause)]
-disasters[, other := ifelse(war == FALSE & earthquake == FALSE, TRUE, FALSE)]
-    # other := grepl("fire|collapse|destroyed|damaged|lightning|ruined|hurrican|conflagration|storm|crushed|flood|light", cause)]
+disasters[, fire := war == FALSE & grepl("fire|confla", cause)]
+disasters[, other_natural := fire == FALSE & war == FALSE & earthquake == FALSE & grepl("flood|light|hurri|storm", cause)]
+disasters[, other := fire == FALSE & war == FALSE & earthquake == FALSE & other_natural == FALSE]
 
-if (!identical(disasters[, unique(earthquake + other + war)], 1L)){
+disasters[is.na(earthquake + other + war + fire + other_natural)]
+disasters[earthquake + other + war + fire + other_natural != 1]
+
+
+if (!identical(disasters[, unique(earthquake + other + war + fire + other_natural)], 1L)){
     warning("categories not mutually exclusive or coverage incomplete")
 }
 
