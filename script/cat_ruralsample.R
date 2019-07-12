@@ -42,7 +42,7 @@ statobs_rur = data.table::as.data.table(statobs_rur)
 
 dynobs_rur = to_dynobs(churchlist=chrlist_rur)
 
-fullobs_rur = to_annual_obs(dyn=dynobs_rur, churchlist=chrlist_rur)
+fullobs_rur = to_annual_obs(dyn=dynobs_rur)
 fullobs_rur[, decade:=(trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 fullobs_rur[, im3_ann_cmc := im3_ann + im3_cml * 0.005]
 
@@ -176,22 +176,22 @@ al_sfc = data.frame(rural = sum(sapply(sqpols, geosphere::areaPolygon)) / (sfc_f
 
 # al = fullobs_sp_urb[, list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # al = fullobs_sp_urb[, list(urban=sum(im3_ann_cmc, na.rm=T)), by = decade]
-al = fullobs_sp_urb[, list(urban=sum(im3_ann, na.rm=T)), by = decade]
-al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann, na.rm=T)), by = decade]
+al = fullobs_sp_urb[, list(urban=sum(im3_ann, na.rm=T) / 1e6), by = decade]
+al_rur = fullobs_sp_rur[centre %in% rurcit, list(rural=sum(im3_ann, na.rm=T) / 1e6), by = decade]
 al = al[al_rur, on = 'decade'][data.table::between(decade, 700, 1500)]
 al[, rural_mlp := (1 / al_sfc$rural) * rural]
 al[, combined := rural_mlp + urban]
 
 matplot(al$decade, al[, list(urban / mean(urban), combined / mean(combined))])
 
-pdf("figs/ruralcorrections_eu.pdf", height=4, width=10)
+pdf("figs/ruralcorrections_eu.pdf", height = 3.5, width = 9)
 par(mfrow = c(1, 3), font.main = 1, mar=c(4, 4, 1.5, 0.5))
 plot(combined ~ decade, data = al, type = 'n', bty = 'l',
-    ylab = 'm3 / 20 years', xlab = '', main = "Urban")
+    ylab = m3y20lblm, xlab = '', main = "Urban")
 lines(urban ~ decade, data = al, type = 'l')
 lines(rural_mlp ~ decade, data = al, type = 'l', col = 'gray')
 plot(combined ~ decade, data = al, type = 'n', bty = 'l',
-    ylab = '', main = "Rural sample x (1/sample area)")
+    ylab = '', main = "Rural sample (scaled to full area)")
 lines(rural_mlp ~ decade, data = al, type = 'l')
 lines(urban ~ decade, data = al, type = 'l', col = 'gray')
 plot(combined ~ decade, data = al, type = 'n', bty = 'l',
@@ -207,34 +207,34 @@ fullobs_sp_urb[, decade := (trunc((year - 1) / declength) + 1) * declength] # so
 fullobs_sp_rur[, decade := (trunc((year - 1) / declength) + 1) * declength] # so 1500 = 1481-1500
 
 
-fr = fullobs_sp_urb[between(year, 700, 1500) & ctr=="fr", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+fr = fullobs_sp_urb[data.table::between(year, 700, 1500) & ctr=="fr", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # fr_cml = fullobs_sp_urb[ctr=="fr", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # fr[, urban := urban + fr_cml$urban]
-de = fullobs_sp_urb[between(year, 700, 1500) & ctr=="de", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+de = fullobs_sp_urb[data.table::between(year, 700, 1500) & ctr=="de", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # de_cml = fullobs_sp_urb[ctr=="de", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # de[, urban := urban + fr_cml$urban]
-uk = fullobs_sp_urb[between(year, 700, 1500) & ctr=="uk", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+uk = fullobs_sp_urb[data.table::between(year, 700, 1500) & ctr=="uk", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # uk_cml = fullobs_sp_urb[ctr=="uk", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # uk[, urban := urban + uk_cml$urban]
-lc = fullobs_sp_urb[between(year, 700, 1500) & ctr=="nl" | ctr=="be", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
+lc = fullobs_sp_urb[data.table::between(year, 700, 1500) & ctr=="nl" | ctr=="be", list(urban=base::sum(.SD, na.rm=T) / M), by = decade, .SDcols = grep("im3_ann\\d", names(fullobs_sp_urb))]
 # lc_cml = fullobs_sp_urb[ctr=="nl" | ctr=="be", list(urban=(base::sum(.SD * 0.005, na.rm=T) / M)), by = decade, .SDcols = grep("im3_cml\\d", names(fullobs_sp_urb))]
 # lc[, urban := urban + lc_cml$urban]
 
 
 
-fr_rur = fullobs_sp_rur[between(year, 700, 1500) & centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
+fr_rur = fullobs_sp_rur[data.table::between(year, 700, 1500) & centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # fr_rur_cml = fullobs_sp_rur[centre %in% c("Toulouse", "Dijon", "Amiens"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
 # fr_rur[, rural := rural + fr_rur_cml$rural]
 
-de_rur = fullobs_sp_rur[between(year, 700, 1500) & centre %in% c("Nuernberg (Nürnberg)", "Osnabrueck (Osnabrück)"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
+de_rur = fullobs_sp_rur[data.table::between(year, 700, 1500) & centre %in% c("Nuernberg (Nürnberg)", "Osnabrueck (Osnabrück)"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # de_rur_cml = fullobs_sp_rur[centre %in% c("Nuernberg (Nürnberg)", "Osnabrueck (Osnabrück)"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
 # de_rur[, rural := rural + de_rur_cml$rural]
 
-uk_rur = fullobs_sp_rur[between(year, 700, 1500) & centre %in% c("Chester", "Peterborough (Medeshamstede)"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
+uk_rur = fullobs_sp_rur[data.table::between(year, 700, 1500) & centre %in% c("Chester", "Peterborough (Medeshamstede)"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # uk_rur_cml = fullobs_sp_rur[centre %in% c("Chester", "Peterborough (Medeshamstede)"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
 # uk_rur[, rural := rural + uk_rur_cml$rural]
 
-lc_rur = fullobs_sp_rur[between(year, 700, 1500) & centre %in% c("Maastricht"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
+lc_rur = fullobs_sp_rur[data.table::between(year, 700, 1500) & centre %in% c("Maastricht"), list(rural=sum(im3_ann, na.rm=T)), by=decade]
 # lc_rur_cml = fullobs_sp_rur[centre %in% c("Maastricht"), list(rural=sum(im3_cml * 0.005, na.rm=T)), by=decade]
 # lc_rur[, rural := rural + lc_rur_cml$rural]
 
@@ -258,6 +258,15 @@ de[, combined := urban + rural * 1 / de_sfc[, 'rural']]
 uk[, combined := urban + rural * 1 / uk_sfc[, 'rural']]
 lc[, combined := urban + rural * 1 / lc_sfc[, 'rural']]
 
+fr[, urban_sm := predict(loess(urban ~ decade, data = .SD))]
+fr[, rural_sm := predict(loess(rural ~ decade, data = .SD))]
+de[, urban_sm := predict(loess(urban ~ decade, data = .SD))]
+de[, rural_sm := predict(loess(rural ~ decade, data = .SD))]
+uk[, urban_sm := predict(loess(urban ~ decade, data = .SD))]
+uk[, rural_sm := predict(loess(rural ~ decade, data = .SD))]
+lc[, urban_sm := predict(loess(urban ~ decade, data = .SD))]
+lc[, rural_sm := predict(loess(rural ~ decade, data = .SD))]
+
 ctrobs = rbindlist(list(fr, de, uk, lc))
 ctrobs[, lapply(.SD, sum), by=decade, .SDcols=c("urban", "rural", "combined")]
 
@@ -270,57 +279,77 @@ ctrobs[, lapply(.SD, sum), by=decade, .SDcols=c("urban", "rural", "combined")]
 # out[is.na(ctr2), ctr2 := "all"]
 # data.table::fwrite(out[decade <= 1500, ][order(ctr2), ], "dat/forbruce2.csv")
 
+ctrobs[, cor(urban, rural)]
+ctrobs[, cor(urban, rural), by = ctr]
+ctrobs[, cor(urban_sm, rural_sm), by = ctr]
+ctrobs[, list(urban_diff = urban - data.table::shift(urban), 
+        rural_diff = rural - data.table::shift(rural)), by = ctr][, 
+    cor(urban_diff, rural_diff, use = 'pairwise.complete')]
+ctrobs[, cor(urban - data.table::shift(urban), rural - data.table::shift(rural), use = 'pairwise.complete'), by = ctr]
+ctrobs[, cor(urban_sm - data.table::shift(urban_sm), rural_sm - data.table::shift(rural_sm), use = 'pairwise.complete'), by = ctr]
 
-cor(fr[decade <= 1500, 2:3])
-cor(fr[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], use='pairwise')
-cor(de[decade <= 1500, 2:3])
-cor(de[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], use='pairwise')
-cor(uk[decade <= 1500, 2:3])
-cor(uk[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], use='pairwise')
-cor(lc[decade <= 1500, 2:3])
-cor(lc[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=2:3], use='pairwise')
+al[, cor(.SD - data.table::shift(.SD), use = "pairwise.complete"), .SDcols = c("urban", "rural", "combined")]
+
+cor(fr[decade <= 1500, c(2:3)])
+cor(fr[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=c(2:3)], use='pairwise')
+cor(de[decade <= 1500, c(2:3)])
+cor(de[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=c(2:3)], use='pairwise')
+cor(uk[decade <= 1500, c(2:3)])
+cor(uk[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=c(2:3)], use='pairwise')
+cor(lc[decade <= 1500, c(2:3)])
+cor(lc[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=c(2:3)], use='pairwise')
+
+cor(fr[decade <= 1500, 6:7])
+cor(fr[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=6:7], use='pairwise')
+cor(de[decade <= 1500, 6:7])
+cor(de[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=6:7], use='pairwise')
+cor(uk[decade <= 1500, 6:7])
+cor(uk[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=6:7], use='pairwise')
+cor(lc[decade <= 1500, 6:7])
+cor(lc[decade <= 1500, .SD - data.table::shift(.SD, type='lag'), .SDcols=6:7], use='pairwise')
 
 pdf('figs/ruralcorrections_smt.pdf', height = 10, width = 8)
 par(mfrow=c(4, 3), mar=c(4, 4, 0.5, 0.5), font.main = 1, bty = 'l')
-plot(rural ~ decade, data=fr, type='l', col='gray', ylab = "m3/20y", xlab = "")
-title(main='France, rur.', line = -0.8)
-add_loess(rural ~ decade, dat=fr, span=0.5)
-plot(urban ~ decade, data=fr, type='l', col='gray', ylab = "", xlab = "")
-title(main='France, urb.', line = -0.8)
-add_loess(urban ~ decade, dat=fr, span=0.5)
-plot(combined ~ decade, data=fr, type='l', col='gray', ylab = "", xlab = "")
+plot(rural / 1e6 ~ decade, data=fr, type='l', col='gray', ylab = m3y20lblm, xlab = "")
+title(main='France, rural', line = -0.8)
+add_loess(rural / 1e6 ~ decade, dat=fr, span=0.5)
+plot(urban / 1e6 ~ decade, data=fr, type='l', col='gray', ylab = "", xlab = "")
+title(main='France, urban', line = -0.8)
+add_loess(urban / 1e6 ~ decade, dat=fr, span=0.5)
+plot(combined / 1e6 ~ decade, data=fr, type='l', col='gray', ylab = "", xlab = "")
 title(main='France, comb.', line = -0.8)
-add_loess(combined ~ decade, dat=fr, span=0.5)
+add_loess(combined / 1e6 ~ decade, dat=fr, span=0.5)
 
-plot(rural ~ decade, data=de, type='l', col='gray', ylab = "m3/20y", xlab = "")
-title(main='Germany, rur.', line = -0.8)
-add_loess(rural ~ decade, dat=de, span=0.5)
-plot(urban ~ decade, data=de, type='l', col='gray', ylab = "", xlab = "")
-title(main='Germany, urb.', line = -0.8)
-add_loess(urban ~ decade, dat=de, span=0.5)
-plot(combined ~ decade, data=de, type='l', col='gray', ylab = "", xlab = "")
+plot(rural / 1e6 ~ decade, data=de, type='l', col='gray', ylab = m3y20lblm, xlab = "")
+title(main='Germany, rural', line = -0.8)
+add_loess(rural / 1e6 ~ decade, dat=de, span=0.5)
+plot(urban / 1e6 ~ decade, data=de, type='l', col='gray', ylab = "", xlab = "")
+title(main='Germany, urban', line = -0.8)
+add_loess(urban / 1e6 ~ decade, dat=de, span=0.5)
+plot(combined / 1e6 ~ decade, data=de, type='l', col='gray', ylab = "", xlab = "")
 title(main='Germany, comb.', line = -0.8)
-add_loess(combined ~ decade, dat=de, span=0.5)
+add_loess(combined / 1e6 ~ decade, dat=de, span=0.5)
 
-plot(rural ~ decade, data=uk, type='l', col='gray', ylab = "m3/20y", xlab = "")
-title(main='Britain, rur.', line = -0.8)
-add_loess(rural ~ decade, dat=uk, span=0.5)
-plot(urban ~ decade, data=uk, type='l', col='gray', ylab = "", xlab = "")
-title(main='Britain, urb.', line = -0.8)
-add_loess(urban ~ decade, dat=uk, span=0.5)
-plot(combined ~ decade, data=uk, type='l', col='gray', ylab = "", xlab = "")
-title(main='Britain, comb.', line = -0.8)
-add_loess(combined ~ decade, dat=uk, span=0.5)
-
-plot(rural ~ decade, data=lc, type='l', col='gray', ylab = "m3/20y", xlab = "year")
-title(main='Low Countries, rur.', line = -0.8)
-add_loess(rural ~ decade, dat=lc, span=0.5)
-plot(urban ~ decade, data=lc, type='l', col='gray', ylab = "", xlab = "year")
-title(main='Low Countries, urb.', line = -0.8)
-add_loess(urban ~ decade, dat=lc, span=0.5)
-plot(combined ~ decade, data=lc, type='l', col='gray', ylab = "", xlab = "year")
+plot(rural / 1e6 ~ decade, data=lc, type='l', col='gray', ylab = m3y20lblm, xlab = "year")
+title(main='Low Countries, rural', line = -0.8)
+add_loess(rural / 1e6 ~ decade, dat=lc, span=0.5)
+plot(urban / 1e6 ~ decade, data=lc, type='l', col='gray', ylab = "", xlab = "year")
+title(main='Low Countries, urban', line = -0.8)
+add_loess(urban / 1e6 ~ decade, dat=lc, span=0.5)
+plot(combined / 1e6 ~ decade, data=lc, type='l', col='gray', ylab = "", xlab = "year")
 title(main='Low Countries, comb.', line = -0.8)
-add_loess(combined ~ decade, dat=lc, span=0.5)
+add_loess(combined / 1e6 ~ decade, dat=lc, span=0.5)
+
+plot(rural / 1e6 ~ decade, data=uk, type='l', col='gray', ylab = m3y20lblm, xlab = "")
+title(main='Gt Britain, rural', line = -0.8)
+add_loess(rural / 1e6~ decade, dat=uk, span=0.5)
+plot(urban / 1e6 ~ decade, data=uk, type='l', col='gray', ylab = "", xlab = "")
+title(main='Gt Britain, urban', line = -0.8)
+add_loess(urban / 1e6~ decade, dat=uk, span=0.5)
+plot(combined / 1e6 ~ decade, data=uk, type='l', col='gray', ylab = "", xlab = "")
+title(main='Gt Britain, comb.', line = -0.8)
+add_loess(combined / 1e6 ~ decade, dat=uk, span=0.5)
+
 dev.off()
 
 
