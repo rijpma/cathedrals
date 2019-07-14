@@ -6,6 +6,8 @@ library("sf")
 library("png")
 library("maptools")
 
+m3y20lbl = "Church building p. 20 years (m³)"
+
 # could add population rasters here, but are all assumed equally distributed within country
 # puc correction should be possible anyway
 
@@ -37,7 +39,7 @@ statobs_sp = sf::st_transform(statobs_sp, crs = 3035)
 
 
 possible_grids = expand.grid(3:6, 3:6)
-# grd = as.data.frame(t(possible_grids))[, 5]
+# grd = as.data.frame(t(possible_grids))[, 12]
 for (grd in as.data.frame(t(possible_grids))){
     griddim = c(cols = grd[1], rows = grd[2])
     eugr = st_make_grid(eu, n = griddim)
@@ -74,8 +76,8 @@ for (grd in as.data.frame(t(possible_grids))){
     print(griddim)
 
     pdf(paste0("figs/gridded_", griddim["cols"], "x", griddim["rows"], ".pdf"),
-        width = 1.1*(grsize["x"]* griddim[1]) + 1, 
-        height = 1.1*(grsize["y"] * griddim[2]) + 1)
+        width = 1*(grsize["x"]* griddim[1]) + 1, 
+        height = 1*(grsize["y"] * griddim[2]) + 1)
 
     plotmat = matrix(1:ncells, nrow = griddim[2], byrow = T)
     plotmat = plotmat[nrow(plotmat):1, ]
@@ -85,6 +87,10 @@ for (grd in as.data.frame(t(possible_grids))){
 
     plotmat = cbind(0, plotmat)
     plotmat = rbind(plotmat, 0)
+
+    plotmat[ceiling(nrow(plotmat) / 2), 1] =  max(plotmat) + 1
+    plotmat[nrow(plotmat), ceiling(ncol(plotmat) / 2)] = max(plotmat) + 1
+
     layout(plotmat, 
         widths = c(ncol(plotmat) * 0.1, rep.int(1, ncol(plotmat) - 1)),
         height = c(rep.int(1, nrow(plotmat) - 1), nrow(plotmat) * 0.1))
@@ -100,7 +106,6 @@ for (grd in as.data.frame(t(possible_grids))){
             rasterImage(as.raster(png::readPNG(tmplist[[i]])), 
                 lims$x[1], lims$y[1], lims$x[2], lims$y[2])
             lines(toplot[, .(decade, V1)], col = 2, lwd = 1.5)
-            abline(v = c(800, 1000, 1348))
         } else {
             plot(cellsums[, .(decade, V1)], type = 'n', 
                 axes = F, xaxs = 'i', yaxs = 'i')
@@ -108,21 +113,30 @@ for (grd in as.data.frame(t(possible_grids))){
                 lims$x[1], lims$y[1], lims$x[2], lims$y[2])
         }
         if (i %in% yaxslocs){
-            if (i %in% yaxslocs[c(FALSE, TRUE)]){
-                axis(2, at = round(lims$y, digits = -floor(log10(lims$y[2]) - 1)))
-            } else {
-                axis(2, at = round(lims$y, digits = -floor(log10(lims$y[2]) - 1)),
-                    labels = FALSE)
-            }
+            currentloc = axTicks(2)
+
+            axis(2, at = currentloc[c(1, length(currentloc) - 1)])
+            title(ylab = m3y20lbl)
+            # if (i %in% yaxslocs[c(FALSE, TRUE)]){
+                # axis(2, at = round(lims$y, digits = -floor(log10(lims$y[2]) - 1)))
+            # } else {
+                # axis(2, at = round(lims$y, digits = -floor(log10(lims$y[2]) - 1)),
+                    # labels = FALSE)
+            # }
         }
         if (i %in% xaxslocs){
-            if (i %in% xaxslocs[c(TRUE, FALSE)]){
-                axis(1, at = lims$x)
-            } else {
-                axis(1, at = lims$x, labels = FALSE)
-            }
+            axis(1)
+            title(xlab = "year")
+            # if (i %in% xaxslocs[c(TRUE, FALSE)]){
+            #     axis(1, at = lims$x)
+            # } else {
+            #     axis(1, at = lims$x, labels = FALSE)
+            # }
         }
     }
+    plot(1, 1, type = 'n' , bty = 'n', axes = F)
+    text(1, 1, cex = 1, pos = 3, m3y20lbl, srt = 90)
+    plot(1, 1, type = 'n', bty = 'n', axes = F)
+    text(1, 1, cex = 1, pos = 1, "year")
     dev.off()
-
 }
