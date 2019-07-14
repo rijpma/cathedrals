@@ -62,8 +62,8 @@ pop_mj = pop_mj[ctr %in% c("uk", "fr", "be", "nl", "de", "ch", "it")]
 
 # heaping and its correction
 # --------------------------
-h_heap = hist(dynobs[, year], breaks=data.table::uniqueN(dynobs$year), plot = F)
-h_unheap = hist(dynobs[, year_crc1], breaks=data.table::uniqueN(dynobs$year_crc1), plot = F)
+h_heap = hist(dynobs[between(year, 700, 1500)][, year], breaks=data.table::uniqueN(dynobs[between(year, 700, 1500)]$year), plot = F)
+h_unheap = hist(dynobs[between(year, 700, 1500)][, year_crc1], breaks=data.table::uniqueN(dynobs[between(year, 700, 1500)]$year_crc1), plot = F)
 h_heap$counts = log1p(h_heap$counts)
 h_unheap$counts = log1p(h_unheap$counts)
 
@@ -175,12 +175,13 @@ data.table::fwrite(out, "dat/eutotalcompare.csv")
 
 # text v43: 0.6
 annualised_growth(eutotal[decade == 960 | decade == 1260, im3y20], delta = 1260 - 961)
+eutotal[decade == 960 | decade == 1260, im3y20]
 # text v43: 1.2
 annualised_growth(eutotal[decade == 960 | decade == 1040, im3y20], delta = 1040 - 961)
 # text v43: 0.5
 annualised_growth(eutotal[decade == 1060 | decade == 1140, im3y20], delta = 1140 - 1061)
-# text v43: 0.4
-annualised_growth(eutotal[decade == 1180 | decade == 1240, im3y20], delta = 1240 - 1181)
+# text v43: 0.4 (based on 1180-1240, so doubl fix)
+annualised_growth(eutotal[decade == 1180 | decade == 1260, im3y20], delta = 1260 - 1181)
 # text v43: -0.6
 annualised_growth(eutotal[decade == 1320 | decade == 1400, im3y20], delta = 1400 - 1321)
 # text v43: 0.3
@@ -219,6 +220,7 @@ bytype = fullobs_sp[
 # cmladd = fullobs_sp[data.table::between(year, 700, 1500), base::sum(.SD * 0.005, na.rm=T) / M, by=list(decade, category), .SDcols = grepr('im3_cml\\d', names(fullobs_sp))]
 # bytype[, V1 := V1 + cmladd$V1]
 colSums(bytype)
+bytype[, .SD / rowSums(.SD), by = decade]
 
 pdf("figs/bytype_hc.pdf", width = 8)
 par(mfrow=c(2, 2), mar=c(4, 4, 1.5, 0.5), font.main=1)
