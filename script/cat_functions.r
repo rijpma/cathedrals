@@ -8,6 +8,16 @@ m3y20pclbl = "Per capita church building per 20 years (m³)"
 m3y20puclbl = "Per urban capita church building per 20 years (m³)"
 m3y100lbl = "Church building per century (m³)"
 
+cmap = c(
+    it = "Italy",
+    fr = "France",
+    ch = "Switzerland",
+    de = "Germany",
+    be = "Belgium",
+    nl = "Netherlands",
+    uk = "Gt Britain"
+)
+
 axis1ks = function(side, ...){
     axis(side = side, 
         at = axTicks(2), 
