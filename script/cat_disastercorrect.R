@@ -5,6 +5,7 @@ library("data.table")
 library("texreg")
 library("lmtest")
 library("sandwich")
+library("knitr")
 
 source("script/cat_functions.r")
 
@@ -44,25 +45,49 @@ table(disasters_sumstats$century, disasters_sumstats$cause)
 # length building
 hist(dynobs[, diff(range(year)), by = list(osmid, bldindex)][, V1])
 
-fwrite(rbindlist(list(
-    disasters_sumstats[
-        order(ctr), list(
+
+disasters_sumstats[, ctr_full := ..cmap[ctr]]
+disasters_sumstats = disasters_sumstats[order(match(ctr, names(cmap)))]
+disasters_sumstats[, total := "total"]
+
+out = rbindlist(list(
+    disasters_sumstats[, 
+        list(
             earthquake = sum(earthquake), 
             war = sum(war), 
             other = sum(other)),
-        by = list(ctr)][order(earthquake + war + other)],
-    disasters_sumstats[!is.na(year), list(
+        by = list(ctr_full)], #[order(earthquake + war + other)],
+    disasters_sumstats[!is.na(year), 
+        list(
             earthquake = sum(earthquake), 
             war = sum(war), 
             other = sum(other)),
-        by = list(century)][order(century)])),
+        by = list(century)][order(century)],
+    disasters_sumstats[!is.na(year),
+        list(
+            earthquake = sum(earthquake), 
+            war = sum(war), 
+            other = sum(other)),
+        by = total]
+))
+out[, all := earthquake + war + other]
+out = out[, cbind(.SD, earthquake = round(earthquake / all * 100,1), 
+    war = round(war / all * 100, 1), 
+    other = round(other / all * 100, 1))]
+
+writeLines(knitr::kable(out, format = "html"),
+    "tab/disastercounts.html")
+
+fwrite(out,
     file = "dat/disastercounts.csv")
 
+
 # number of disasters on churches
-disasters[statobs, on = 'osmid'][, .N, by = !is.na(cause)]
-disasters[statobs, on = 'osmid'][, .N, by = !is.na(cause)][, N / sum(N)]
+disasters[statobs, on = 'osmid'][!is.na(year), .N, by = !is.na(cause)]
+disasters[statobs, on = 'osmid'][!is.na(year), .N, by = !is.na(cause)][, N / sum(N)]
 # number of churches ever disastered
-disasters[statobs, on = 'osmid'][, uniqueN(osmid), by = !is.na(cause)][, V1 / sum(V1)]
+disasters[statobs, on = 'osmid'][, uniqueN(osmid), by = !is.na(year)]
+disasters[statobs, on = 'osmid'][, uniqueN(osmid), by = !is.na(year)][, V1 / sum(V1)]
 
 disasters150 = disasters[
     !is.na(year), 
@@ -149,9 +174,9 @@ mlist = list(m_nocen = m_nocen, m_all = m_all, m_quake = m_quake,
 selist = lapply(mlist, coeftest, vcov. = vcovHC)
 pvlist = lapply(selist, '[', i =, j = 4)
 selist = lapply(selist, '[', i =, j = 2)
-texreg::screenreg(mlist[1:4], 
-    override.pval = pvlist[1:4],
-    override.se = selist[1:4])
+texreg::screenreg(mlist[1:5], 
+    override.pval = pvlist[1:5],
+    override.se = selist[1:5])
 texreg::screenreg(mlist[c(2, 7:9)], 
     override.pval = pvlist[c(2, 7:9)],
     override.se = selist[c(2, 7:9)])
@@ -182,6 +207,10 @@ cfmap = list(
     "prevsize" = "predecessor size",
     "(Intercept)" = "Intercept"
 )
+texreg::screenreg(mlist[1:5], 
+    override.se = selist[1:5],
+    override.pval = pvlist[1:5],
+    custom.coef.map = cfmap)
 texreg::htmlreg(mlist[1:5], 
     override.se = selist[1:5],
     override.pval = pvlist[1:5],
