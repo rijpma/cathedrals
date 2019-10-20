@@ -13,52 +13,18 @@ citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
-# impvrbs = grepr('im3_ann_cmc\\d', names(fullobs_sp))
 impvrbs = names(fullobs_sp)[grepl('im3_ann\\d', names(fullobs_sp))]
 
-ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
+ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")   
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
-
+gdp_new = data.table::fread("dat/gddnew.csv")
+pop_mj = data.table::fread("dat/pop_mj.csv")
 
 siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
+
 # add ctr2 and ctr3 to siem
-# note: not complete to all cities, should be redone
-# convex hull will not work
+# note: does not cover all cities (only those w churches)
 siem = unique(statobs[, list(ctr2, ctr3, city)])[siem, on = "city"]
-
-# gdp data
-gdp_new = readxl::read_excel("excels/mpd2018.xlsx", sheet = "Full data")
-setDT(gdp_new)
-gdp_new = gdp_new[year <= 1500]
-gdp_new[, iso2c := ifelse(countrycode == 'GBR', "UK",
-    countrycode::countrycode(countrycode, 'iso3c', 'iso2c'))]
-gdp_new = gdp_new[iso2c %in% toupper(unique(fullobs_sp$ctr)), ]
-holland_england = readxl::read_excel("excels/mpd2018.xlsx",
-    sheet = "Partial countries", skip = 1)
-setDT(holland_england)
-holland_england = holland_england[year <= 1500]
-holland_england = rbindlist(list(
-    holland_england[, list(
-        year = year, iso2c = "UK", cgdppc_part = cgdppc_England, rgdpnapc_part = rgdpnapc_England)],
-    holland_england[, list(
-        year = year, iso2c = "NL", cgdppc_part = cgdppc_Holland, rgdpnapc_part = rgdpnapc_Holland)]))
-
-gdp_new = merge(gdp_new, holland_england, on = c("iso2c", "year"), all = T)
-
-# population data & interpolation
-pop_mj = data.table::fread("dat/mcevedyjones.csv", encoding = "UTF-8")
-pop_mj[, decade := year]
-pop_mj = pop_mj[as.data.table(expand.grid(ctr = unique(pop_mj$ctr), decade = unique(fullobs$decade))), on = c("ctr", "decade")]
-pop_mj[ctr == 'uk', broadberry := ukgdp$population[match(decade, ukgdp$V1)]]
-pop_mj[!is.na(broadberry), pop := broadberry / 1e6]
-pop_mj[, pop := pop * 1e3]
-pop_mj[, bd := ifelse(decade < 1348, "pre", "post")]
-pop_mj[
-    decade >= 500, 
-    pop_spl := exp(zoo::na.spline(log(pop), x = decade, na.rm = F)), 
-    by = .(ctr, bd)]
-pop_mj = pop_mj[ctr %in% c("uk", "fr", "be", "nl", "de", "ch", "it")]
-# spline not very effective on urban populations
 
 # heaping and its correction
 # --------------------------
