@@ -31,25 +31,9 @@ gbr = raster::getData("GADM", country='GBR', level=0)
 deu = raster::getData("GADM", country='DEU', level=0)
 ita = raster::getData("GADM", country='ITA', level=0)
 
-### drought atlas ###
-#####################
-# first because grid used as ref elsewhere
-fn = "/Users/auke/Downloads/data/droughts.nc"
-fid = RNetCDF::open.nc(fn)
-
-# no direct raster read because of permutation
-droughts = RNetCDF::read.nc(fid)
-str(droughts)
-droughts$pdsi = aperm(droughts$pdsi, c(2, 3, 1))
-str(droughts)
-
-r = raster::brick(droughts$pdsi, crs=wgs,
-    ymn=min(droughts$lat), ymx=max(droughts$lat),
-    xmn=min(droughts$lon), xmx=max(droughts$lon))
-r = raster::flip(r, direction=2)
-
-rhigh = disaggregate(r, 2)
-
+rhigh = raster(nrows = 176, ncols = 228, 
+    xmn = -11.75, xmx = 44.75, 
+    ymn = 27.25, ymx = 70.75)
 
 ### churches data ###
 #####################
