@@ -1,3 +1,5 @@
+# functions and constants
+
 thinmargins <- c(4, 4, 3, 0.5)
 
 m3y10lbl = "Church building per 10 years (m³)"
@@ -189,8 +191,6 @@ to_city_obs = function(statobs, fullobs, res=100){
 }
 
 to_annual_obs = function(dyn){
-    # setting this to 100 rather than 600 would fix most issues,
-    # can just cut later?
 
     full = as.data.table(expand.grid(year = 0:2000, osmid = unique(dyn$osmid), stringsAsFactors = FALSE))
     data.table::setkey(full, osmid, year)
@@ -206,21 +206,27 @@ to_annual_obs = function(dyn){
     full = full[!(m2obs <= 1 | hgtobs <= 1 | m3obs <= 1), ]
 
     # interpolation
-    # default na.approx is rule = 1, so no interpolation outside
-    # of date range. This means first m2/m3 obs are not
-    # used for im2 or im3, which is good because we don't 
-    # know when they started (or their zero, that is, starting dates)
-    full[m2obs > 1, im2 := zoo::na.approx(m2, method = 'constant', na.rm = F), by = osmid]
-    full[hgtobs > 1, ihgt :=  zoo::na.approx(hgt, method = 'constant', na.rm = F), by = osmid]
-    full[m3obs > 1, im3 :=  zoo::na.approx(m3, method = 'constant', na.rm = F), by = osmid]
+    # default na.approx is rule = 1, so no interpolation outside of date range. 
+    # This means first m2/m3 obs are not used for im2 or im3, good because we don't 
+    # know when they started (or their starting dates)
+    full[m2obs > 1, 
+        im2 := zoo::na.approx(m2, method = 'constant', rule = 1, na.rm = F), 
+        by = osmid]
+    full[hgtobs > 1, 
+        ihgt := zoo::na.approx(hgt, method = 'constant', rule = 1, na.rm = F), 
+        by = osmid]
+    full[m3obs > 1, 
+        im3 :=  zoo::na.approx(m3, method = 'constant', rule = 1, na.rm = F), 
+        by = osmid]
 
-
-    full[, inobs := zoo::na.approx(nobs, method='constant', rule = 1, na.rm = F), by = osmid]
+    full[, 
+        inobs := zoo::na.approx(nobs, method='constant', rule = 1, na.rm = F), 
+        by = osmid]
     full[m2obs > 1 & !is.na(inobs), iphaselength := zoo::na.approx(phaselength, method='constant', na.rm=F, rule=2:1), by=osmid]
-    # create a valid data range and then use rule=2 ?
-    # no
-    # zoo::na.approx does not work on nobs=2
-    full[, irestphase := zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), by=osmid]
+    
+    full[, 
+        irestphase := zoo::na.approx(restphase, method='constant', na.rm=F, rule=1, f=0), 
+        by = osmid]
     full[, im2_ann := im2 / iphaselength]
     full[irestphase==1, im2_ann := 0]
     full[firstobs==TRUE & !is.na(firstobs), im2_ann := 0]
@@ -229,26 +235,28 @@ to_annual_obs = function(dyn){
     full[, im3_ann := im3/iphaselength]
     full[irestphase == 1, im3_ann := 0]
     full[firstobs == TRUE & !is.na(firstobs), im3_ann := 0]
-    dyn[osmid == 60803772]
-    full[osmid == 60803772 & data.table::between(year, 1318, 1330)]
     
     full = full[order(osmid, year), ]
 
-    full[, ibldindex := zoo::na.approx(bldindex, method = 'constant', rule = 1, na.rm = F), by = osmid]
+    # cumulative 
+    full[, 
+        ibldindex := zoo::na.approx(bldindex, method = 'constant', rule = 1, na.rm = F), 
+        by = osmid]
     full[is.na(newbld), newbld := FALSE]
     full[, osmid_buildindex := paste(osmid, ibldindex, sep = '_')]
 
-    as.data.frame(full[!is.na(im2_ann) & osmid == 37717, 
-        list(im2_ann, m2, im2, year, newbld, 
-            cumsum(im2_ann) + im2), 
-        by = osmid_buildindex])
-    full[!is.na(im2_ann) & osmid == 37717, cumsum(im2_ann) + im2[newbld==TRUE], by = osmid_buildindex]
-
-    full[!is.na(im2_ann), im2_cml := cumsum(im2_ann) + im2[newbld==TRUE], by = osmid_buildindex]
-    # full[!is.na(im2_ann), im2_cml:=im2_cml + im2[newbld==TRUE], by=osmid_buildindex]
-    full[, im2_cml := zoo::na.approx(im2_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), by = osmid]
-    full[!is.na(im3_ann), im3_cml := cumsum(im3_ann) + im3[newbld == TRUE], by = osmid_buildindex]
-    full[, im3_cml := zoo::na.approx(im3_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), by = osmid]
+    full[!is.na(im2_ann), 
+        im2_cml := cumsum(im2_ann) + im2[newbld==TRUE], 
+        by = osmid_buildindex]
+    full[, 
+        im2_cml := zoo::na.approx(im2_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), 
+        by = osmid]
+    full[!is.na(im3_ann), 
+        im3_cml := cumsum(im3_ann) + im3[newbld == TRUE], 
+        by = osmid_buildindex]
+    full[, 
+        im3_cml := zoo::na.approx(im3_cml, method = 'constant', rule = 1:2, yleft = 0, na.rm = F), 
+        by = osmid]
 
     return(full)
 }
@@ -347,19 +355,19 @@ checks = function(dyn, full, churchlist){
 }
 
 recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
+    
     fill = list()
+    
     for (id in unique(churches$osmid[churches$osmid!=''])){
         church = as.data.frame(churches[osmid==id, ])
-        # dynstrt = which(church[2, 5:ncol(church)]!='' & !is.na(church[2, 5:ncol(church)]))
-        # if (length(dynstrt)==0) next
-        # dynvrbs = dynstrt[1]:ncol(church)
         dynvrbs = firstm2col:ncol(church)
-        temp = data.frame(osmid=rep(id, length(dynvrbs)), 
-                          year=integer(length(dynvrbs)),
-                          m2=integer(length(dynvrbs)),
-                          hgt=integer(length(dynvrbs)),
-                          gss_hgt=logical(length(dynvrbs)),
-                          gss_m2=logical(length(dynvrbs)))
+        temp = data.frame(osmid = rep(id, length(dynvrbs)), 
+                          year = integer(length(dynvrbs)),
+                          m2 = integer(length(dynvrbs)),
+                          hgt = integer(length(dynvrbs)),
+                          gss_hgt = logical(length(dynvrbs)),
+                          gss_m2 = logical(length(dynvrbs)))
+
         temp$year = unlist(as.numeric(church[2, dynvrbs]))
         temp$m2 = unlist(as.numeric(church[3, dynvrbs]))
         temp$hgt = unlist(as.numeric(church[4, dynvrbs]))
@@ -367,9 +375,9 @@ recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
         if (is.null(guesses)){
             temp$gss_m2 = unlist(as.logical(as.numeric(church[6, dynvrbs])))
             temp$gss_hgt = unlist(as.logical(as.numeric(church[6, dynvrbs])))
-        } else{
-            temp$gss_hgt = unlist(guesses[osmid==id, ][4, dynvrbs, with=F]) == "guestimate"
-            temp$gss_m2 = unlist(guesses[osmid==id, ][3, dynvrbs, with=F]) == "guestimate"            
+        } else {
+            temp$gss_hgt = unlist(guesses[osmid == id, ][4, dynvrbs, with=F]) == "guestimate"
+            temp$gss_m2 = unlist(guesses[osmid == id, ][3, dynvrbs, with=F]) == "guestimate"            
         }
         temp = temp[!(is.na(temp$year) & is.na(temp$m2) & is.na(temp$hgt)), ]
 
@@ -382,24 +390,18 @@ recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
 write_filltable = function(dat, outfile, 
     baseinfo=c("osmid", "city", "osmname", "surface", "osmwikipedia", "osmlink", "lat", "lon"),
     fillvrbs=c("year", "surface", "height", "m3", "guestimate")){
+
     dat@data[, paste0('yr', sprintf("%o2d", 1:20))] = "x"
     write.table(dat@data[0, baseinfo], file=outfile, sep=',')
+
     for (rw in 1:nrow(dat@data)){
         write.table(dat@data[rw, c(baseinfo, grepr("yr", names(dat)))], 
-            file=outfile, append=T, col.names=F, row.names=F, sep=',')
+            file=outfile, append=TRUE, col.names=FALSE, row.names=FALSE, sep=',')
         for (fillvrb in fillvrbs){
             write.table(cbind(dat@data[rw, c("osmid", "city", "osmname")], fillvrb), 
-                file=outfile, append=T, col.names=F, row.names=F, sep=',')
+                file=outfile, append=TRUE, col.names=FALSE, row.names=FALSE, sep=',')
             
         }
-        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
-        #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
-        #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
-        #     file=outfile, append=T, col.names=F, sep=',')
-        # write.table(cbind(dat@data[rw, c("city", "osmname")], fillvrb), 
-            # file=outfile, append=T, col.names=F, sep=',')
         write.table('', file=outfile, append=T, row.names=F, col.names=F, sep=',')
     }
 }
@@ -645,7 +647,8 @@ get_osm_churches_rect <- function(lat1, lon1, lat2, lon2){
 get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2, 
     what="way", ruins=F){
     # make this handle relations as well
-    basequery <-   '[out:xml][timeout:900];
+    basequery <-   
+        '[out:xml][timeout:900];
         (
             %2$s["building"="church"] %1$s;
             %2$s["building"="chapel"] %1$s;
@@ -656,7 +659,8 @@ get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2,
         >;
         out skel qt;'
     if (ruins){
-        basequery <-   '[out:xml][timeout:900];
+        basequery <-   
+        '[out:xml][timeout:900];
         (
             %2$s["building"="church"] %1$s;
             %2$s["building"="chapel"] %1$s;
@@ -686,10 +690,6 @@ geocode <- function(loc, reg='', bounds='', apikey = NA){
     # barebones version of  geocode function on:
     # https://github.com/dkahle/ggmap
 
-    # my api key
-    # 
-    # sigh
-
     require(jsonlite)
     if (length(loc) > 1) loc <- loc[1] # geocode api takes only one location
     loc <- loc
@@ -716,15 +716,15 @@ geocode <- function(loc, reg='', bounds='', apikey = NA){
     }
 }
 
-distmatch <- function(ll1, ll2, maxdist=0.1){
-    distm <- sp::spDists(ll1, ll2, longlat=T)
+distmatch <- function(lonlat1, lonlat2, maxdist=0.1){
+    distm <- sp::spDists(lonlat1, lonlat2, longlat=T)
     ids <- which(distm < maxdist)
     rws <- row(distm)[distm < maxdist]
-    cls <- col(distm)[distm < maxdist] # get rid of duplicated in polys, not in james
+    cls <- col(distm)[distm < maxdist]
 
-    dd <- data.frame(ll1=rws, ll2=cls, dist=distm[ids])
-    if (anyDuplicated(dd$ll1)) warning('multiple churches in radius')
-    dd <- do.call(rbind, lapply(split(dd, dd$ll1), function(x) x[which.min(x$dist), ]))
+    dd <- data.frame(lonlat1=rws, lonlat2=cls, dist=distm[ids])
+    if (anyDuplicated(dd$lonlat1)) warning('multiple objects in radius')
+    dd <- do.call(rbind, lapply(split(dd, dd$lonlat1), function(x) x[which.min(x$dist), ]))
 
     return(dd)
 }
