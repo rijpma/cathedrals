@@ -1,3 +1,5 @@
+# summary statistics tables
+
 setwd("~/dropbox/cathedrals")
 
 library("data.table")
@@ -35,15 +37,9 @@ byctr = Reduce(merge, list(
         by = list(osmid, ctr)][,
             list(`Building phases / church` = mean(N)),
             by = list(ctr)],
-    # dynobs_sp[,
-    #     list(`% phases < 1000` = mean(year < 1000)),
-    #     by = list(ctr)],
     dynobs_sp[,
         list(`% phases <= 1100` = mean(year <= 1100)),
         by = list(ctr)]
-    # dynobs_sp[,
-    #     list(`% phases < 1200` = mean(year < 1200)),
-    #     by = list(ctr)]
     )
 )
 
@@ -61,17 +57,16 @@ tot = Reduce(merge, list(
         .N,
         by = list(osmid, ctr)][,
             list(`Building phases / church` = mean(N))],
-    # dynobs_sp[, list(`% phases < 1000` = mean(year < 1000))],
     dynobs_sp[, list(`% phases <= 1100` = mean(year <= 1100))]
-    # dynobs_sp[, list(`% phases < 1200` = mean(year < 1200))]
     )
 )
 
 setnames(tot, 'x', "N")
-out = rbind(byctr, data.table(ctr = 'all', tot))
+out = rbind(byctr, data.table(tot, ctr = 'all'))
+percentvars = grep('\\%', names(out))
 out[, 
-    grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), 
-    .SDcols = grep('\\%', names(out))]
+    (percentvars) := lapply(.SD, function(x) as.integer(round(x * 100))), 
+    .SDcols = percentvars]
 writeLines(knitr::kable(out, digits = 1, format = 'html'), 
     con = "tab/sumstats_perc.html")
 
@@ -115,10 +110,11 @@ tot1100 = Reduce(merge, list(
     dynobs_sp1100[, list(`% phases <= 900` = mean(year <= 900))]))
 
 setnames(tot1100, 'x', "N")
-out = rbind(byctr1100, data.table(ctr = 'all', tot1100))
+out = rbind(byctr1100, data.table(tot1100, ctr = 'all'))
+percentvars = grep('\\%', names(out))
 out[, 
-    grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), 
-    .SDcols = grep('\\%', names(out))]
+    (percentvars) := lapply(.SD, function(x) as.integer(round(x * 100))), 
+    .SDcols = percentvars]
 writeLines(knitr::kable(out, digits = 1, format = 'html'), 
     con = "tab/sumstats_perc_7001100.html")
 
@@ -162,10 +158,11 @@ tot11001500 = Reduce(merge, list(
     dynobs_sp11001500[, list(`% phases <= 1300` = mean(year <= 1300))]))
 
 setnames(tot11001500, 'x', "N")
-out = rbind(byctr11001500, data.table(ctr = 'all', tot11001500))
+out = rbind(byctr11001500, data.table(tot11001500, ctr = 'all'))
+percentvars = grep('\\%', names(out))
 out[, 
-    grep('\\%', names(out)) := lapply(.SD, function(x) as.integer(round(x * 100))), 
-    .SDcols = grep('\\%', names(out))]
+    (percentvars) := lapply(.SD, function(x) as.integer(round(x * 100))), 
+    .SDcols = percentvars]
 writeLines(knitr::kable(out, digits = 1, format = 'html'), 
     con = "tab/sumstats_perc11001500.html")
 

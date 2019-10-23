@@ -1,5 +1,9 @@
+# calculate share >1000 in all churches
+
 rm(list = ls())
+
 library("sf")
+library("data.table")
 
 setwd("~/dropbox/cathedrals/")
 
@@ -11,6 +15,7 @@ germany = sf::read_sf("dat/gis/germany.shp")
 netherlands = sf::read_sf("dat/gis/netherlands.shp")
 swiss = sf::read_sf("dat/gis/swiss.shp")
 unitedkingdom = sf::read_sf("dat/gis/unitedkingdom.shp")
+# italy shapefiles were saved after dropping < 1000 m2, so no point adding
 
 nweur = rbind(belgium, 
     france_extra_more, 
@@ -21,30 +26,14 @@ nweur = rbind(belgium,
     swiss,
     unitedkingdom)
 
-# N churches in cities
+nweur$surface = geosphere::areaPolygon(as_Spatial(st_geometry(nweur)))
+
+cat("Total churches from OSM: ")
 length(unique(nweur$osmid))
 
-nweur$surface = geosphere::areaPolygon(as_Spatial(st_geometry(nweur)))
 
 surfaces = as.data.table(nweur)[, list(surface = sum(surface)), by = osmid]
 
-hist(surfaces$surface)
-hist(log(surfaces$surface))
-abline(v = log(1e3), col = 2)
-
-# N churches > 1000ms
+cat("Churches in OSM > 1000 m2")
 sum(surfaces$surface > 1000)
-table(surfaces$surface > 1000)
-prop.table(table(surfaces$surface > 1000))
-
-# not currently in db
-# bs = sf::read_sf("dat/gis/bs.shp")
-# it = sf::read_sf("dat/gis/it.shp")
-# james = sf::read_sf("dat/gis/james.shp")
-# pt_rels = sf::read_sf("dat/gis/pt_rels.shp")
-# pt_ways = sf::read_sf("dat/gis/pt_ways.shp")
-# pt = sf::read_sf("dat/gis/pt.shp")
-# rur = sf::read_sf("dat/gis/rur.shp")
-# ruralbritain = sf::read_sf("dat/gis/ruralbritain.shp")
-# ruralfrance = sf::read_sf("dat/gis/ruralfrance.shp")
-
+prop.table(table(larger1000m2 = surfaces$surface > 1000))

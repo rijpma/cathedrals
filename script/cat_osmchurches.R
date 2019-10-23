@@ -1,13 +1,15 @@
+# extract church info from openstreetmap
+
 rm(list=ls())
 setwd("~/dropbox/cathedrals/")
 options(stringsAsFactors=FALSE)
 
-library(data.table)
-library(jsonlite)
-library(XML)
-library(osmar)
-library(sp)
-library(geosphere)
+library("data.table")
+library("jsonlite")
+library("XML")
+library("osmar")
+library("sp")
+library("geosphere")
 
 os = sp::CRS("+init=EPSG:27700")
 wgs = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
@@ -65,7 +67,6 @@ dev.off()
 out = sp_rbind(polys4merge=polys_way_ad, polys=polys_rel_ad)
 # out = rbindlist(list(polys_way_pt@data, polys_rel_pt@data), use.names=TRUE, fill=TRUE)
 
-
 dim(out)
 out = out[out$surface >= 1e3, ]
 dim(out)
@@ -94,9 +95,6 @@ for (i in 236:nrow(siem_it)){
     Sys.sleep(30)
 }
 
-# checked Calascibetta, all correct
-# check cagliari = 63
-
 # combine two lists 
 # or later as dataframe?
 polys_way_it = polylist2df(polylist_way_it)
@@ -113,7 +111,6 @@ polys_rel_it = aggregate_multipolys(polys=polys_rel_it, by='osmid')
 
 plot(polys_way_it)
 plot(polys_rel_it, add=T, col=2)
-
 
 pdf('figs/it_way_churches.pdf')
 plot_churches_by_city(polylist_way_it, siem_it)
@@ -189,8 +186,6 @@ polys_rel_rur@data$lon = sp::coordinates(polys_rel_rur)[, 1]
 polys_rel_rur@data$lat = sp::coordinates(polys_rel_rur)[, 2]
 polys_rel_rur = aggregate_multipolys(polys=polys_rel_rur, by='osmid')
 
-add_borders()
-
 out = sp_rbind(polys4merge=polys_way_rur, polys=polys_rel_rur)
 
 dim(out)
@@ -213,9 +208,6 @@ max(nchar(unlist(out@data))) < 254
 out@data$timestamp = as.character(out@data$timestamp)
 maptools::writeSpatialShape(out, "dat/gis/rur")
 maptools::readSpatialShape(out, "dat/gis/rur")
-
-
-
 
 out = out[order(out$city, out$surface), ]
 write_filltable(out, outfile="dat/rurcities.csv")
@@ -286,8 +278,6 @@ for (i in 1:nrow(siem_pt)){
     Sys.sleep(30)
 }
 
-# combine two lists 
-# or later as dataframe?
 polys_way_pt = polylist2df(polylist_way_pt)
 polys_way_pt@data$surface = geosphere::areaPolygon(polys_way_pt)
 polys_way_pt@data$lon = sp::coordinates(polys_way_pt)[, 1]
@@ -309,11 +299,9 @@ plot_churches_by_city(polylist_way_pt, siem_pt)
 dev.off()
 
 out = sp_rbind(polys4merge=polys_way_pt, polys=polys_rel_pt)
-# out = rbindlist(list(polys_way_pt@data, polys_rel_pt@data), use.names=TRUE, fill=TRUE)
 
 pdf('figs/pt_churches.pdf')
 plot_churches_by_city(c(polylist_way_pt, polylist_rel_pt), siem_pt)
-# plot_churches_by_city(polylist_rel_pt, polylist_rel_pt), siem_pt)
 dev.off()
 
 dim(out)
@@ -477,44 +465,8 @@ for (i in 129:nrow(siem_uk)){
     polylist_rel_uk[[siem_uk$city[i]]] = get_osm_data(cty=siem_uk[i, ], what='relation', block=FALSE)
     Sys.sleep(30)
 }
-# manchester cathedral has broken polys, could be fixed on osm
-# newark not in siem
-# stamford not in siem
-# stirling not in siem
-# windsor, louth, melford, lavenham all not in siem
-# rochester (), salisbury (149498084) was accidentally omitted in bruce's file
-# wells (1277182) not in siem (bath is)
-# ripon, southwell, binham not in siem
-# bury st edmunds, 
-# St Augustine's Abbey (ruin) not in osm
-# crowland, dunster, glastonbury, great malvern, hexham, lindisfarm, malmesbury, pershore not in siem
-# cambridge SMG is only 700 m2
-# altham niet in siem
 
 unique(siem$city[grep('ranth|avenha|elfo|outh', siem$city)])
-# Dorchester could be added: get_osm_data_church(35311931, what='way')
-# Norwich could be added: get_osm_data_church(103327553, what='way')
-# Greyfriars church (77468736), reading is 900m2, could be added as this is in part because it is ruined
-# southwark 26183417 zou er in moeten zitten; AR controleren
-
-# Manchester
-topo = osmar::as_sp(osmar::get_osm(osmar::relation("4423340"), full=TRUE))
-coordinates(rgeos::gCentroid(topo$lines))
-
-# Norwich
-topo = osmar::as_sp(osmar::get_osm(osmar::way("103327553"), full=TRUE))
-coordinates(rgeos::gCentroid(topo$lines))
-
-# Reading
-topo = osmar::as_sp(osmar::get_osm(osmar::way("77468736"), full=TRUE))
-coordinates(rgeos::gCentroid(topo$lines))
-
-# canterbury: aug abbey (in osm, ruin)
-# bury st edmunds: niet in osm (ruine)
-# whitby abbey: ruine in osm
-# st mary's in york: ruine in osm
-# reading abbey: ruine in osm
-# rest: ruine | niet in siem | te klein
 
 polys_rel_uk = polylist2df(polylist_rel_uk)
 polys_rel_uk@data$surface = geosphere::areaPolygon(polys_rel_uk)
@@ -542,9 +494,6 @@ for (i in 1:nrow(siem_uk)){
     Sys.sleep(30)
 }
 
-# polylist_uk1 = get_osm_data(siem_uk[1:74, ])
-# polylist_uk2 = get_osm_data(siem_uk[75:nrow(siem_uk), ])
-# polylist_uk = c(polylist_uk1, polylist_uk2)
 polys_uk = polylist2df(polylist_uk)
 
 polys_uk@data$surface = geosphere::areaPolygon(polys_uk)
@@ -628,16 +577,6 @@ for (i in 1:nrow(siem_nl)){
     Sys.sleep(30)
 }
 
-# polylist_nl = get_osm_data(siem_nl)
-# grote of jacobijnenkerk, leeuwarden: niet als "way" aanwezig
-# kathedraal st cristoffel roermond; niet als "way" aanwezig
-# sint laurenskerk rotterdam; niet juist beschreven in osm: 54085821
-# grote of sint-jacobskerk den haag: niet juist beschreven in osm: 58617235
-# laurenskerk = osmar::get_osm(way(54085821), full=T)
-# jacobskerk = osmar::get_osm(way(58617235))
-# osmar::as_sp(laurenskerk["ways"])
-# osmar::as_osmar(XML::xmlParse(laurenskerk))
-
 polys_nl = polylist2df(polylist_nl)
 
 polys_nl@data$surface = geosphere::areaPolygon(polys_nl)
@@ -646,15 +585,13 @@ polys_nl@data$lat = coordinates(polys_nl)[, 2]
 
 max(nchar(unlist(polys_nl@data))) < 254
 polys_nl@data$timestamp = as.character(polys_nl@data$timestamp)
-# maptools::writeSpatialShape(polys_nl, "dat/gis/netherlands")
-# polys_nl = maptools::readShapeSpatial("dat/gis/netherlands")
 
 pdf('figs/utrechtchurches.pdf', width=10, height=10)
-plot(polys_nl[polys_nl$city=="Utrecht", ], xlim=c(5.1, 5.14), ylim=c(52.07, 52.11), border=uublu)
-plot(polys_nl[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, ], border=uured, add=T)
+plot(polys_nl[polys_nl$city=="Utrecht", ], xlim=c(5.1, 5.14), ylim=c(52.07, 52.11), border="blue")
+plot(polys_nl[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, ], border="red", add=T)
 text(x=coordinates(polys_nl[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, ])[, 1],
              y=coordinates(polys_nl[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, ])[, 2] + 0.0006,
-             labels=polys_nl@data[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, "osmname"], cex=0.4, col=uured)
+             labels=polys_nl@data[polys_nl$city=="Utrecht" & polys_nl$surface > 1000, "osmname"], cex=0.4, col="red")
 axis(1); axis(2)
 dev.off()
 

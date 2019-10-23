@@ -1,18 +1,23 @@
+# prep auxiliary data files
+
 rm(list = ls())
 setwd("~/dropbox/cathedrals")
+
 source("script/cat_functions.r")
 
-library("readxl")
+library("readxl", verbose = FALSE)
 library("data.table")
+library("countrycode")
 
 # gdp data
 gdp_new = readxl::read_excel("excels/mpd2018.xlsx", sheet = "Full data")
 setDT(gdp_new)
-gdp_new = gdp_new[year <= 1500]
+gdp_new = gdp_new[year <= 1500
+    & countrycode %in% c("DEU", "ITA", "GBR", "FRA", "BEL", "CHE", "NLD"), ]
 gdp_new[, iso2c := ifelse(countrycode == 'GBR', "UK",
     countrycode::countrycode(countrycode, 'iso3c', 'iso2c'))]
 
-gdp_new = gdp_new[iso2c %in% c("DE", "IT", "UK", "FR", "BE", "CH", "NL"), ]
+gdp_new = gdp_new
 holland_england = readxl::read_excel("excels/mpd2018.xlsx",
     sheet = "Partial countries", skip = 1)
 setDT(holland_england)

@@ -1,3 +1,5 @@
+# relation between building activity and stock of churches
+
 rm(list=ls())
 setwd("~/dropbox/cathedrals")
 
@@ -9,16 +11,13 @@ statobs = data.table::fread("dat/statobs.csv")
 citobs = data.table::fread("dat/citobs.csv")
 dynobs = data.table::fread("dat/dynobs.csv")
 fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
-siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
+siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 
 M = 9
 impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
-# fullobs_sp[, century := ceiling(year / 100)  * 100] # for compatability w. century
 fullobs_sp[, century := round(year / 100)  * 100] # for compatability w. century
-# fullobs_sp[, century := (trunc((year - 1) / 100) + 1) * 100] # so 1500 = 1401-1500
 
-# endsizes = dynobs[, list(endsize = cumsum(m3), year), by = list(osmid)]
 # if by phase
 endsizes = dynobs[, list(endsize = sum(m3, na.rm = T), year = tail(year, 1)), by = list(osmid, bldindex)]
 fullobs_sp = endsizes[fullobs_sp, on = list(osmid, year)]
@@ -45,22 +44,3 @@ plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = '
     xlab = "lag completed church stock (log m³)", ylab = "")
 abline(m_lag, col = 1, lwd = 1.5)
 dev.off()
-
-texreg::screenreg(list(m, m_lag, m_city, m_lag_city), omit.coef = 'city')
-
-stock = siem[, list(city, century = year, inhab)][stock, on = c("city", "century")]
-
-m = lm(log1p(activity / inhab) ~ log1p(endsize / inhab), data = stock)
-m_lag = lm(log1p(activity / inhab) ~ log1p(endsize_lag / inhab), data = stock)
-
-pdf("figs/completedstock_activity_puc.pdf", width = 10, height = 6)
-par(mfrow=c(1, 2), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
-plot(log1p(activity) ~ log1p(endsize), data = stock, col = 'gray30', bty = 'l',
-    xlab = "completed stock (log m3)", ylab = "activity (log m3/century)")
-abline(m, col = 1, lwd = 1.5)
-plot(log1p(activity) ~ log1p(endsize_lag), data = stock, col = 'gray30', bty = 'l',
-    xlab = "lag completed stock (log m3)", ylab = "")
-abline(m_lag, col = 1, lwd = 1.5)
-dev.off()
-
-texreg::screenreg(list(m, m_lag, m_city, m_lag_city), omit.coef = 'city')

@@ -1,17 +1,18 @@
+# geocode cities from google maps for sufficient accuracy
+
 rm(list=ls())
 options(stringsAsFactors=FALSE)
 
-setwd('~/dropbox/cathedrals/')
 
 library("data.table")
-library(countrycode)
-library(sp)
+library("countrycode")
+library("sp")
+
+setwd('~/dropbox/cathedrals/')
 
 source('script/cat_functions.r')
 
 apikey = readLines("dat/googleapikey.txt")
-
-hdr <- unlist(read.csv("dat/siem.csv", nrows=1))
 
 siem <- read.csv('dat/siem.csv', skip=2)
 siemloc <- c('city', 'north', 'east')
@@ -19,18 +20,17 @@ siem$city <- iconv(siem$city, from='macroman', to='utf8')
 
 tld <- structure(countrycode(unique(siem$country), 'country.name', 'iso2c'), names=unique(siem$country))
 siem$tld <- tld[siem$country]
+
 mss = read.csv("dat/missing_bishoprics.csv", skip=1)
 
 # additions to siem dataset
 # -------------------------
 siem_new = readxl::read_excel("excels/urb pop 700 to 2000.xlsx",
     skip = 2, sheet = "Sheet2")
-siem_old = data.table::fread("dat/siem_long.csv")
-
 setDT(siem_new)
 
+siem_old = data.table::fread("dat/siem_long.csv")
 siem_new = siem_new[country %in% unique(siem_old$country)]
-
 new_not_in_old = setdiff(siem_new$city, siem_old$city)
 
 new_gc = lapply(new_not_in_old, geocode, reg = 'eu', apikey = apikey)
@@ -89,24 +89,21 @@ mss$ctr = substring(mss$ctr, 1, 2)
 mss$ctr[mss$ctr=="sw"] = "ch"
 ms_gcd = apply(mss, 1, function(x) geocode(x['loc'], reg=x['ctr']))
 nms = sapply(ms_gcd, function(x) unique(x$loc))
+
 # replace with names
 ms_gcd[sapply(ms_gcd, nrow) > 1]
 ms_gcd[[grep('bangor', nms)]] = ms_gcd[[grep('bangor', nms)]][ms_gcd[[grep('bangor', nms)]]$lon > -5, ]
 ms_gcd[[grep('magelone', nms)]] = geocode("Villeneuve-lès-Maguelone", reg='fr')
 ms_gcd[[grep('dol', nms)]] = geocode("Dol-de-Bretagne", reg='fr')
-
-
 ms_gcd[[grep('david', nms)]] = geocode("St Davids, Pembrokeshire")
 ms_gcd[[grep('lizier', nms)]] = geocode("Saint-Lizier, arriege", reg='fr')
-ms_gcd[[grep('brugny', nms)]][c('lat', 'lon')] = c(48.71, 2.49)
-ms_gcd[[grep('galndive', nms)]][c('lat', 'lon')] = c(43.95, 6.81)
-# brungy zijn: 48.71 N, 2.49  E
-# glandive zijn: 43.95 N en 6.81 E
+ms_gcd[[grep('brugny', nms)]][c('lat', 'lon')] = c(48.71, 2.49) # brungy 
+ms_gcd[[grep('galndive', nms)]][c('lat', 'lon')] = c(43.95, 6.81) # glandive
+
 out = do.call(rbind, ms_gcd)
 names(out)[1] = 'city'
 out$tld = mss$ctr
 write.csv(out, 'dat/extra_bishoprics.csv', row.names=F)
-
 
 # Italy
 #------

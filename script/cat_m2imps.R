@@ -1,14 +1,16 @@
+# explore predecessor imputation procedure
+
 rm(list=ls())
 
 setwd("~/dropbox/cathedrals/")
 
-library("data.table")
-library("lme4")
-library("texreg")
-library("readxl")
-
 source("script/cat_functions.r")
 
+library("data.table")
+library("texreg")
+library("brms")
+ncores = parallel::detectCores() -1
+options(mc.cores = ncores)
 
 statobs = data.table::fread("dat/statobs.csv")
 dynobs = data.table::fread("dat/dynobs.csv")
@@ -45,14 +47,18 @@ sfc_all = rbindlist(list(
 sfc_all[, century := floor(year_predecessor / 100)  * 100] # for compatability w. century
 sfc_all = merge(sfc_all, statobs[, .(osmid, category)], on = "osmid")
 
+cat("distribution of predecessors: \n")
+ftable(sfc_all$century, sfc_all$ctr)
+ftable(sfc_all$century, sfc_all$category)
+ftable(sfc_all$ctr, sfc_all$category)
+
 modlist = list(
     `all` = lm(log(m2predecessor) ~ log(m2successor) - 1, data = sfc_all),
     `excl. italy` = lm(log(m2predecessor) ~ log(m2successor) - 1, data = sfc_all[ctr != 'it']),
     `country split` = lm(log(m2predecessor) ~ log(m2successor):(factor(ctr) - 1) - 1, data = sfc_all),
     `century split` = lm(log(m2predecessor) ~ log(m2successor):(factor(century) - 1) - 1, data = sfc_all),
     `church split` = lm(log(m2predecessor) ~ log(m2successor):(factor(category) - 1) - 1, data = sfc_all))
-texreg::screenreg(modlist)
-texreg::htmlreg(modlist, "tab/predecessors_utrylogs.html",
+texreg::htmlreg(modlist, "tab/predecessors_logs.html",
     custom.coef.names = unique(unlist(lapply(modlist, function(x) gsub("factor\\(.*\\)", "", names(coef(x)))))))
 
 modlist = list(
@@ -61,95 +67,80 @@ modlist = list(
     `country split` = lm(m2predecessor ~ m2successor:factor(ctr) - 1, data = sfc_all),
     `century split` = lm(m2predecessor ~ m2successor:factor(century) - 1, data = sfc_all),
     `church split` = lm(m2predecessor ~ m2successor:factor(category) - 1, data = sfc_all))
-texreg::screenreg(modlist)
 texreg::htmlreg(modlist, "tab/predecessors.html",
     custom.coef.names = unique(unlist(lapply(modlist, function(x) gsub("factor\\(.*\\)", "", names(coef(x)))))))
 
-modlist = list(
-    `all` = lm(m2predecessor ~ m2successor - 1, data = sfc_all),
-    `excl. italy` = lm(m2predecessor ~ m2successor - 1, data = sfc_all[ctr != 'it']),
-    `country split` = lm(m2predecessor ~ m2successor*factor(ctr) - 1, data = sfc_all),
-    `century split` = lm(m2predecessor ~ m2successor*factor(century) - 1, data = sfc_all),
-    `church split` = lm(m2predecessor ~ m2successor*factor(category) - 1, data = sfc_all))
-texreg::screenreg(modlist)
-
-
-# sample distribution
-ftable(sfc_all$century, sfc_all$ctr)
-sfc_all[, .N, by = century][order(N)]
-sfc_all[, .N, by = category][order(N)]
-sfc_all[, .N, by = ctr][order(N)]
-
+# end-size of successor chuches
 dynobs[, endm2 := sum(m2, na.rm = T), by = .(osmid, bldindex)]
 dynobs[, successor_endm2 := data.table::shift(endm2, type = "lead"), by = osmid]
 dynobs[, successor_endm2 := tail(successor_endm2, 1), by = list(osmid, bldindex)]
-# ugly af, but it works
 
-# eltjo's relation
+# find points in data derived from fitted relation
+# first: the original model
 m = lm(I(m2predecessor / m2successor) ~ m2successor, data = sfc_all[ctr == 'it'])
-# so actually y = bx^2 + ax
+# y = bx^2 + ax
 
 dynobs[, ratio_to_successor :=  endm2 / successor_endm2]
 dynobs[ctr == "it", ratio_predicted := predict(m, newdata = data.table(m2successor = successor_endm2))]
 dynobs[ctr != "it", m2predicted := predict(modlist$`excl. italy`, newdata = data.table(m2successor = successor_endm2))]
 
-bldobs = dynobs[, list(endm2 = unique(endm2), 
-        successor_endm2 = unique(successor_endm2), 
-        ratio_to_successor = unique(ratio_to_successor), 
-        ratio_predicted = unique(ratio_predicted), 
-        m2predicted = unique(m2predicted), 
-        year = min(year),
-        gss = mean(gss_m2, na.rm = T)), 
+bldobs = dynobs[, 
+    list(endm2 = unique(endm2), 
+         successor_endm2 = unique(successor_endm2), 
+         ratio_to_successor = unique(ratio_to_successor), 
+         ratio_predicted = unique(ratio_predicted), 
+         m2predicted = unique(m2predicted), 
+         year = min(year),
+         gss = mean(gss_m2, na.rm = T)), 
     by = list(ctr, osmid, bldindex)]
 
-# fits and all data
-par(mfrow = c(1, 1))
-plot(endm2 ~ successor_endm2, data = bldobs, type = 'n', log = 'xy')
-points(endm2 ~ successor_endm2, data = bldobs[ctr != 'it'], col = 'black')
-abline(modlist$`excl. italy`, col = 1, untf = T)
-points(endm2 ~ successor_endm2, data = bldobs[ctr == 'it'], col = 'blue')
-curve(coef(m)[1]*x + coef(m)[2]*x^2, add = T, col = 'blue')
-
-pdf("figs/backproj_ita.pdf")
-plot(m2predecessor ~ m2successor, data = sfc_all, 
-    type = 'n', log = 'xy', bty = "l")
-points(m2predecessor ~ m2successor, data = sfc_all[ctr != "it"])
-points(m2predecessor ~ m2successor, data = sfc_all[ctr == "it"], col = 'blue')
-abline(modlist$`excl. italy`, untf = T)
-curve(coef(m)[1]*x + coef(m)[2]*x^2, add = T, col = 'blue')
-text(c(4800, 3000), c(5000, 300), labels = c("Italy", "Rest"), col = c("blue", "black"))
-dev.off()
-
-# find points on fit
 # italy
+itmin = -0.025
+itmax = 0.058
+eumin = -0.00005
+eumax = 0.00335
+pdf("figs/fittedpoints.pdf")
 par(mfrow = c(1, 2))
-plot(ecdf(bldobs[, ratio_to_successor - ratio_predicted]), 
+plot(ecdf(bldobs[ctr == "it", ratio_to_successor - ratio_predicted]), 
     pch = 1, xlim = c(-0.2, 0.2))
-abline(v = c(-0.025, 0.058)) # so between these values
+abline(v = c(itmin, itmax)) # between these values
 # rest
 plot(ecdf(bldobs[ctr != "it" & endm2 != 0 & successor_endm2 != 0, ratio_to_successor - 0.53]),
     xlim = c(-0.01, 0.01), pch = NA, lty = 1)
-abline(v = c(-0.00005, 0.00335))
+abline(v = c(eumin, eumax)) # between these values
+dev.off()
 
 # = predicted in buildings
 bldobs[, predicted := "no"]
-bldobs[ctr == "it" & data.table::between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
-bldobs[ctr != "it" & data.table::between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
+bldobs[ctr == "it" 
+     & data.table::between(ratio_to_successor - ratio_predicted, itmin, itmax), 
+     predicted := "italy"]
+bldobs[ctr != "it" 
+     & data.table::between(ratio_to_successor - 0.53, eumin, eumax), 
+     predicted := "rest"]
 
+cat("N measured and imputed: \n")
 bldobs[, .N, by = predicted]
-bldobs[, mean(predicted != "no"), by = .(ctr == "it", bldindex)][order(ctr, bldindex)]
 
 # = predicted in dynobs
 dynobs[, predicted := "no"]
-dynobs[ctr == "it" & data.table::between(ratio_to_successor - ratio_predicted, -0.025, 0.058), predicted := "italy"]
-dynobs[ctr != "it" & data.table::between(ratio_to_successor - 0.53, -0.00005, 0.00335), predicted := "rest"]
+dynobs[ctr == "it" 
+     & data.table::between(ratio_to_successor - ratio_predicted, -0.025, itmax), 
+     predicted := "italy"]
+dynobs[ctr != "it" 
+     & data.table::between(ratio_to_successor - 0.53, eumin, eumax), 
+     predicted := "rest"]
 
-library("brms")
-ncores = parallel::detectCores() -1
-options(mc.cores = ncores)
+# model successors/predecessors relation by country/century
+m = brms::brm(log(m2predecessor) ~ (log(m2successor)| ctr + century), 
+    data = sfc_all, 
+    chains = 3,
+    seed = 12904)
 
-m = brm(log(m2predecessor) ~ (log(m2successor) | ctr + century), 
-    data = sfc_all, chains = 3)
+# divergent transitions dissappear with adapt_delta = 0.999
+# but since there are no noticable differences in predictions
+# it is left at default (0.8) for speed
+
 preds = predict(m, 
     newdata = dynobs[, 
         list(m2successor = successor_endm2, 
@@ -159,15 +150,16 @@ preds = predict(m,
              # century = century)], 
     allow_new_levels = TRUE)
 dynobs[, newpreds := exp(preds[, 1])]
-dynobs[, .(osmid, bldindex, endm2, newpreds, successor_endm2, ctr, endm2 / newpreds)]
+
 dynobs_alt = copy(dynobs)
-dynobs_alt[!is.na(newpreds), m2 := m2 * (newpreds / endm2)]
+dynobs_alt[!is.na(newpreds), m2 := as.integer(m2 * (newpreds / endm2))]
 
 fullobs = to_annual_obs(dynobs)
 fullobs_alt = to_annual_obs(dynobs_alt)
 fullobs[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 fullobs_alt[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 
+# add countries
 fullobs = statobs[, list(osmid, ctr)][fullobs, on = "osmid"]
 fullobs_alt = statobs[, list(osmid, ctr)][fullobs_alt, on = "osmid"]
 
@@ -243,42 +235,12 @@ lines(All ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
 axis1ks(side = 2)
 dev.off()
 
-ctrs = unique(fullobs$ctr)
-for (i in seq_along(ctrs)){
-    plot(fullobs_alt[between(year, 700, 1500) & ctr == ctrs[i], 
-            sum(im2_ann, na.rm = T), by = decade], 
-        type = 'l', 
-        ylab = ifelse(i %% 4 == 1, m2y20lbl, ""),
-        xlab = 'decade', 
-        col = 2, main = ctrs[i])
-    lines(fullobs[between(year, 700, 1500) & ctr == ctrs[i], 
-            sum(im2_ann, na.rm = T), by = decade], type = 'l')
-}
-plot(fullobs_alt[between(year, 700, 1500), 
-        sum(im2_ann, na.rm = T), by = decade], 
-    type = 'l', 
-    ylab = "", 
-    xlab = 'decade', 
-    col = 2, main = "all")
-lines(fullobs[between(year, 700, 1500), 
-        sum(im2_ann, na.rm = T), by = decade], type = 'l')
-dev.off()
-
 # eltjo's estimates
-1.879^(1:3)
-
+# originally manually set using 1.879^(1:3)
 m = lm(end_surface ~ previous_surface - 1, data=sfc)
 m1 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==1,])
 m2 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==2,])
 m3 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==3,])
-m1$coef
-m2$coef
-m3$coef
-
-par(mfrow=c(1, 1))
-plot(c(m1$coef, m2$coef, m3$coef), type='b', log='y', 
-    xlab='Generation', ylab='log(coef)', bty='l')
-lines(m1$coef^(1:3), col=2)
 
 pdf("figs/surface_fits.pdf", height=3, width=8)
 par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0))

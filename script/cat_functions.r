@@ -1,5 +1,7 @@
 # functions and constants
 
+overpass_baseurl <- "http://overpass-api.de/api/interpreter?data="
+
 thinmargins <- c(4, 4, 3, 0.5)
 
 m3y10lbl = "Church building per 10 years (m³)"
@@ -52,8 +54,8 @@ add_loess = function(frm, dat, span=0.7, res=100, ...){
 
 rtnorm = function (n, mean = 0, sd = 1, min = -Inf, max = Inf) {
     # replace Trunc distributions from envstats
-    # in due time remove
-    # laeken, plyr, MASS, Rcpp (≥ 0.11.0), e1071, parallel, nnet, doParallel, foreach, colorspace, VIM, methods, party, EnvStats, fitdistrplus, ranger
+
+    # many deps so only take these two functions
 
     ln <- length(n)
     if (ln < 1)
@@ -131,10 +133,6 @@ qtnorm = function (p, mean = 0, sd = 1, min = -Inf, max = Inf)
     return(q)
 }
 
-calcMode <- function(x, ...) {
-    ux <- unique(x)
-    ux[which.max(tabulate(match(x, ux)))]
-}
 add_borders = function(border=1, add=T){
     data(wrld_simpl)
     eur = wrld_simpl[wrld_simpl$REGION==150, ]
@@ -157,23 +155,6 @@ sp_rbind = function(polys, polys4merge){
     # polys = maptools::spRbind(polys, polys4merge, makeUniqueIDs=TRUE)
 
     return(polys)
-}
-panel_approx <- function(y, timevar, indexvar){
-    # na.approx for panel data: 
-    # does not interpolate between observations in two different countries etc.
-
-    out <- y
-    for (i in unique(indexvar)){
-        if (sum(!is.na(y[indexvar==i])) > 1){
-            out[indexvar==i] <- zoo::na.approx(object=y[indexvar==i], x=timevar[indexvar==i], na.rm=F)
-        }
-      }
-  return(out)
-}
-find_duplicated_ids = function(ids, pattern='_'){
-    ids_duplicated = ids[grepl(pattern, ids)]
-    ids_duplicated = c(ids_duplicated, gsub(paste0(pattern, '.*'), '', ids_duplicated))
-    return(sort(ids_duplicated))
 }
 
 to_city_obs = function(statobs, fullobs, res=100){
@@ -264,7 +245,7 @@ to_annual_obs = function(dyn){
 to_dynobs = function(churchlist){
     dyn = do.call(rbind, lapply(churchlist, function(x) x$dynamic))
     dyn = data.table::as.data.table(dyn)
-    # dyn = dyn[!is.na(m2), ][order(osmid, year)]
+
     dyn = dyn[!is.na(m2) | !is.na(year), ][order(osmid, year)]
 
     dyn[, m3:=m2*hgt]
@@ -281,12 +262,6 @@ to_dynobs = function(churchlist){
     dyn[, newbld := ifelse((m2 == 0 & !is.na(m2)) | firstobs == TRUE, TRUE, FALSE), by=osmid]
     dyn[newbld == TRUE, bldindex := 1:length(nobs), by=osmid]
     dyn[, bldindex := zoo::na.approx(bldindex, method='constant', rule=1:2)]
-    
-    # dyn[m2==0, bldindex:=1:length(m2), by=osmid]
-    # dyn[, nbblds:=sum(!is.na(bldindex)), by=osmid]
-    # dyn[nbblds > 0, bldindex:=as.integer(zoo::na.approx(bldindex, method="constant", na.rm=F, rule=1:2)), by=osmid]
-    # dyn[nbblds==0, bldindex:=1]
-    # dyn[is.na(bldindex), bldindex:=0]
 
     return(dyn)
 }
@@ -294,6 +269,7 @@ to_dynobs = function(churchlist){
 check_order = function(dyn){
     # data.table works by reference, so copy to prevent global scope in functions!
     dyn = copy(dyn)
+
     dyn[order(osmid, year), dyear:=c(0, diff(year)), by=osmid]
     cat('reversed:')
     print(dyn[sort(c(which(dyear < 0), which(dyear <0) - 1)), ])
@@ -319,39 +295,6 @@ check_annual_m2 = function(full, n=10){
     highann = c(highann, full[as.numeric(attr(outltest$rstudent, "names")), osmid])
 
     return(unique(highann))
-}
-
-checks = function(dyn, full, churchlist){
-    # prb_osmids = list()
-
-    m2miss = dyn[, all(is.na(m2)), by=osmid][V1==TRUE, ]
-    cat('\n\nall m2 missing:\n')
-    print(m2miss)
-    # prb_osmids$m2miss = m2miss$osmid
-
-    cat('\n\nall hgt missing:\n')
-    hgtmiss = dyn[, all(is.na(hgt)), by=osmid][V1==TRUE, ]
-    print(hgtmiss)
-    # prb_osmids$hgtmiss = hgtmiss$osmid
-
-    cat('\n\norder incorrect:\n')
-    orderwrong = check_order(dyn)
-    print(orderwrong)
-    # prb_osmids$orderwrong = orderwrong$osmid
-
-    cat('\n\nosm total and final series total:\n')
-    totaloutl = check_osm_total(full, churchlist)
-    print(totaloutl)
-    # prb_osmids$totaloutl = totaloutl$osmid
-
-    cat('\n\nhighest m2/annum:\n')
-    ann2high = check_annual_m2(full)
-    print(ann2high)
-    # prb_osmids$ann2high = ann2high
-
-    prb_osmids = list(m2miss=m2miss$osmid, hgtmiss=hgtmiss$osmid, 
-        orderwrong=orderwrong$os, totaloutl=totaloutl$osmid, ann2high=ann2high)
-    return(prb_osmids)
 }
 
 recombine_churches = function(churches, guesses=NULL, firstm2col = 5){
@@ -442,10 +385,6 @@ get_osm_data = function(cty, what='way', radius=5, block=FALSE, ruins=FALSE){
         rel_refs = topo$relations$refs[topo$relation$refs$ref %in% polys@data$id, ]
 
         polys = polys[match(rel_refs$ref, polys@data$id),] 
-        # rel_refs = topo$relations$refs[match(polys@data$id, topo$relations$refs$ref), ]
-        # polys = aggregate(polys, by=list(rel_refs$id), FUN=function(x) x[1], dissolve=FALSE)
-        # polys = aggregate(polys, by=list(rel_refs$id), FUN=mean, dissolve=TRUE)
-        # polys@data = data.frame(polys@data, tags[as.character(polys$Group.1), ])
         polys@data = data.frame(polys@data, tags[as.character(rel_refs$id), ])
         polys@data$id = rel_refs$ref
         polys@data$role = rel_refs$role
@@ -455,6 +394,7 @@ get_osm_data = function(cty, what='way', radius=5, block=FALSE, ruins=FALSE){
     polys@data$city = cty$city
     return(polys)
 }
+
 get_osm_data_church = function(osmid, what=c("way", "relation")){
     # function for aditional single additions to the data
     # would also work with direct osmar item
@@ -481,17 +421,17 @@ get_osm_data_church = function(osmid, what=c("way", "relation")){
     }
     return(polys)
 }
+
 get_osm_tags <- function(topo, what="way"){
-    # make sure it can handle relations as well
     # rbind topo$ways$tags with topo$ways$relations
     osmtags <- rbind(topo$ways$tags, topo$relations$tags)
-    # and check uniqueness
+
+    # check uniqueness
     osmtags <- reshape(osmtags, direction='wide', idvar='id', timevar='k', v.names='v')
     osmtags <- factor2char(osmtags)
     
     names(osmtags) <- gsub("v[.]", "", names(osmtags))
     names(osmtags) <- paste0('osm', names(osmtags))
-    # osmtags <- osmtags[osmtags$id %in% polyids, ]
     
     vrbs <- c("osmid", "osmamenity", "osmbuilding", "osmdenomination", 
               "osmheritage",  "osmname", "osmreligion", "osmwikipedia")
@@ -511,7 +451,6 @@ get_osm_tags <- function(topo, what="way"){
 polylist2df = function(polylist, what="way"){
     polys = polylist[[1]]
     
-    # if (what=="relation"){}
     rownames(polys@data)  = sapply(slot(polys, "polygons"), function(x) slot(x, "ID"))
     if (length(polylist) == 1){
         return(polylist[[1]])
@@ -527,9 +466,6 @@ polylist2df = function(polylist, what="way"){
         # fix missing variables between spdfs
         polys4merge@data[, setdiff(names(polys), names(polys4merge))] = NA
         polys@data[, setdiff(names(polys4merge), names(polys))] = NA
-        # sapply(slot(polys, "polygons"), function(x) slot(x, "ID"))
-        # rownames(polys@data)
-        # sapply(slot(polys4merge, "polygons"), function(x) slot(x, "ID"))
         polys@data$timestamp = polys4merge@data$timestamp = character(1)
         polys = maptools::spRbind(polys, polys4merge)
     }
@@ -551,8 +487,6 @@ aggregate_multipolys = function(polys, by="Group.1"){
     polys@data$lat = tapply(polys@data$lat, polys@data[, by], mean)[as.character(polys@data[, by])]
     polys@data$surface = tapply(polys@data$surface, polys@data[, by], sum)[as.character(polys@data[, by])]
     out = aggregate(polys, by=list(polys@data[, by]), FUN=function(x) x[1])
-    # caution: used to be aggregate spdf and returned spdf, now requires FUN= to do that
-    # out = aggregate.data.frame(polys, by=list(polys[, by]), `[`, 1)
     return(out)
 }
 
@@ -569,7 +503,7 @@ filter_prox = function(ctr_gcd, siem_ctr,
         if (min(dsts) < 2){
             ctr_gcd[failed][[i]] = ctr_gcd[failed][[i]][which.min(dsts), ]
         } else {
-            cat(siem_ctr$city[failed][[i]], 'failed\n\n')
+            cat(siem_ctr$city[failed][[i]], 'no deduplication < 2km \n\n')
         }
     }
     return(ctr_gcd)
@@ -590,35 +524,25 @@ grepr <- function(pattern, x, ...){
     idx <- grep(pattern, x, ...)
     return(x[idx])
 }
-gregexprr <- function(pattern, string){
-    # return all string matches of a regular expression
-    # todo: check whether/how it work on multiple strings at once
-
-    rgx <- gregexpr(pattern, string)
-    out <- substring(string, rgx[[1]], rgx[[1]] + attr(rgx[[1]], 'match.length') - 1)
-    return(out)
-}
-
-overpass_baseurl <- "http://overpass-api.de/api/interpreter?data="
 
 factor2char <- function(dat){
     factors <- sapply(dat, class) == 'factor'
     dat[factors] <- sapply(dat[factors], as.character)
     return(dat)
 }
+
 km2lat <- function(km){
     km / 110.574
 }
+
 km2lon <- function(km, lat){
     km / (111.320 * cos(lat * (pi/180)))
 }
 
-
-
-
-
 get_osm_churches_rect <- function(lat1, lon1, lat2, lon2){
-    basequery <-   '[out:xml][timeout:900];
+    # original osm fetch used for French churches
+    basequery <-   
+        '[out:xml][timeout:900];
         (
             node["building"="church"] %1$s;
             way["building"="church"] %1$s;
@@ -686,24 +610,25 @@ get_osm_all_churches_rect <- function(lat1, lon1, lat2, lon2,
     return(topo)
 }
 
-geocode <- function(loc, reg='', bounds='', apikey = NA){
-    # barebones version of  geocode function on:
-    # https://github.com/dkahle/ggmap
+geocode <- function(loc, reg = "", bounds = "", apikey = NA){
 
-    require(jsonlite)
     if (length(loc) > 1) loc <- loc[1] # geocode api takes only one location
     loc <- loc
-    base <- 'https://maps.googleapis.com/maps/api/geocode/json?address='
+
+    base <- "https://maps.googleapis.com/maps/api/geocode/json?address="
     request <- paste0(base, loc, '&region=', reg)
     request <- paste0(request, '&bounds=', bounds)
     if(!is.na(apikey)) request <- paste0(request, '&key=', apikey)
+
     request <- URLencode(request)
     result <- readLines(url(request))
     closeAllConnections()
     Sys.sleep(0.2) # max 5 calls per sec
+
     result <- paste(result, collapse='')
-    result <- fromJSON(result)
-    if (result$status != 'OK'){
+    result <- jsonlite::fromJSON(result)
+
+    if (result$status != "OK"){
         out <- data.frame(loc=loc, lat=NA, lon=NA, loc_frmtd=NA)
         return(out)
     } else {
@@ -729,96 +654,7 @@ distmatch <- function(lonlat1, lonlat2, maxdist=0.1){
     return(dd)
 }
 
-###### old ######
-#---------------#
-# get_osm_data = function(siem, what='way', sleep=20, radius=5){
-#     polylist = list()
-#     for (i in 1:nrow(siem)){
-#         cty = siem[i, city]
-#         cat(cty, ' - ')
-
-#         topo = get_osm_all_churches_rect(
-#             lat1=siem[i, lat] - km2lat(radius),
-#             lat2=siem[i, lat] + km2lat(radius),
-#             lon1=siem[i, lon] - km2lon(radius, lat=siem[i, lat]),
-#             lon2=siem[i, lon] + km2lon(radius, lat=siem[i, lat]),
-#             what=what)
-
-#         if (dim(topo)["ways"] == 0){
-#             cat("no results, skipped\n")
-#             next
-#         }
-
-#         polys = osmar::as_sp(topo, what="polygons")
-#         tags = get_osm_tags(topo)
-#         rownames(tags) = tags$osmid
-
-#         # check duplicates
-#         # issue: sometimes a way is caught separately from the relation
-#         # in that case prefer relation?
-
-#         polys@data = data.frame(polys@data, tags[as.character(polys$id), ])
-#         polys@data$city = siem[i, city]
-
-#         polylist[[cty]] = polys
-
-#         Sys.sleep(sleep)
-#     }
-#     return(polylist)
-# }
-
-get_osm_all_relation_churches_rect <- function(lat1, lon1, lat2, lon2){
-    # make this handle relations as well
-    basequery <-   '[out:xml][timeout:900];
-        (
-            relation["building"="church"] %1$s;
-            relation["building"="chapel"] %1$s;
-            relation["amenity"="place_of_worship"] %1$s;
-            relation["building"="cathedral"] %1$s;
-        );
-        out body;
-        >;
-        out skel qt;'
-    
-    bounding <- paste0('(',paste(c(lat1, lon1, lat2, lon2), collapse=','),')')
-    qry <- sprintf(basequery, bounding)
-    
-    request <- URLencode(paste0(overpass_baseurl, qry))
-    reqtime <- system.time(result <- readLines(request))
-    if (sum(reqtime) > 900) warning('timeout exceeded')
-    
-    topo <- osmar::as_osmar(XML::xmlParse(result))
-    cat('request returned', nrow(topo$ways[[1]]), 'ways', '\n')
-
-    return(topo)
-}
-
-
-get_osm_relation_churches_rect <- function(lat1, lon1, lat2, lon2){
-    basequery <-   '[out:xml][timeout:900];
-        (
-            relation["building"="church"] %1$s;
-            relation["building"="chapel"] %1$s;
-            relation["amenity"="place_of_worship"] %1$s;
-            relation["building"="cathedral"] %1$s;
-        );
-        out body;
-        >;
-        out skel qt;'
-    
-    bounding <- paste0('(',paste(c(lat1, lon1, lat2, lon2), collapse=','),')')
-    qry <- sprintf(basequery, bounding)
-    
-    request <- URLencode(paste0(overpass_baseurl, qry))
-    reqtime <- system.time(result <- readLines(request))
-    if (sum(reqtime) > 900) warning('timeout exceeded')
-    
-    topo <- osmar::as_osmar(XML::xmlParse(result))
-    cat('request returned', nrow(topo$ways[[1]]), 'ways', '\n')
-
-    return(topo)
-}
-
+# old version used for French churches
 get_osm_other_churches_rect <- function(lat1, lon1, lat2, lon2){
     basequery <-   '[out:xml][timeout:900];
         (
@@ -841,13 +677,3 @@ get_osm_other_churches_rect <- function(lat1, lon1, lat2, lon2){
 
     return(topo)
 }
-
-uured = '#F52A01' # the UU hexs seem off.
-uuyel = '#FFCD00'
-uublu = '#094D8E'
-uugre = '#419702'
-uupur = '#791D72'
-uulbl = '#36A2C9'
-uupnk = '#9A0000'
-uuora = '#F08000'
-uulgr = '#FEF200'
