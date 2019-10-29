@@ -4,6 +4,8 @@ rm(list=ls())
 setwd("~/dropbox/cathedrals/")
 options(stringsAsFactors=FALSE)
 
+source("script/cat_functions.r")
+
 library("data.table")
 library("jsonlite")
 library("XML")
@@ -15,7 +17,6 @@ os = sp::CRS("+init=EPSG:27700")
 wgs = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
 rdriehoek = CRS("+init=epsg:28992")
 
-source("script/cat_functions.r")
 
 siem_it = data.table::fread("dat/siem_it.csv")
 siem_pt = data.table::fread("dat/siem_pt.csv")

@@ -17,7 +17,6 @@ data("wrld_simpl", package = "maptools")
 statobs = data.table::fread("dat/statobs.csv")
 citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
-siem = data.table::fread("dat/siem_long.csv", encoding="UTF-8")
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 
 M = 9 # number of imputations
