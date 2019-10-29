@@ -19,7 +19,6 @@ impvrbs = names(fullobs_sp)[grepl('im3_ann\\d', names(fullobs_sp))]
 
 ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")   
 gdp = data.table::fread("dat/maddison_gdp_old.csv")
-gdp_new = data.table::fread("dat/gddnew.csv")
 pop_mj = data.table::fread("dat/pop_mj.csv")
 
 siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
@@ -380,10 +379,6 @@ eu = citobs_dec[, list(im3_dec = sum(m3dec), urb_inhab = sum(inhab)), by=list(de
 
 byctr = pop_mj[data.table::between(decade, 700, 1500), list(ctr, decade, pop, pop_spl)][byctr, on = c('ctr', 'decade')]
 eu = pop_mj[data.table::between(decade, 700, 1500), list(ctr, decade, pop, pop_spl)][, list(pop = sum(pop), pop_spl = sum(pop_spl)), by = decade][eu, on = 'decade']
-
-byctr = gdp_new[year %% 20 == 0, list(ctr = tolower(iso2c), decade = year, cgdppc, rgdpnapc,
-    pop_madison = pop, cgdppc_part, rgdpnapc_part)][
-    byctr, on = c('ctr', 'decade')]
 
 byctr[decade %% 100 != 0, urb_inhab := NA] # fix zeroes
 byctr2[decade %% 100 != 0, urb_inhab := NA]
