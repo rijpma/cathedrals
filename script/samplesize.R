@@ -31,8 +31,8 @@ nweur$surface = geosphere::areaPolygon(as_Spatial(st_geometry(nweur)))
 cat("Total churches from OSM: ")
 length(unique(nweur$osmid))
 
-
-surfaces = as.data.table(nweur)[, list(surface = sum(surface)), by = osmid]
+surfaces = data.table::as.data.table(nweur)
+surfaces = surfaces[, list(surface = sum(surface)), by = osmid]
 
 cat("Churches in OSM > 1000 m2")
 sum(surfaces$surface > 1000)

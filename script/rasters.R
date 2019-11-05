@@ -4,7 +4,6 @@ rm(list=ls())
 setwd("~/dropbox/cathedrals")
 
 library("raster")
-library("RNetCDF")
 library("maptools")
 library("data.table")
 library("viridisLite")
@@ -14,24 +13,20 @@ source('script/cat_functions.r')
 wgs <- sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
 data("wrld_simpl", package = "maptools")
 
-statobs = data.table::fread("dat/statobs.csv")
-citobs = data.table::fread("dat/citobs.csv")
 fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
-ukgdp = data.table::fread("dat/engdp12001700.csv", skip=1, encoding="UTF-8")
 
 M = 9 # number of imputations
-impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
+impvrbs = names(fullobs_sp)[grep('im3_ann\\d', names(fullobs_sp))]
 
-rhigh = raster(
+baseraster = raster(
     nrows = 176,  ncols = 228, 
     xmn = -11.75, xmx = 44.75, 
     ymn = 27.25,  ymx = 70.75)
 
-### churches data ###
-#####################
 fullobs_sp[!is.na(phase) & firstobs != TRUE, newbuild := m2]
 
-rchm = list()
+# smoothed raster of period totals
+rba = list()
 periods = list(700:1000, 1001:1200, 1201:1347, 1348:1500)
 for (i in 1:length(periods)){
     temp = fullobs_sp[year %in% periods[[i]], ]
@@ -40,37 +35,37 @@ for (i in 1:length(periods)){
         data = temp[, list(im2_ann, im3_ann, newbuild)], 
         proj4str = wgs)
     spdf = spdf[!is.na(spdf$im3_ann) & spdf$im3_ann != 0, ]
-    r_temp = raster::rasterize(spdf, rhigh, 
+    r_temp = raster::rasterize(spdf, baseraster, 
         field = "im3_ann", fun = sum, na.rm = TRUE)
-    rchm[[i]] = raster::focal(r_temp, 
+    rba[[i]] = raster::focal(r_temp, 
         w = raster::focalWeight(r_temp, 0.7, 'Gauss'), 
         fun = sum, 
         na.rm = TRUE)
 
-    cat("Sum in raw: ")
-    print(sum(getValues(r_temp), na.rm = TRUE))
-    cat("Sum in smooth: ")
-    print(sum(getValues(rchm[[i]]), na.rm = TRUE))
+    cat("Sum in raw: ", sum(getValues(r_temp), na.rm = TRUE))
+    cat("Sum in smooth: ", sum(getValues(rba[[i]]), na.rm = TRUE), "\n")
 }
-rchm = raster::stack(rchm)
-rchm = trim(rchm)
+rba = raster::stack(rba)
+rba = raster::trim(rba)
 
 # express values per square km2
-rchm = rchm / area(rchm)
+rba = rba / raster::area(rba)
 
-rchm[is.na(rchm)] = 0
+# NA to zero to ensure black like bg
+rba[is.na(rba)] = 0 
+
 pdf("figs/4m3maps_smoothed.pdf", width=10, height=10)
 par(mfrow=c(2,2), font.main=1, mar=c(2, 2, 3, 7))
-plot(rchm[[1]], main="700-1000", zlim = c(0, 31), col=viridisLite::magma(256), axes=F,
+plot(rba[[1]], main="700-1000", zlim = c(0, 31), col=viridisLite::magma(256), axes=F,
     axis.args=list(at=seq(0, 31, 10)))
 add_borders(border='white')
-plot(rchm[[2]], main="1000-1200", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
+plot(rba[[2]], main="1000-1200", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
     axis.args=list(at=seq(0, 60, 20)))
 add_borders(border='white')
-plot(rchm[[3]], main="1200-1348", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
+plot(rba[[3]], main="1200-1348", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
     axis.args=list(at=seq(0, 60, 20)))
 add_borders(border='white')
-plot(rchm[[4]], main="1348-1500", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
+plot(rba[[4]], main="1348-1500", zlim = c(0, 72), col=viridisLite::magma(256), axes=F,
     axis.args=list(at=seq(0, 60, 20)))
 add_borders(border='white')
 dev.off()

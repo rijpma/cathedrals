@@ -7,16 +7,13 @@ library("data.table")
 
 source('script/cat_functions.r')
 
-statobs = data.table::fread("dat/statobs.csv")
-citobs = data.table::fread("dat/citobs.csv")
 dynobs = data.table::fread("dat/dynobs.csv")
 fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
-siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 
 M = 9
-impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
+impvrbs = names(fullobs_sp)[grep('im3_ann\\d', names(fullobs_sp))]
 
-fullobs_sp[, century := round(year / 100)  * 100] # for compatability w. century
+fullobs_sp[, century := round(year / 100)  * 100] # for compatability w. century in siem
 
 # if by phase
 endsizes = dynobs[, list(endsize = sum(m3, na.rm = T), year = tail(year, 1)), by = list(osmid, bldindex)]
