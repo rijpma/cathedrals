@@ -15,14 +15,15 @@ M = 9
 impvrbs = grepr('im3_ann\\d', names(fullobs_sp))
 
 james = data.table::fread("dat/james_exp.csv", header=T)
-james$id_james <- james$id
-james$id <- NULL
+data.table::setnames(james, "id", "id_james")
 
 yrs = grep('\\d{4}', names(james))
 
+# per church totals
 james$JU <- rowSums(james[, yrs, with=F], na.rm=T)
 james$JU[rowSums(!is.na(james[, yrs, with=F]))==0] <- NA
 
+# match to our data based on distance
 mtchs = distmatch(lonlat1 = as.matrix(james[, list(Longitude, Latitude)]), 
                   lonlat2 = as.matrix(statobs[, list(lon, lat)]))
 mtchs = mtchs[order(mtchs$dist), ]
@@ -32,16 +33,17 @@ james[mtchs$lonlat1, osmid := statobs$osmid[mtchs$lonlat2]]
 james[mtchs$lonlat1, osmname :=statobs$osmname[mtchs$lonlat2]]
 james[mtchs$lonlat1, osmcity :=statobs$city[mtchs$lonlat2]]
 
-# Sainte-Geneviève and La Vistiation, probably incorrectly matched
+# Sainte-Geneviève and La Vistiation seem incorrect
 james[osmid %in% c("55343672", "147457637"), osmid := NA] 
 
 # comparison 1: our series v. James' series for Paris basin
 lonrange = range(james$Longitude)
 latrange = range(james$Latitude)
 ourparisbasin = fullobs_sp[
-    lon %between% lonrange & lat %between% latrange & year > 1050 & year < 1260, 
+    lon %between% lonrange & lat %between% latrange & year %between% c(1051, 1259), 
     list(m3dec = base::sum(.SD, na.rm=T) / M), 
-    by = list(decade = floor(year / 10)*10), .SDcols = impvrbs]
+    by = list(decade = floor(year / 10)*10), 
+    .SDcols = impvrbs]
 jamesparisbasin = melt(
     james[, yrs[-20], with = F], 
     measure.vars = yrs[-20], 
@@ -81,6 +83,7 @@ james_mtchd = merge(
 james_mtchd = james_mtchd[!id_james %in% c("Synopsis.php?id=EVREUX", 
                                            "Synopsis.php?id=ETMPES-B", 
                                            "Synopsis.php?id=ETMPES-G"), ]
+# outliers dropped after looking up
 # http://creationofgothic.org/V3/PHP/"
     # Synopsis.php?id=EVREUX   # only lower part of nave, rest built later
     # Synopsis.php?id=ETMPES-B # west portal of nave only
@@ -100,6 +103,12 @@ abline(lm(log(JU) ~ log(im3_cml),
     lwd = 1.5)
 dev.off()
 
+# correlation james and osm for same research area
+cor(comp[, .(JU, m3dec)])
+
+# share matched
+sum(!is.na(james$osmid)) / nrow(james)
+
 # series of matched and unmatched churches in James
 pdf('figs/james_mtch_v_unmtchd.pdf', width=10, height=4)
 par(mfrow=c(1, 3), font.main=1, mar=c(5, 4, 3.5, 0.5))
@@ -111,6 +120,12 @@ plot(names(james)[yrs], colSums(james[is.na(osmid), yrs, with=F], na.rm=T),
     type='l', bty='l', xlab='year', ylab="James' cost est.", col=2, lwd=2, main='Unmatched')
 dev.off()
 
+# correlation matched/unmatched in james
+cor(colSums(james[, yrs, with=F], na.rm=T),
+    colSums(james[!is.na(osmid), yrs, with=F], na.rm=T))
+# first differences
+cor(diff(colSums(james[, yrs, with=F], na.rm=T)),
+    diff(colSums(james[!is.na(osmid), yrs, with=F], na.rm=T)))
 
 # overlay building activity series
 osmids_james = unique(na.omit(james$osmid))
@@ -139,16 +154,3 @@ for (i in osmids_james){
     }
 }
 dev.off()
-
-# correlation matched/unmatched in james
-cor(colSums(james[, yrs, with=F], na.rm=T),
-    colSums(james[!is.na(osmid), yrs, with=F], na.rm=T))
-# first differences
-cor(diff(colSums(james[, yrs, with=F], na.rm=T)),
-    diff(colSums(james[!is.na(osmid), yrs, with=F], na.rm=T)))
-
-# correlation james and osm for same research area
-cor(comp[, .(JU, m3dec)])
-
-# share matched
-sum(!is.na(james$osmid)) / nrow(james)
