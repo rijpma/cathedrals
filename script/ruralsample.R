@@ -11,7 +11,7 @@ library("data.table")
 
 source("script/cat_functions.r")
 
-# old data
+# urban church building data
 fullobs_sp_urb = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 fullobs_sp_urb = fullobs_sp_urb[ctr != "it"]
 fullobs_sp_urb[, decade2:=(trunc((year - 1) / 50) + 1) * 50] # so 1500 = 1481-1500
@@ -19,6 +19,7 @@ fullobs_sp_urb[, decade2:=(trunc((year - 1) / 50) + 1) * 50] # so 1500 = 1481-15
 M = 9 # imputations
 impvrbs = names(fullobs_sp_urb)[grep("im3_ann\\d", names(fullobs_sp_urb))]
 
+# city pop data
 siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 siem = siem[country %in% c("France", "UK", "Netherlands", "Belgium", "Germany")] #, "Italy")]
 
@@ -68,8 +69,6 @@ dynobs_rur = to_dynobs(churchlist=chrlist_rur)
 fullobs_rur = to_annual_obs(dyn=dynobs_rur)
 fullobs_rur[, decade:=(trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 
-citobs = to_city_obs(statobs=statobs_rur, fullobs=fullobs_rur)
-
 dynobs_rur_sp = merge(dynobs_rur, statobs_rur, by="osmid")
 dim(fullobs_rur)
 fullobs_sp_rur = merge(fullobs_rur, statobs_rur, by="osmid", all=T)
@@ -97,19 +96,6 @@ siem[, bot := lat - km2lat(5)]
 siem[, lft := lon - km2lon(5, lat=lat)]
 siem[, rgt := lon + km2lon(5, lat=lat)]
 
-png('figs/researcharea_norural.png', width=1080, height=1080)
-plot(nld, lwd = 0.8, 
-    xlim = range(fullobs_sp_urb$lon),
-    ylim = range(fullobs_sp_urb$lat))
-lines(fra, lwd = 0.8)
-lines(che, lwd = 0.8)
-lines(bel, lwd = 0.8)
-lines(gbr, lwd = 0.8)
-lines(deu, lwd = 0.8)
-# lines(ita, lwd = 0.8)
-points(siem[year == 1500, list(lon, lat)], pch = 19, col = 2)
-dev.off()
-
 png('figs/researcharea.png', width=1080, height=1080)
 proj4string(rur) = sp::CRS("+proj=longlat +datum=WGS84 +no_defs ")
 # plot(rur, border=1)
@@ -126,7 +112,11 @@ lines(deu, lwd = 0.5)
 
 # remove norther ireland
 rect(xleft = -8.3, ybottom = 54, xright = -5.3, ytop = 55.3, col = 'white', border = NA)
+
+# urban data
 points(lat ~ lon, data=fullobs_sp_urb, pch = 20, cex = 0.7, col = 'gray')
+
+# rural data
 points(coordinates(rur), pch = 20, cex = 0.8)
 rect(xleft = siem$lft, ybottom = siem$bot, 
      xright = siem$rgt, ytop = siem$top, 

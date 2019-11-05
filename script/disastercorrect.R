@@ -3,7 +3,7 @@
 rm(list = ls())
 setwd("~/dropbox/cathedrals")
 
-library("zoo")
+# library("zoo")
 library("data.table")
 library("texreg")
 library("lmtest")
@@ -14,7 +14,6 @@ source("script/cat_functions.r")
 
 fullobs_sp <- data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
 disasters = data.table::fread("dat/disasters.csv")
-dynobs = data.table::fread("dat/dynobs.csv")
 statobs = data.table::fread("dat/statobs.csv")
 
 M = 9 # number of imputations
@@ -30,9 +29,6 @@ disasters[other == TRUE, cause := "other"]
 # disasters[other_natural == TRUE, cause := "other_natural"]
 # disasters[fire == TRUE, cause := "fire"]
 # too few obs for splitting further
-
-# length building
-# hist(dynobs[, diff(range(year)), by = list(osmid, bldindex)][, V1])
 
 disasters_sumstats = statobs[disasters, on = 'osmid']
 disasters_sumstats[, ctr_full := ..cmap[ctr]]
@@ -74,7 +70,6 @@ cat("number of churches ever disastered: ")
 disasters[statobs, on = 'osmid'][, uniqueN(osmid), by = !is.na(year)]
 disasters[statobs, on = 'osmid'][, uniqueN(osmid), by = !is.na(year)][, V1 / sum(V1)]
 
-# time to complete a church:
 cat("average time to build phase of church: ")
 fullobs_sp[irestphase != 1, .N, by = .(osmid, iphaselength)][, mean(N)]
 cat("average time to build church: ")
@@ -97,6 +92,7 @@ disasters150[
     by = osmid]
 disasters150 = disasters150[kill == FALSE]
 
+# merge into annual series
 fullobs_sp = disasters150[fullobs_sp, on = c("osmid", "year")]
 
 if (sum(duplicated(fullobs_sp, by = c("osmid", "year"))) > 0){
@@ -104,26 +100,30 @@ if (sum(duplicated(fullobs_sp, by = c("osmid", "year"))) > 0){
 }
 
 fullobs_sp[, afterdisaster := !is.na(cause)]
-fullobs_sp[is.na(war), war := FALSE]
-fullobs_sp[is.na(earthquake), earthquake := FALSE]
-fullobs_sp[is.na(other), other := 0] # because sum earlier
+fullobs_sp[, afterearthquake := earthquake]
+fullobs_sp[, afterwar := war]
+fullobs_sp[, afterother := other]
+
+fullobs_sp[is.na(afterwar), afterwar := FALSE]
+fullobs_sp[is.na(afterearthquake), afterearthquake := FALSE]
+fullobs_sp[is.na(afterother), afterother := 0] # because sum earlier
 fullobs_sp[, century := (trunc((year - 1) / 100) + 1) * 100] # so 1500 = 1481-1500
 
 churchobs = fullobs_sp[data.table::between(year, 700, 1500), 
     list(
         share_afterdisaster = mean(afterdisaster, na.rm = TRUE), 
-        share_earthquake = mean(earthquake, na.rm = TRUE),
-        share_war = mean(war, na.rm = TRUE),
-        share_other = mean(other, na.rm = TRUE),
+        share_afterearthquake = mean(afterearthquake, na.rm = TRUE),
+        share_afterwar = mean(afterwar, na.rm = TRUE),
+        share_afterother = mean(afterother, na.rm = TRUE),
         bldindex = mean(ibldindex),
         category = unique(category),
         im3_dec = base::sum(.SD, na.rm=T) / M),
     by = .(osmid, ctr, decade, century),
     .SDcols = impvrbs]
 churchobs[, afterdisaster := as.numeric(share_afterdisaster > 0.5)]
-churchobs[, earthquake := as.numeric(share_earthquake > 0.5)]
-churchobs[, war := as.numeric(share_war > 0.5)]
-churchobs[, other := as.numeric(share_other > 0.5)]
+churchobs[, afterearthquake := as.numeric(share_afterearthquake > 0.5)]
+churchobs[, afterwar := as.numeric(share_afterwar > 0.5)]
+churchobs[, afterother := as.numeric(share_afterother > 0.5)]
 churchobs[, bldindex := round(bldindex)] # took average of bldindex over 20y period
                                          # back to integer: >50% is bldindex up
 
@@ -141,41 +141,33 @@ churchobs[bldindex == 1, prevsize := 0]
 churchobs[is.na(bldindex), prevsize := 0] # one-phase buildings
 
 # rename disasters to get 
-m_nocen = lm(im3_dec / 1000 ~ ctr:disaster + ctr, 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster)])
-m_all = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster)])
-m_quake = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = earthquake)])
-m_war = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = war)])
-m_other = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = other)])
-m_all_prev = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century) + prevsize, 
-    data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)])
-m_pois = glm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[im3_dec >= 0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)],
-    family = quasipoisson(link = "log"))
-m_log = lm(log(im3_dec / 1000) ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[im3_dec > 0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)])
-m_log1p = lm(log1p(im3_dec / 1000) ~ ctr:disaster + ctr + factor(century), 
-    data = churchobs[im3_dec >=0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)])
-
 mlist = list(
-    m_nocen = m_nocen, 
-    m_all = m_all, 
-    m_quake = m_quake, 
-    m_war = m_war, 
-    m_other = m_other, 
-    m_all_prev = m_all_prev, 
-    m_pois = m_pois, 
-    m_log = m_log, 
-    m_log1p = m_log1p)
-
+    m_nocen = lm(im3_dec / 1000 ~ ctr:disaster + ctr, 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster)]),
+    m_all = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster)]),
+    m_quake = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterearthquake)]),
+    m_war = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterwar)]),
+    m_other = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterother)]),
+    m_all_prev = lm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century) + prevsize, 
+        data = churchobs[, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)]),
+    m_pois = glm(im3_dec / 1000 ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[im3_dec >= 0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)],
+        family = quasipoisson(link = "log")),
+    m_log = lm(log(im3_dec / 1000) ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[im3_dec > 0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)]),
+    m_log1p = lm(log1p(im3_dec / 1000) ~ ctr:disaster + ctr + factor(century), 
+        data = churchobs[im3_dec >=0, .(im3_dec, ctr, century, disaster = afterdisaster, prevsize)])
+)
+# robust standard errors
 selist = lapply(mlist, lmtest::coeftest, vcov. = sandwich::vcovHC)
 pvlist = lapply(selist, '[', i =, j = 4)
 selist = lapply(selist, '[', i =, j = 2)
 
+# rename variables for paper
 coefmap = list(
     # "ctrbe:disaster" = "Belgium × disaster",
     "ctrch:disaster" = "Switzerland × disaster",
@@ -222,10 +214,10 @@ churchobs = cfsl[churchobs, on = "ctr"]
 churchobs[afterdisaster == TRUE, corrected_all := im3_dec - (coef_all * 1000)]
 churchobs[is.na(corrected_all), corrected_all := im3_dec]
 
-churchobs[earthquake == TRUE, corrected_quake := im3_dec - (coef_quake * 1000)]
+churchobs[afterearthquake == TRUE, corrected_quake := im3_dec - (coef_quake * 1000)]
 churchobs[is.na(corrected_quake), corrected_quake := im3_dec]
 
-churchobs[afterdisaster == TRUE, corrected_war := im3_dec - (coef_war * 1000)]
+churchobs[afterwar == TRUE, corrected_war := im3_dec - (coef_war * 1000)]
 churchobs[is.na(corrected_war), corrected_war := im3_dec]
 
 churchobs[ctr == "it", ctr := "Italy"]
