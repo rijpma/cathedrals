@@ -10,7 +10,6 @@ library("raster") # for spatial splitting of data
 library("sf")
 library("data.table")
 library("stringi")
-library("writexl")
 
 # rasters for country ids where absent
 nld = raster::getData("GADM", country='NLD', level=0)
@@ -33,7 +32,7 @@ siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 
 # church construction histories
 chr = data.table::fread("dat/checkedchurches_eb_8_2018sep4.csv", 
-    header = T, encoding = "UTF-8", colClasses = "character")
+    header = TRUE, encoding = "UTF-8", colClasses = "character")
 chr = chr[, 1:29, with=F]
 firstm2col_chr = 14
 setnames(chr, 
@@ -47,7 +46,7 @@ chr[, osmwikipedia := gsub("√©", "é", osmwikipedia)]
 
 # italian churches
 chr_it = data.table::fread("dat/churches_italy_2_2018oct2.csv",
-    header = T, encoding = "UTF-8", colClasses = "character")
+    header = TRUE, encoding = "UTF-8", colClasses = "character")
 chr_it = chr_it[, 1:23]
 firstm2col_chr_it = 11
 setnames(chr_it, 
@@ -58,14 +57,14 @@ chr_it[, ctr := "it"]
 
 # later additions to db
 chr_ad = data.table::fread("dat/churches_add_2018nov30.csv",
-    header = T, encoding = "UTF-8")
+    header = TRUE, encoding = "UTF-8")
 chr_ad = chr_ad[, 1:20]
 firstm2col_chr_ad = 11
 setnames(chr_ad, 
     old = firstm2col_chr_ad:ncol(chr_ad), 
     new = paste0("y", 1:(ncol(chr_ad) - firstm2col_chr_ad + 1)))
 
-# country codes for additions
+# country codes from nwEU map for additions
 ad_sf = st_as_sf(chr_ad[!is.na(lat) & osmlink != ""], 
     coords = c("lon", "lat"), crs = 4326)
 chr_ad[!is.na(lat) & osmlink != "",
@@ -73,7 +72,8 @@ chr_ad[!is.na(lat) & osmlink != "",
 chr_ad[, ctr := tolower(substr(iso3, 1, 2))]
 chr_ad[, ctr := ifelse(ctr == "gb", "uk", ctr)]
 
-chr = rbindlist(list(chr, chr_it, chr_ad), fill = T)
+# all church building histories together
+chr = rbindlist(list(chr, chr_it, chr_ad), fill = TRUE)
 
 # check encoding
 if (!all(sapply(chr, validUTF8))){
@@ -119,7 +119,7 @@ chr[osmid %in% dpls, tokeep := rep(c(FALSE, TRUE), each = 6), by = osmid]
 chr = chr[tokeep == TRUE]
 chr[, tokeep := NULL]
 
-# no duplicates and all 6 rows?
+# check: no duplicates and all 6 rows?
 if (! all(chr[osmid != "", table(osmid)] == 6)){
     warning("non-6 row entries in file")
 }
@@ -159,6 +159,7 @@ chr[city == "temse", city:= "Temse"]
 chr[city == "zierikzee", city:= "Zierikzee"]
 chr[city == "zwickau", city:= "Zwickau"]
 
+# border city, choose to prevent join duplicates later
 chr[city == "Konstanz (Drusomagus)" & ctr == "ch", ctr := "de"]
 
 # more accurate coordinates
@@ -207,7 +208,7 @@ if (any(
             lapply(.SD, as.numeric), 
             .SDcols = yearvrbs][, 
                 -length(yearvrbs), with = F]) < 0, 
-        na.rm = T)){
+        na.rm = TRUE)){
     warning("years not chronological: year[n + 1] < year[n]")
 }
 if (any(unlist(
@@ -229,10 +230,11 @@ if (chr[!is.na(ctr) & ctr != "", list(nctr = uniqueN(ctr)), by = city ][
 
 chrlist = recombine_churches(churches = chr, guesses = NULL, firstm2col = 14)
 
+# static church data
 statobs = do.call(rbind, lapply(chrlist, `[[`, 'static')) 
 statobs = data.table::as.data.table(statobs)
 
-### fix statobs city names to match siem
+### fix statobs city names to match those in siem
 # seemingly no problems with Italian cities
 fixes = lapply(
     gsub('-', ' ', setdiff(statobs$city, siem$city)), 
@@ -266,7 +268,8 @@ statobs[, lat := as.numeric(lat)]
 statobs[, lon := as.numeric(lon)]
 
 # country splits
-# ---------------
+# --------------
+# north/south
 statobs[, ctr2 := ctr]
 statobs[lat >  46.0 & ctr == "fr", ctr2 := "fr_north"]
 statobs[lat <= 46.0 & ctr == "fr", ctr2 := "fr_south"]
@@ -318,11 +321,7 @@ statobs[lat <= 46.0 & ctr == "fr", ctr3 := "fr_south"]
 
 statobs[ctr == "it", ctr3 := ctr2]
 
-out = merge(statobs, unique(siem[, .(city, country)]), by = 'city', all.y = T)
-writexl::write_xlsx(
-    out[, sum(!is.na(osmid)), by = .(city, country)][order(country, city)],
-    "excels/cityoverview.xlsx")
-
+# dynamic church data (building histories)
 dynobs = to_dynobs(churchlist = chrlist)
 
 # correct date heaping
@@ -355,6 +354,7 @@ M = 9
 for (j in 1:M){
     dynobs[, year_crc := year]
 
+    # heaping on 20, 25, and 100 using truncated normal
     rsmpl = rtnorm(n = nrow(dynobs[!is.na(sdev)]), 
                    mean = dynobs[!is.na(sdev), year],
                    sd = dynobs[!is.na(sdev), sdev],
@@ -367,18 +367,17 @@ for (j in 1:M){
     # of times neighbour is twenty years away
     n = nrow(dynobs[heap10 == TRUE])
     dynobs[heap10 == TRUE, splt10 := rbinom(n, size=1, prob=0.5)]
-    rsmpl4 = runif(n = sum(dynobs$splt10 == 1, na.rm=T),
+    rsmpl4 = runif(n = sum(dynobs$splt10 == 1, na.rm=TRUE),
                    min = dynobs[heap10 == TRUE & splt10 == 1, year - 4],
                    max = dynobs[heap10 == TRUE & splt10 == 1, year + 4])
-    rsmpl5 = runif(n = sum(dynobs$splt10 == 0, na.rm=T),
+    rsmpl5 = runif(n = sum(dynobs$splt10 == 0, na.rm=TRUE),
                    min = dynobs[heap10 == TRUE & splt10 == 0, year - 5],
                    max = dynobs[heap10 == TRUE & splt10 == 0, year + 5])
 
     dynobs[heap10 == TRUE & splt10 == 1, year_crc := round(rsmpl4)]
     dynobs[heap10 == TRUE & splt10 == 0, year_crc := round(rsmpl5)]
 
-    # swap if diff(year) < 0 ?
-    # or mean to original observation?
+    # de-heaping can swap building order, check and correct:
     dynobs[, year_lead_crc := data.table::shift(year_crc, type='lead'), by=osmid]
     dynobs[, year_lag_crc := data.table::shift(year_crc, type='lag'), by=osmid]
 
@@ -395,6 +394,7 @@ for (j in 1:M){
     setnames(dynobs, 'year_crc', paste0("year_crc", j))
 }
 
+# annual series from building histories
 fullobs = to_annual_obs(dyn = dynobs)
 
 if ((length(fullobs[, .N, by = osmid][, unique(N)]) != 1) | 
@@ -402,6 +402,7 @@ if ((length(fullobs[, .N, by = osmid][, unique(N)]) != 1) |
     warning("unbalanced dataset")
 }
 
+# annual series for each imputation
 for (j in 1:M){
     dynobs_rs = data.table::copy(dynobs)
 
@@ -451,11 +452,11 @@ fullobs[, im2_ann_cmc := im2_ann + im2_cml * 0.005]
 
 fullobs[, decade := (trunc((year - 1) / 20) + 1) * 20] # so 1500 = 1481-1500
 
+# city-level aggregates
 citobs = to_city_obs(statobs=statobs, fullobs=fullobs)
 
-dim(fullobs)
-fullobs_sp = merge(fullobs, statobs, by="osmid", all=T)
-dim(fullobs_sp)
+# annual series with static + spatial attributes
+fullobs_sp = merge(fullobs, statobs, by="osmid", all=TRUE)
 
 if (any(is.na(fullobs_sp$year))){
     warning("missing years")
@@ -471,6 +472,7 @@ data.table::fwrite(statobs, "dat/statobs.csv")
 data.table::fwrite(citobs, "dat/citobs.csv")
 
 # todo: replace with fwrite once binaries on cran
+# this takes a few minutes
 outfile = gzfile("dat/fullobs_sp.csv.gz", 'w')
 write.csv(fullobs_sp, outfile)
 close(outfile)
@@ -479,10 +481,10 @@ close(outfile)
 unique(stringi::stri_enc_mark(siem$city))
 unique(stringi::stri_enc_mark(citobs$city))
 
-# m3 per region
-out = fullobs_sp[data.table::between(year, 700, 1500), list(im2 = sum(im2_ann, na.rm=T), 
+# m3 per region per 20y
+out = fullobs_sp[data.table::between(year, 700, 1500), list(im2 = sum(im2_ann, na.rm=TRUE), 
                                     im3 = sum(im3_ann, na.rm=T), 
                                     im2_tot = max(im2_cml, na.rm=T),
                                     im3_tot = max(im3_cml, na.rm=T)), 
     by=list(ctr, city, decade, category)][order(ctr, city, category, decade), ]
-data.table::fwrite(out, "dat/fullobs_sp_20y.csv")
+# data.table::fwrite(out, "dat/fullobs_sp_20y.csv")

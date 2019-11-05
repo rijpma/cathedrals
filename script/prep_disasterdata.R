@@ -52,6 +52,7 @@ disas = disas[destroyed != "mary" | is.na(destroyed)]
 # otherwise non-disaster fields
 disas = disas[destroyed != "current church 16th c." | is.na(destroyed)]
 
+# italian disasters to long format
 disas_it = rbindlist(list(
     disas_it[, .(`X__1`, `destroyed`, `(approximate) date`)],
     disas_it[, .(`X__1`, `destroyed__1`, `(approximate) date__1`)]))
@@ -64,6 +65,7 @@ disasters[, year := as.numeric(year)]
 
 disasters = disasters[!is.na(osmid) & !is.na(cause) & !is.na(year)]
 
+# cause dummies
 disasters[, earthquake := grepl("earthquake", cause)]
 disasters[, war := grepl("vikings|saracens|war|riot|invasion|normans|plun?der|ravaged|raze|danes|rebellion|crusade|mag?yars", cause)]
 disasters[, fire := war == FALSE & grepl("fire|confla", cause)]

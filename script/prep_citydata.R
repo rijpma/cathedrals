@@ -8,7 +8,7 @@ source("script/cat_functions.r")
 
 library("data.table")
 
-# original file (additions below)
+# original city file (additions below)
 siem = data.table::fread("dat/siem.csv", header = T)
 data.table::setnames(siem, names(siem)[!grepl('^V\\d+$', names(siem))], 
     c('inhab', 'coord', 'yr', 'cargoratio', 'rivercanal', 'rivertoll', 
@@ -16,12 +16,13 @@ data.table::setnames(siem, names(siem)[!grepl('^V\\d+$', names(siem))],
     'arcbishopric', 'seatoll', 'coastal', 'riverXcoast', 'landlocked', 
     'atlantic', 'whitesea', 'blacksea', 'northsea', 'caspian', 
     'mediterranean', 'baltic'))
+# name empty columns
 for (i in 5:ncol(siem)){
     if (grepl("^V\\d+$", names(siem)[i])) names(siem)[i] = names(siem)[i - 1]
 }
 names(siem) = paste0(gsub('^V\\d+$', '', names(siem)), siem[2, ])
 
-# geocoded version
+# re-geocoded versions of dataset
 siem_fr = data.table::fread("dat/siem_france.csv")
 data.table::setnames(siem_fr, 1:ncol(siem), names(siem))
 siem_fr[, distance2:=NULL]
@@ -59,9 +60,10 @@ siem = data.table::melt(siem,
 siem$year = 600 + as.numeric(siem$year) * 100
 setnames(siem, grep('value', names(siem)), measures)
 
-# one coord name actually wrong
+# fix wrong name
 setnames(siem, 'coord', 'elevation')
 
+# additions to city dataset
 siem_ad = data.table::fread("dat/siem_add.csv")
 setnames(siem_ad, 
     old = names(siem_ad),
@@ -100,7 +102,7 @@ siem_long = rbindlist(
 # tld fill
 siem_long[, tld := unique(na.omit(tld)), by = country]
 
-# some mistakes so recreate here
+# some mistakes in river-coast combination so recreate here
 siem_ad_long[, riverXcoast := coastal == 1 & rivercanal == 1]
 
 # correction: remove these
@@ -110,7 +112,7 @@ siem_long = siem_long[!(city %in% not_in_siem)]
 siem_long[, ctr := tolower(siem_long$tld)]
 siem_long[ctr == 'gb', ctr := "uk"]
 
-
+# data checks
 if (siem_long[, duplicated(city), by = year][, sum(V1)] > 0){
     warning("Duplicated cities")
 }

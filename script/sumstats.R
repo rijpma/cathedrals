@@ -10,8 +10,12 @@ statobs = data.table::fread("dat/statobs.csv")
 dynobs_sp = merge(dynobs, statobs, by="osmid")
 siem = data.table::fread("dat/siem_long_1500.csv", encoding="UTF-8")
 
-siem[, inhab_before1100 := any(inhab[year <= 1100] > 0), by = city]
-siem[, inhab_1100_1500 := any(inhab[year > 1100 & year <= 1500] > 0), by = city]
+siem[, 
+    inhab_before1100 := any(inhab[year <= 1100] > 0), 
+    by = city]
+siem[, 
+    inhab_1100_1500 := any(inhab[year > 1100 & year <= 1500] > 0), 
+    by = city]
 
 siem1100 = siem[inhab_before1100 == TRUE & year <= 1100]
 dynobs_sp1100 = dynobs_sp[year <= 1100]
@@ -23,15 +27,15 @@ byctr = Reduce(merge, list(
     siem[year == 1500,
         .N,
         by = list(ctr)],
-    unique(dynobs_sp[, list(city, 1)])[
+    unique(dynobs_sp[, list(city, count = 1)])[
         siem[year == 1500],
         on = c("city")][,
-            list(`% cities w. large church` = mean(!is.na(V2))),
+            list(`% cities w. large church` = mean(!is.na(count))),
             by = list(ctr)],
     dynobs_sp[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch)), by = ctr],
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch)), by = ctr],
     dynobs_sp[,
         .N,
         by = list(osmid, ctr)][,
@@ -45,14 +49,14 @@ byctr = Reduce(merge, list(
 
 tot = Reduce(merge, list(
     siem[year == 1500, .N],
-    unique(dynobs_sp[, list(city, 1)])[
+    unique(dynobs_sp[, list(city, count = 1)])[
         siem[year == 1500 ],
         on = c("city")][,
-            list(`% cities w. large church` = mean(!is.na(V2)))],
+            list(`% cities w. large church` = mean(!is.na(count)))],
     dynobs_sp[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch))],
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch))],
     dynobs_sp[,
         .N,
         by = list(osmid, ctr)][,
@@ -75,15 +79,15 @@ byctr1100 = Reduce(merge, list(
     siem1100[year == 1100,
         .N,
         by = list(ctr)],
-    dynobs_sp1100[, list(city = unique(city), 1)][
+    unique(dynobs_sp1100[, list(city, count = 1)])[
         siem1100[year == 1100],
         on = c("city")][,
-            list(`% cities w. large church` = mean(!is.na(V2))),
+            list(`% cities w. large church` = mean(!is.na(count))),
             by = list(ctr)],
     dynobs_sp1100[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch)), by = ctr],
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch)), by = ctr],
     dynobs_sp1100[,
         .N,
         by = list(osmid, ctr)][,
@@ -95,14 +99,14 @@ byctr1100 = Reduce(merge, list(
 
 tot1100 = Reduce(merge, list(
     siem1100[year == 1100, .N],
-    unique(dynobs_sp1100[, list(city, 1)])[
+    unique(dynobs_sp1100[, list(city, count = 1)])[
         siem1100[year == 1100 ],
         on = c("city")][,
-            list(`% cities w. large church` = mean(!is.na(V2)))],
+            list(`% cities w. large church` = mean(!is.na(count)))],
     dynobs_sp1100[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch))],
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch))],
     dynobs_sp1100[,
         .N,
         by = list(osmid, ctr)][,
@@ -122,15 +126,15 @@ byctr11001500 = Reduce(merge, list(
     siem11001500[year == 1500,
         .N,
         by = list(ctr)],
-    dynobs_sp11001500[, list(city = unique(city), 1)][
+    unique(dynobs_sp11001500[, list(city, 1)])[
         siem11001500[year == 1500],
         on = c("city")][,
             list(`% cities w. large church` = mean(!is.na(V2))),
             by = list(ctr)],
     dynobs_sp11001500[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch)), 
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch)), 
             by = ctr],
     dynobs_sp11001500[,
         .N,
@@ -143,14 +147,14 @@ byctr11001500 = Reduce(merge, list(
 
 tot11001500 = Reduce(merge, list(
     siem11001500[year == 1500, .N],
-    unique(dynobs_sp11001500[, list(city, 1)])[
+    unique(dynobs_sp11001500[, list(city, count = 1)])[
         siem11001500[year == 1500 ],
         on = c("city")][,
-            list(`% cities w. large church` = mean(!is.na(V2)))],
+            list(`% cities w. large church` = mean(!is.na(count)))],
     dynobs_sp11001500[, 
-        .(nchurch = uniqueN(osmid)), 
-        by = .(ctr, city)][, 
-            .(`Large churches/city` = mean(nchurch))],
+        list(nchurch = uniqueN(osmid)), 
+        by = list(ctr, city)][, 
+            list(`Large churches/city` = mean(nchurch))],
     dynobs_sp11001500[,
         .N,
         by = list(osmid, ctr)][,
@@ -185,6 +189,6 @@ ss_out = data.table(siem_cities,
 ss_out = ss_out[order(-as.numeric(city)), ]
 ss_out = rbind(ss_out, c(ctr = 'all', as.list(colSums(ss_out[, -1]))))
 
-writeLines(
-    knitr::kable(ss_out, format = "html", row.names = FALSE),
-    "tab/sumstats.html")
+# writeLines(
+#     knitr::kable(ss_out, format = "html", row.names = FALSE),
+#     "tab/sumstats.html")

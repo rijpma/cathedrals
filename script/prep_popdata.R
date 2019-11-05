@@ -21,6 +21,9 @@ pop_mj = pop_mj[popgrid, on = c("ctr", "decade")]
 pop_mj[ctr == 'uk', broadberry := ukgdp$population[match(decade, ukgdp$V1)]]
 pop_mj[!is.na(broadberry), pop := broadberry / 1e6]
 pop_mj[, pop := pop * 1e3]
+
+# interpolate population data with spline pre/post 1348
+# to avoid unrealistic figures in 1300-1400 period
 pop_mj[, bd := ifelse(decade < 1348, "pre", "post")]
 pop_mj[decade >= 500, 
     pop_spl := exp(zoo::na.spline(log(pop), x = decade, na.rm = F)), 

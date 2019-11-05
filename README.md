@@ -36,9 +36,9 @@ All tables and figures except figure 1 can be reproduced by running the script `
 |Figure A9| figs/disasterpanel.pdf|
 |Figure A9| figs/disasterpanel.pdf|
 
-Once the basic data files have been created by prep_citydata.R prep_popdata.R, and prep_churchdata.R, all the other files should run separately as well.
+There are scripts to create the data as well as the figures. The scripts prep_citydata.R prep_popdata.R, and prep_churchdata.R create the basic data files. The remaining scripts create the figures in the main paper and the appendices.
 
-The scripts cat_osmchurches.R and cat_geocoding.R are excluded from the runs because they make a lot of requests at the OpenStreetMap/overpass and google geocoding servers. Moreover, the data on the servers can have changed since the original requests. They are included here only to show how this part of the data was created.
+The scripts cat_osmchurches.R and cat_geocoding.R are excluded from the overall reproduction script because they make a lot of requests at the OpenStreetMap/overpass and google geocoding servers. Moreover, the data on the servers can have changed since the original requests. They are included here only to show how this part of the data was created.
 
 The scripts have a GPLv3 license. The data based on OpenStreetMap has an [Open Database License](http://opendatacommons.org/licenses/odbl/1.0/). This holds for the following files:
 
@@ -48,12 +48,17 @@ The scripts have a GPLv3 license. The data based on OpenStreetMap has an [Open D
 * dat/fullobs_sp.csv.gz
 * dat/dynobs.csv
 * dat/heights.csv
-* dat/backproj.csv
-* dat/backproj_ita.csv
 * dat/statobs.csv
 * dat/citobs.csv
 * dat/gis/rur.shp
 * dat/rurchurches_eb.csv
+* dat/backproj.csv
+* dat/backproj_ita.csv
+* excels/saints and exogenous disasters.xlsx
+* excels/ital cities def 2.xlsx
+* dat/backproj.csv
+* dat/backproj_ita.csv
+
 
 Environment:
 
@@ -79,7 +84,5 @@ Environment:
 
 
 todo in text:
-* add to "24.000" -- later X Italian churches were added
-* correlation: 0.9 & fd 0.7 -> 0.7 & no fd mentioned
-    * and fix cat_james.R accordingly
 * some tables changed due to swiss/germany swap
+* and just update all figures
