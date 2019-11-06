@@ -2,11 +2,11 @@
 
 This repository contains reproduction files for the paper "Church building and the economy during Europe’s ‘Age of the Cathedrals’, 700–1500 CE".
 
-All tables and figures except figure 1 can be reproduced by running the script `reproduce.sh`. Figure 1 is included as a separate excel file.
+All tables and figures except figure 1 can be reproduced by running the script `reproduce.sh`. Figure 1 is included as a separate excel file: `excels/England Ch building GDP & earnings.xlsx`.
 
 |paper    |file              |
 |---------|------------------|
-|Figure 1 | xlsx|
+|Figure 1 | excels/England Ch building GDP & earnings.xlsx|
 |Table 1  | tab/sumstats_perc_7001100.html|
 |         | tab/sumstats_perc11001500.html|
 |         | tab/sumstats.html|
@@ -81,8 +81,3 @@ Environment:
      [6] texreg_1.36.23    zoo_1.8-0         viridisLite_0.3.0 maptools_0.9-2    RNetCDF_1.9-1    
     [11] knitr_1.20        writexl_0.2       stringi_1.3.1     sf_0.6-3          raster_2.5-8     
     [16] sp_1.2-5          countrycode_1.1.0 readxl_1.3.1      data.table_1.12.0
-
-
-todo in text:
-* some tables changed due to swiss/germany swap
-* and just update all figures
