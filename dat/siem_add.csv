@@ -1,0 +1,135 @@
+city,UN.country.code,country,transport.location,X__1,X700y,X800y,X900y,X1000y,X1100y,X1200y,X1300y,X1400y,X1500y,X1550y,X1600y,X1650y,X1700y,X1750y,X1800y,X1850y,X1900y,X1950y,X2000y,latitude,longtitude,elevation,loc,lat,lon,loc_frmtd,distance
+Ardooie,56,Belgium,land north sea,,0,0,1,1,1,2,2,1,2,2,2,3,4,5,6,10,8,9,10,50.98,3.2,21,Ardooie,50.9767648,3.1991212,"Ardooie, Belgium",0.365165694460114
+Arlon (Aarlen),56,Belgium,river north sea,,1,1,1,1,1,2,1,1,2,2,2,2,3,3,3,5,10,11,25,49.68,5.82,421,Arlon (Aarlen),49.6851364,5.8104804,"6700 Arlon, Belgium",0.89349642869065
+Binche,56,Belgium,land north sea,,0,0,0,0,0,1,1,1,1,2,2,2,2,3,4,12,23,35,32,50.4,4.17,92,Binche,50.41218,4.1659,"Binche, Belgium",1.38587389944965
+Dour (Dou),56,Belgium,land north sea,,0,0,0,1,1,1,1,1,1,2,2,2,2,3,4,7,9,13,17,50.4,3.78,93,Dour,50.4000126,3.7827918,"7370 Dour, Belgium",0.198498991802909
+Soignies (Zinnik),56,Belgium,land north sea,,0,1,1,1,1,1,2,1,1,2,2,3,3,4,4,7,11,17,26,50.58,4.07,84,Soignies (Zinnik),50.5764245,4.0706869,"Soignies, Belgium",0.400707703355439
+Veurne,56,Belgium,land north sea,,0,0,1,1,1,1,2,1,2,2,2,2,2,2,3,5,6,8,11,51.07,2.67,3,Veurne,51.073159,2.6680341,"8630 Veurne, Belgium",0.377486760651832
+Wetteren,56,Belgium,land north sea,,0,0,0,0,0,1,1,1,1,2,2,2,3,3,4,4,5,11,24,51,3.88,16,Wetteren,51.0029052,3.8896697,"9230 Wetteren, Belgium",0.751787071386157
+Bedarieux (Bédarieux),250,France,river mediterranean,,0,0,0,0,0,1,1,1,1,1,1,2,2,2,3,10,6,7,6,43.62,3.17,309,Bedarieux (Bédarieux),43.610054,3.167373,"34600 Bédarieux, France",1.12522119075168
+Belfort,250,France,river north sea,,0,0,0,0,0,0,1,1,1,1,2,2,3,3,4,8,33,43,50,47.63,6.87,152,Belfort,47.639674,6.863849,"Belfort, France",1.17071838230025
+Bourg en Bresse (Bourg-en-Bresse),250,France,land mediterranean,,0,0,0,0,1,1,2,1,5,5,5,5,6,6,7,12,19,27,41,46.2,5.22,220,Bourg en Bresse (Bourg-en-Bresse),46.2051675,5.2255007,"01000 Bourg-en-Bresse, France",0.714263480233641
+Cannes,250,France,med,,1,1,1,2,2,2,2,1,2,2,3,3,4,4,3,6,30,50,67,43.55,7.02,16,Cannes,43.552847,7.017369,"Cannes, France",0.381124356729694
+Chalon-sur-Saone (Chalon-sur-Saône),250,France,river mediterranean,,1,2,2,2,2,3,3,2,8,8,9,9,10,10,11,16,27,37,47,48.95,4.37,175,Chalon-sur-Saone (Chalon-sur-Saône),46.780764,4.853947,"71100 Chalon-sur-Saône, France",243.895830581362
+"Digne-les-Bains (Dinia, Digna)",250,France,river mediterranean,,1,1,1,1,2,2,2,1,1,1,2,2,2,2,3,5,7,10,16,44.08,6.23,950,"Digne-les-Bains (Dinia, Digna)",44.092193,6.235976,"Digne, France",1.43688016197217
+Givors,250,France,river mediterranean,,0,0,0,0,1,1,2,1,1,1,2,2,3,3,4,8,12,14,18,45.58,4.77,233,Givors,45.58329,4.772829,"69700 Givors, France",0.427151000627129
+Hazebrouck,250,France,land north sea,,0,0,0,1,1,1,2,1,3,3,3,4,4,4,4,5,13,15,21,50.72,2.53,33,Hazebrouck,50.72748,2.542555,"59190 Hazebrouck, France",1.21588320427636
+Lavaur,250,France,river north sea,,0,0,0,0,1,1,1,1,1,1,2,2,2,2,3,7,7,6,9,43.68,1.8,141,Lavaur,43.699185,1.820699,"81500 Lavaur, France",2.70714201196027
+Le Blanc,250,France,river north sea,,0,0,0,0,0,0,0,1,2,2,3,4,4,5,4,7,7,6,7,46.63,1.07,100,Le Blanc,46.633239,1.064289,"36300 Le Blanc, France",0.566483056894139
+Lens,250,France,land north sea,,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,10,24,41,36,50.43,2.83,44,Lens,50.42893,2.83183,"Lens, France",0.176280483804797
+Loches,250,France,river north sea,,0,0,0,0,1,1,1,1,1,1,2,2,3,3,4,5,5,6,6,47.13,1,97,Loches,47.128158,0.997664,"37600 Loches, France",0.270830941489305
+Marmande,250,France,river north sea,,0,0,0,0,0,1,2,1,1,1,2,2,3,3,4,8,10,12,17,44.5,0.17,40,Marmande,44.500484,0.159869,"47200 Marmande, France",0.807502700875214
+Maubeuge,250,France,river north sea,,0,0,1,1,1,1,2,1,1,1,2,2,2,2,3,15,21,24,34,50.28,3.97,143,Maubeuge,50.280228,3.9674,"59600 Maubeuge, France",0.187050491666468
+Montbeliard (Montbéliard),250,France,river mediterranean,,0,0,0,1,1,1,2,1,1,1,2,2,3,3,4,5,10,17,28,47.52,6.78,375,Montbeliard (Montbéliard),47.510356,6.798466,"25200 Montbéliard, France",1.75620786582713
+Quimperle,250,France,river north sea,,0,0,0,0,1,1,1,1,1,1,2,2,2,2,3,6,9,10,11,47.87,-3.55,13,Quimperle,47.872586,-3.547546,"29300 Quimperlé, France",0.341144274184413
+Ribeauville (Ribeauvillé),250,France,land north sea,,0,0,0,0,0,1,1,1,1,1,2,2,3,3,4,6,6,5,5,48.2,7.33,150,Ribeauville (Ribeauvillé),48.194668,7.319091,"Ribeauvillé, France",1.00459119051424
+St Nazaire,250,France,north sea + river,,0,0,0,0,1,1,2,1,1,2,2,2,2,3,4,5,36,39,66,47.28,-2.18,7,St Nazaire,47.2734979,-2.213848,"44600 Saint-Nazaire, France",2.6610826373473
+Baden-Baden,276,Germany,river north sea,,1,1,1,1,1,1,2,1,1,1,2,2,2,2,2,7,16,37,53,48.77,8.23,161,Baden-Baden,48.76564,8.2285242,"Baden-Baden, Germany",0.496848241422938
+Bremerhaven,276,Germany,north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,4,20,114,121,53.55,8.58,2,Bremerhaven,53.5395845,8.5809425,"Bremerhaven, Germany",1.16090042902372
+Celle,276,Germany,river north sea,,0,0,0,1,1,1,1,1,1,2,3,3,3,3,4,5,20,60,72,52.62,10.08,40,Celle,52.6175963,10.0628514,"Celle, Germany",1.19182387554505
+Doebeln (Döbeln),276,Germany,river north sea,,0,0,0,1,1,1,1,1,2,1,1,1,1,3,4,6,16,31,23,51.12,13.12,158,Doebeln (Döbeln),51.1229322,13.1167196,"Döbeln, Germany",0.398953811906131
+Ebersbach,276,Germany,river north sea,,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,6,8,13,7,51,14.58,382,"Ebersbach, Görlitz",51.0040105,14.5905346,"Ebersbach, Germany",0.863642975095776
+Glauchau,276,Germany,land north sea,,0,0,0,0,0,1,1,1,1,1,2,2,3,5,4,10,24,35,27,50.82,12.53,266,Glauchau,50.8187761,12.5451713,"Glauchau, Germany",1.07775124355179
+Goeppingen,276,Germany,river north sea,,0,0,0,0,0,1,1,1,1,2,2,2,3,3,4,7,19,39,57,48.7,9.67,323,Goeppingen,48.7054382,9.6512491,"Göppingen, Germany",1.50685950581494
+Grimma,276,Germany,river north sea,,0,0,0,0,0,1,1,1,2,2,2,3,3,3,4,5,9,17,30,51.23,12.72,128,Grimma,51.2364426,12.7202313,"04668 Grimma, Germany",0.716945302449413
+Kaiserslautern,276,Germany,river north sea,,0,0,1,1,1,1,1,1,2,2,2,1,1,2,3,10,48,63,99,49.43,7.77,251,Kaiserslautern,49.4400657,7.7491265,"Kaiserslautern, Germany",1.88294248033011
+Konstanz (Drusomagus),276,Germany,river north sea,,1,1,1,1,2,2,2,1,1,2,2,3,3,4,4,7,21,43,78,47.67,9.17,405,Konstanz (Drusomagus),47.6779496,9.1732384,"Konstanz, Germany",0.916720488975461
+Lippstadt,276,Germany,river north sea,,0,0,0,0,0,1,2,1,3,3,2,2,2,2,3,5,13,31,67,51.67,8.32,79,Lippstadt,51.6712278,8.3406481,"Lippstadt, Germany",1.43496774295797
+Mittweida,276,Germany,river north sea,,0,0,0,0,0,1,2,1,3,3,3,4,4,4,3,6,13,20,17,50.98,12.98,280,Mittweida,50.9853149,12.9740557,"Mittweida, Germany",0.723778867862752
+Neuwied,276,Germany,river north sea,,0,1,1,1,2,2,2,1,1,1,2,2,3,3,4,9,18,34,64,50.42,7.45,60,Neuwied,50.4361866,7.4664546,"Neuwied, Germany",2.14688272042132
+Oldenburg,276,Germany,river north sea,,0,0,0,1,1,2,3,2,2,2,2,3,3,3,6,11,27,123,155,53.15,8.22,5,Oldenburg,53.1434501,8.2145521,"Oldenburg, Germany",0.814997451293603
+"Oldenburg (Oldenburg in Holstein, Brandehuse)",276,Germany,baltic,,1,1,2,2,2,1,1,1,1,2,2,2,2,3,3,3,4,5,10,54.28,10.87,8,"Oldenburg (Oldenburg in Holstein, Brandehuse)",54.2957397,10.8919582,"Oldenburg-Land, 23758 Oldenburg in Holstein, Germany",2.26148717882514
+Pirna,276,Germany,river north sea,,0,0,0,0,0,0,1,1,1,1,2,2,2,3,4,6,17,39,42,50.97,13.97,118,Pirna,50.9625175,13.9419168,"Pirna, Germany",2.14122700059642
+Radevormwald,276,Germany,land north sea,,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,9,10,17,26,51.2,7.35,421,Radevormwald,51.2015995,7.3590901,"42477 Radevormwald, Germany",0.65979365046151
+Reichenbach,276,Germany,land north sea,,0,0,0,0,1,1,1,1,1,1,1,2,3,5,4,9,25,32,23,50.62,12.3,380,Reichenbach im Vogtland,50.6175423,12.2990016,"Reichenbach im Vogtland, Germany",0.282382266478216
+Rheydt,276,Germany,land north sea,,0,0,0,0,1,1,1,1,1,1,1,1,2,2,3,8,34,78,--,51.3,6.45,70,Rheydt,51.1686686,6.4469619,"Rheydt, Mönchengladbach, Germany",14.612651276104
+Schleswig (Hedeby),276,Germany,baltic,,0,2,2,2,2,2,3,2,2,3,3,4,4,5,8,12,15,19,24,54.52,9.55,1,Schleswig (Hedeby),54.4970832,9.5694405,"Am Haddebyer Noor 5, 24866 Busdorf, Germany",2.84485742097933
+Velbert,276,Germany,land north sea,,0,0,0,1,1,2,2,1,1,2,2,2,2,3,4,6,17,41,90,51.37,7.03,230,Velbert,51.3370703,7.0426775,"Velbert, Germany",3.76856897803777
+Verden,276,Germany,river north sea,,0,1,1,1,2,2,2,1,2,3,4,4,3,3,3,5,9,15,27,52.92,9.22,20,Verden,52.9347982,9.2329647,"27283 Verden, Germany",1.86338492903868
+Weissenfels,276,Germany,river north sea,,0,0,1,1,1,1,2,1,1,2,2,3,4,4,4,9,28,48,32,51.2,11.97,100,Weissenfels,51.1972771,11.9689146,"Weißenfels, Germany",0.312286525546269
+Wolfsburg,276,Germany,land north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,25,122,52.42,10.78,63,Wolfsburg,52.4226503,10.7865461,"Wolfsburg, Germany",0.534136259776466
+Wuelfrath,276,Germany,land north sea,,0,0,0,0,0,1,1,1,1,1,1,1,2,2,3,5,8,14,23,51.28,7.03,262,Wuelfrath,51.280284,7.0349609,"Wülfrath, Germany",0.347580501682648
+Acqui Terme,380,Italy,river mediterranean,,1,1,1,1,2,2,2,1,2,2,3,3,2,3,4,7,14,16,19,44.68,8.47,156,Acqui Terme,44.6763846,8.4670285,"15011 Acqui Terme, Province of Alessandria, Italy",0.465751060783682
+Alba,380,Italy,river mediterranean,,1,1,1,1,2,2,2,1,2,2,3,3,2,3,4,5,14,16,30,44.7,8.03,172,Alba,44.7009153,8.0356911,"12051 Alba, Province of Cuneo, Italy",0.462382630246817
+Biella,380,Italy,land mediterranean,,1,1,1,1,2,2,2,1,2,2,3,3,2,3,4,8,26,43,46,45.57,8.05,420,Biella,45.5628842,8.0583397,"13900 Biella, Province of Biella, Italy",1.02437651862446
+Caraglio,380,Italy,land mediterranean,,0,0,1,1,1,2,2,1,2,2,3,3,3,4,4,6,6,6,6,44.42,7.43,638,Caraglio,44.429685,7.4489531,"12023 Caraglio, Province of Cuneo, Italy",1.85367363050766
+Carrara,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,2,3,3,3,3,4,5,6,42,62,65,44.07,7.72,100,Carrara,44.0793245,10.097677,"54033 Carrara, Province of Massa and Carrara, Italy",190.46108206536
+Cassano All'Ionio,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,2,2,3,3,3,4,4,4,9,14,18,39.78,16.33,250,Cassano All'Ionio,39.784712,16.3210165,"87011 Cassano all'Ionio, Province of Cosenza, Italy",0.930561878682672
+Cavour,380,Italy,land mediterranean,,0,0,0,0,1,1,1,1,1,1,2,2,3,3,4,6,7,6,5,40.78,7.37,300,"Cavour, Piedmont",44.7866591,7.3735817,"10061 Cavour, Metropolitan City of Turin, Italy",445.098387422192
+Chieri,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,3,4,4,5,7,8,10,12,14,15,33,45.02,7.82,283,Chieri,45.008885,7.8275551,"10023 Chieri, Metropolitan City of Turin, Italy",1.37131366554815
+Eboli,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,2,2,3,3,3,4,5,6,10,20,36,40.62,15.05,145,Eboli,40.6179234,15.0564332,"84025 Eboli, Province of Salerno, Italy",0.591191678445925
+Este,380,Italy,river mediterranean,,0,0,0,0,1,1,2,1,3,4,5,4,4,5,7,10,11,16,17,45.22,11.67,15,Este,45.2254915,11.6603917,"35042 Este, Province of Padua, Italy",0.970546369728038
+Ferentino,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,2,3,3,3,4,4,5,7,12,16,20,41.68,13.25,395,Ferentino,41.6956788,13.2577285,"03013 Ferentino FR, Italy",1.85648430003781
+Fossombrone,380,Italy,river mediterranean,,1,1,2,2,2,2,3,2,2,3,3,3,3,4,5,7,11,12,10,43.7,12.8,118,Fossombrone,43.6886585,12.8033192,"61034 Fossombrone, Province of Pesaro and Urbino, Italy",1.28822080958483
+Gubbio,380,Italy,land mediterranean,,2,2,2,2,2,3,3,2,3,3,4,4,4,4,4,6,26,37,32,43.35,12.58,522,Gubbio,43.3513193,12.5753166,"06024 Gubbio, Province of Perugia, Italy",0.407017794772924
+La Spezia,380,Italy,med,,1,2,2,2,2,3,3,2,2,2,3,3,2,3,4,12,74,112,91,44.12,9.83,10,La Spezia,44.1024504,9.8240826,"La Spezia, SP, Italy",2.00674849523435
+Latina (Littona),380,Italy,land mediterranean,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,35,105,41.57,12.9,21,Latina,41.4675671,12.9035965,"04100 Latina, Province of Latina, Italy",11.3806712298008
+Montagnana,380,Italy,land mediterranean,,0,0,0,0,1,2,3,2,3,3,4,4,4,5,6,9,10,13,9,45.23,11.47,16,Montagnana,45.2308365,11.4624091,"35044 Montagnana, Province of Padua, Italy",0.603319440509902
+Montepulciano,380,Italy,land mediterranean,,1,1,2,2,2,2,3,2,4,3,3,2,2,2,3,4,15,17,14,43.08,11.78,605,Montepulciano,43.0986938,11.7872467,"53045 Montepulciano, Province of Siena, Italy",2.15899059297249
+Nicastro (= part of Lamezia Terme),380,Italy,land mediterranean,,0,0,1,1,2,2,2,1,2,2,3,3,2,3,4,6,29,52,71,38.98,16.33,216,Nicastro (= part of Lamezia Terme),38.9669689,16.3199537,"L.T. Nicastro, Via Nazionale Nicastro, 88046 Lamezia Terme CZ, Italy",1.68841923561083
+Oria,380,Italy,land mediterranean,,1,1,1,1,1,2,2,1,1,2,2,2,2,2,3,4,9,14,15,40.5,17.63,166,Oria,40.4993413,17.6388796,"72024 Oria, BR, Italy",0.756252657070059
+Oristano,380,Italy,med,,0,0,0,1,1,2,2,1,2,2,3,3,2,3,4,6,9,16,31,44.77,8.78,10,Oristano,39.906182,8.5883863,"09170 Oristano, Province of Oristano, Italy",540.507954102673
+Ormea,380,Italy,land mediterranean,,0,0,0,1,1,2,2,1,2,2,3,3,2,3,4,5,6,5,2,44.15,7.9,740,Ormea,44.1482868,7.9104915,"12078 Ormea, Province of Cuneo, Italy",0.860687296473776
+Ortona a Mare,380,Italy,med,,1,1,1,1,1,2,2,1,2,3,3,3,3,4,5,7,16,22,23,42.35,14.4,72,Ortona a Mare,42.3522441,14.4028113,"66026 Ortona, Province of Chieti, Italy",0.340283351114488
+Osimo,380,Italy,land mediterranean,,1,1,1,1,1,2,2,1,2,3,3,3,3,4,5,7,18,23,29,43.47,13.48,265,Osimo,43.4884025,13.4785426,"60027 Osimo, Province of Ancona, Italy",2.04797309973194
+Otranto,380,Italy,med,,1,1,1,1,1,2,2,1,1,1,1,1,1,2,2,2,2,3,5,40.13,18.5,15,Otranto,40.1438978,18.4911678,"73028 Otranto LE, Italy",1.71697087406946
+Resina (Ercolano),380,Italy,med,,0,0,0,0,1,1,1,1,2,2,3,3,4,6,7,9,12,20,53,40.8,14.35,44,Resina (Ercolano),40.8039741,14.3510823,"Corso Resina, 80056 Ercolano NA, Italy",0.450679452018049
+Santa Caterina Villarmosa,380,Italy,land mediterranean,,0,0,0,0,0,0,0,0,0,0,1,1,2,3,6,6,8,11,6,37.58,14.03,650,Santa Caterina Villarmosa,37.5894388,14.0355276,"93018 Santa Caterina Villarmosa, Province of Caltanissetta, Italy",1.15578807396884
+Santa Margherita di Belice,380,Italy,land mediterranean,,0,0,0,0,0,0,0,0,0,0,1,2,3,6,7,7,8,8,7,37.7,13.03,400,Santa Margherita di Belice,37.6912737,13.0225944,"92018 Santa Margherita di Belice, AG, Italy",1.16818555366542
+Santa Maria Capua Vetere (Santa Maria Capua Vetere),380,Italy,land mediterranean,,1,2,2,2,2,3,3,2,4,4,5,5,5,6,8,12,22,28,31,41.08,14.25,36,Santa Maria Capua Vetere (Santa Maria Capua Vetere),41.0820867,14.2541872,"81055 Santa Maria Capua Vetere, Province of Caserta, Italy",0.421317236490817
+San Stefano di Briga (Santo Stefano di Briga),380,Italy,land mediterranean,,0,0,0,1,1,1,2,1,2,2,2,3,3,3,5,5,4,3,2,38.1,15.47,150,San Stefano di Briga (Santo Stefano di Briga),38.1006777,15.4811241,"98137 Santo Stefano di Briga ME, Italy",0.978619415883354
+Scigliano,380,Italy,land mediterranean,,1,1,1,2,2,2,2,1,2,2,3,3,2,3,4,6,3,4,2,39.12,16.3,659,Scigliano,39.1290963,16.293406,"87057 Scigliano, Province of Cosenza, Italy",1.15972238410924
+Tortorici,380,Italy,land mediterranean,,0,0,0,0,1,1,2,1,2,3,4,3,2,3,4,6,11,11,8,38.03,14.82,468,Tortorici,38.0103998,14.8337879,"98078 Tortorici, Province of Messina, Italy",2.48975961056243
+Trino,380,Italy,river mediterranean,,1,1,1,1,1,2,2,1,2,2,3,3,2,3,4,7,12,10,8,45.2,8.3,120,Trino,45.2180536,8.246264,"13039 Trino, Province of Vercelli, Italy",4.67402760102246
+Ventigmiglia,380,Italy,med,,2,2,2,2,2,2,3,2,2,2,3,3,3,4,4,5,11,16,25,43.78,7.62,1,Ventigmiglia,43.7912366,7.6075864,"18039 Ventimiglia, Province of Imperia, Italy",1.5991144545739
+Vibo Valentia,380,Italy,land mediterranean,,1,1,1,2,2,2,2,1,3,4,5,4,4,5,7,10,15,23,34,38.67,16.1,475,Vibo Valentia,38.6757774,16.0983488,"89900 Vibo Valentia, Province of Vibo Valentia, Italy",0.657250352612775
+Vigon (Vigone),380,Italy,land mediterranean,,0,0,0,0,1,1,1,1,2,2,2,3,3,3,4,6,6,5,5,44.85,7.5,160,Vigon (Vigone),44.8383738,7.4922834,"10067 Vigone, Metropolitan City of Turin, Italy",1.42881002847636
+Almere,528,Netherlands,river north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,143,52.37,5.22,-3,Almere,52.3507849,5.2647016,"Almere, Netherlands",3.72095840372523
+Ede,528,Netherlands,land north sea,,0,0,0,0,0,1,1,1,1,1,2,2,3,3,4,5,12,28,68,52.03,5.67,30,Ede,52.0401675,5.6648594,"Ede, Netherlands",1.18505141842918
+Franeker,528,Netherlands,river north sea,,0,0,0,1,1,1,2,1,2,2,3,4,4,3,4,5,7,10,13,53.18,5.53,4,Franeker,53.1888206,5.5564857,"Franeker, Netherlands",2.0245008525661
+Goes,528,Netherlands,river north sea,,0,0,0,1,1,1,2,1,2,2,2,3,3,3,4,5,7,14,27,51.5,3.9,1,Goes,51.5046455,3.8911304,"Goes, Netherlands",0.804014851254301
+Harderwijk,528,Netherlands,north sea,,0,0,0,0,0,1,2,2,4,3,3,3,4,4,4,6,7,18,45,52.35,5.6,2,Harderwijk,52.3422025,5.6367423,"Harderwijk, Netherlands",2.64994798283081
+Heerlen,528,Netherlands,river north sea,,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,5,13,34,89,50.9,5.98,116,Heerlen,50.8881742,5.9794988,"Heerlen, Netherlands",1.31606021412937
+Helmond,528,Netherlands,land north sea,,0,0,0,0,0,1,2,1,2,2,2,3,3,3,3,5,13,34,89,51.48,5.67,18,Helmond,51.4792547,5.6570096,"Helmond, Netherlands",0.906261106331129
+Hilversum,528,Netherlands,land north sea,,0,0,0,0,0,0,1,1,1,2,2,2,2,3,4,5,20,41,86,52.23,5.17,5,Hilversum,52.2291696,5.1668974,"Hilversum, Netherlands",0.231250455828114
+Hoogeveen,528,Netherlands,land north sea,,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,7,14,28,55,52.72,6.48,12,Hoogeveen,52.7286158,6.4901002,"Hoogeveen, Netherlands",1.1768370736859
+Meppel,528,Netherlands,river north sea,,0,0,0,0,0,1,1,1,1,1,2,2,2,3,4,6,10,18,33,52.7,6.18,4,Meppel,52.6921234,6.1937187,"Meppel, Netherlands",1.27613359510519
+"s Gravenhage (Den Haag, 's Gravenhage)",528,Netherlands,river north sea,,0,0,0,0,0,1,4,3,7,6,15,20,30,38,39,72,212,326,502,52.08,4.27,1,"s Gravenhage (Den Haag, 's Gravenhage)",52.0704978,4.3006999,"The Hague, Netherlands",2.35549333199968
+"s Hertogenbosch (Den Bosch, 's Hertogenbosch)",528,Netherlands,river north sea,,0,0,0,0,1,2,3,9,16,18,13,10,10,14,13,22,32,67,142,51.7,5.3,3,"s Hertogenbosch (Den Bosch, 's Hertogenbosch)",51.6978162,5.3036748,"'s Hertogenbosch, Netherlands",0.3515490964044
+Tiel,528,Netherlands,river north sea,,0,1,2,3,3,3,3,2,3,3,2,2,2,3,3,6,11,21,42,51.9,5.42,7,Tiel,51.8876176,5.4278765,"Tiel, Netherlands",1.48060079500681
+Vlissingen,528,Netherlands,north sea,,0,0,0,0,0,0,0,1,4,4,5,6,7,8,6,10,19,29,44,51.43,3.58,1,Vlissingen,51.4536672,3.5709125,"Vlissingen, Netherlands",2.7079040739224
+Workum,528,Netherlands,river north sea,,0,0,0,0,0,0,0,1,2,2,2,3,3,3,3,6,5,5,4,52.95,5.43,-1,Workum,52.9803166,5.4495924,"8711 Workum, Netherlands",3.62156227656726
+Lugano,756,Switzerland,river mediterranean,,1,1,1,1,1,2,2,1,2,3,3,3,3,4,4,6,13,28,59,46.02,8.97,273,Lugano,46.0036778,8.951052,"Lugano, Switzerland",2.33344089531545
+Luzern,756,Switzerland,river north sea,,0,0,1,1,1,2,2,1,3,3,3,4,4,5,4,16,27,45,76,47.05,8.3,422,Luzern,47.0501682,8.3093072,"Lucerne, Switzerland",0.707452517200675
+Montreux,756,Switzerland,river mediterranean,,1,1,1,1,1,1,1,1,1,1,1,1,2,2,3,3,14,17,25,46.43,6.92,390,Montreux,46.4312213,6.9106799,"Montreux, Switzerland",0.72909444621399
+Neuchatel,756,Switzerland,river mediterranean,,0,0,0,1,1,2,2,1,2,3,3,3,4,4,4,8,22,27,33,46.98,6.93,434,Neuchatel,46.9899874,6.9292732,"Neuchâtel, Switzerland",1.11169149116238
+Schwytz,756,Switzerland,river north sea,,0,0,0,1,1,2,2,1,2,3,3,4,4,5,3,5,7,10,14,47.03,8.57,516,"Schwyz, Schwyz",47.0207138,8.6529884,"Schwyz, Switzerland",6.39267691364705
+Solothurn,756,Switzerland,river north sea,,1,1,1,1,2,2,2,1,3,3,3,4,4,4,4,7,9,12,16,47.22,7.53,432,Solothurn,47.2088348,7.532291,"4500 Solothurn, Switzerland",1.25337627988781
+St Gallen (Sankt Gallen),756,Switzerland,land north sea,,0,1,1,2,2,3,4,3,5,5,5,5,6,8,6,18,29,46,73,47.42,9.38,675,St Gallen (Sankt Gallen),47.4244818,9.3767173,"St Gallen, Switzerland",0.556455217757115
+Vevey,756,Switzerland,river mediterranean,,1,1,1,1,2,2,2,1,2,2,3,3,3,3,4,8,12,14,16,46.47,6.85,383,Vevey,46.4628333,6.8419192,"Vevey, Switzerland",1.00990854197358
+Barnsley,826,UK,land north sea,,0,0,0,0,0,1,1,1,1,1,1,1,1,2,4,13,41,55,74,53.57,-1.47,103,Barnsley,53.55263,-1.479726,"Barnsley, UK",2.03783374197403
+Bournemouth,826,UK,north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,5,60,145,184,50.72,-1.88,5,Bournemouth,50.719164,-1.880769,"Bournemouth, UK",0.107694819927904
+Congleton,826,UK,river north sea,,0,0,0,0,1,1,1,1,2,2,2,3,3,3,4,11,11,17,26,53.16,-2.22,90,Congleton,53.162856,-2.218923,"Congleton CW12, UK",0.325905814027194
+Deptford (became part of London),826,UK,north sea + river,,0,0,0,0,0,0,0,0,0,0,1,2,4,8,18,32,110,--,--,51.48,-0.03,12,Deptford (became part of London),51.4815584,-0.0264139,"Deptford, London SE8 5QL, UK",0.303521616762865
+Gravesend,826,UK,north sea + river,,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,17,27,41,63,51.44,0.37,5,Gravesend,51.441884,0.370759,"Gravesend, UK",0.216150731418951
+Greenwich  (became part of London),826,UK,north sea + river,,0,0,0,0,0,0,0,0,1,1,1,2,3,6,14,57,96,141,208,51.48,0,17,Greenwich  (became part of London),51.4825766,-0.0076589,"Greenwich, London SE10 9NN, UK",0.604367516537735
+Grimsby,826,UK,north sea + river,,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,9,63,74,88,53.56,-0.07,4,Grimsby,53.567471,-0.080784,"Grimsby, UK",1.09634255768262
+Guildford,826,UK,river north sea,,0,0,0,0,1,1,1,1,1,1,1,1,1,2,3,7,16,33,67,51.24,-0.57,46,Guildford,51.23622,-0.570409,"Guildford, UK",0.421508357358522
+Hartlepool,826,UK,north sea,,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,10,23,46,93,54.69,-1.21,5,Hartlepool,54.691745,-1.212926,"Hartlepool, UK",0.270803700094753
+Ilkeston,826,UK,land north sea,,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,6,25,31,38,52.97,-1.31,103,Ilkeston,52.970142,-1.306978,"Ilkeston DE7, UK",0.203642376473667
+Leek,826,UK,land north sea,,0,0,0,0,0,1,1,1,1,1,2,2,2,2,3,9,15,17,19,53.11,-2.02,197,Leek,53.109152,-2.023393,"Leek ST13, UK",0.24603783717587
+Middlesborough,826,UK,north sea + river,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,6,91,147,138,54.58,-1.23,5,Middlesborough,54.574227,-1.234956,"Middlesbrough, UK",0.718109626432103
+Milton Keynes,826,UK,land north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,249,52.04,-0.76,100,Milton Keynes,52.0406224,-0.7594171,"Milton Keynes, UK",0.0799737305188581
+Nantwich,826,UK,river north sea,,0,0,0,1,1,1,1,1,2,3,3,4,4,3,3,6,8,10,13,53.07,-2.52,39,Nantwich,53.067185,-2.524102,"Nantwich CW5, UK",0.416827195404993
+Newark,826,UK,river north sea,,1,1,1,1,1,1,1,1,2,3,3,2,2,4,7,11,15,19,25,53.08,-0.81,19,Newark,53.0700391,-0.80657,"Newark-on-Trent, Newark NG24, UK",1.1321191392855
+Newbury,826,UK,river north sea,,0,0,0,1,1,1,1,1,3,3,2,2,2,3,4,7,11,18,28,51.4,-1.32,78,Newbury,51.401409,-1.3231139,"Newbury, UK",0.267455953841072
+Nuneaton,826,UK,river north sea,,0,0,0,0,0,1,1,1,1,1,2,2,2,3,5,5,25,42,71,52.523,-1.4683,85,Nuneaton,52.520489,-1.465382,"Nuneaton, UK",0.342497184389766
+Rugby,826,UK,land north sea,,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,6,17,32,62,52.38,-1.25,114,Rugby,52.370878,-1.265032,"Rugby, UK",1.44163316724665
+Sandwich,826,UK,land north sea,,0,0,0,0,0,1,1,1,1,1,2,2,2,3,4,5,3,5,7,51.28,1.33,5,"Sandwich, Kent",51.274017,1.337427,"Sandwich, UK",0.843593065241054
+Sefton,826,UK,land north sea,,0,0,0,0,0,1,1,1,1,1,1,1,2,2,3,5,3,2,1,53.5,-2.97,8,Sefton,53.5034767,-3.0350661,"Metropolitan Borough of Sefton, UK",4.33483792102623
+"Southampton (Hamtun, Hamwic)",826,UK,north sea + river,,3,4,2,1,1,2,3,2,3,3,4,3,3,3,8,35,105,178,240,50.9,-1.4,5,"Southampton (Hamtun, Hamwic)",50.9022553,-1.3976217,"Cook St, Southampton SO14 1YA, UK",0.301562307576036
+Southend on Sea,826,UK,north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,3,29,152,174,50.54,0.71,5,Southend on Sea,51.5459269,0.7077123,"Southend-on-Sea, UK",111.909571770989
+Stafford,826,UK,river north sea,,0,0,0,1,1,1,1,1,1,1,1,1,2,3,4,12,21,34,56,52.81,-2.12,77,Stafford,52.806693,-2.12066,"Stafford, UK",0.370696255560865
+Stoke on Trent (has been changed in size),826,UK,river north sea,,0,0,0,0,0,0,0,0,0,0,0,1,1,3,6,14,30,275,240,53,-2.17,144,Stoke on Trent (has been changed in size),53.002668,-2.179404,"Stoke-on-Trent, UK",0.697670422408878
+Telford,826,UK,land north sea,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.4,170,52.68,-2.45,129,Telford,52.678419,-2.445258,"Telford, UK",0.365805136176043
+Windsor,826,UK,river north sea,,0,0,0,0,0,0,1,1,1,1,2,2,2,3,5,14,14,21,32,51.4791,-0.6095,49,Windsor,51.4817279,-0.613576,"Windsor SL4, UK",0.407017301551559

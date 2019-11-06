@@ -1,0 +1,157 @@
+osmid,city,church,ground_surface_m2,nave_height,ctr,start,finish,,remarks,,height,sqrt surface
+139350629,Abbeville,Collégiale Saint-Vulfran,1872,32,France,1488,1663,,,,32,43
+,Moulins,Sacre Coeur,1500,24,France,1714,,,,,24,39
+2322752,Cluny,Cluny III,2800,33,France,1080,1220,,,,33,53
+73677188,Tours,Cathédrale Saint-Gatien,3675,29,France,1170,1400,,,,29,61
+260584755,Toulouse,Basilique Saint-Sernin,4013,21,France,1010,1180,,,,21,63
+35316357,Toulouse,Cathédrale Saint-Étienne,4530,28,France,1120,1600,,,,28,67
+35316357,Toulouse,Cathédrale Saint-Étienne,1600,20,France,1071,1100,,,,20,40
+130237098,St-Quentin,Basilique Saint-Quentin,4487,34,France,1120,1420,,,,34,67
+166832406,St Omer,Cathédrale Notre-Dame des Miracles,4030,23,France,1210,1521,,,,23,63
+63420359,Rouen,Cathédrale Notre-Dame,5807,28,France,1120,1478,,,,28,76
+64451463,Rouen,Abbatiale Saint-Ouen,5192,33,France,1310,1537,,,,33,72
+92294792,Reims,Cathédrale Notre-Dame,7276,38,France,1211,1275,,,,38,85
+81690355,Perpignan,Cathédrale Saint-Jean-Baptiste,4562,26,France,1324,1453,,,,26,68
+201611261,Paris,Cathédrale Notre-Dame de Paris,6878,35,France,1160,1345,,,,35,83
+62287173,Paris,Église Saint-Germain des Prés,3161,20,France,990,1253,,,,20,56
+53762963,Paris,Église Saint-Eustache,4209,33,France,1532,1633,,,,33,65
+16077204,Paris,Église Saint-Sulpice,6071,30,France,1646,1870,,,,30,78
+126156165,Nevers,Église Saint-Étienne,1176,18,France,1063,1097,,,,18,34
+32694789,Metz,Cathédrale Saint-Étienne,4950,42,France,1200,1359,,,,42,70
+60801683,Lyon,Église Saint-Nizier,2376,29,France,1350,1480,,,,29,49
+136200148,Lyon,Primatiale Saint-Jean,3432,33,France,1165,1332,,,,33,59
+121570436,Chalon-sur-saone,Cathédrale Saint-Vincent,2334,24,France,1090,1520,,,,24,48
+113037532,Chalons-sur-Marne,Cathédrale Saint-Étienne,3065,27,France,1240,1500,,,,27,55
+155702951,Caen,Église Saint-Nicolas-des-Champs,1432,15,France,1093,1450,,,,15,38
+155689386,Caen,Église Saint-Michel de Vaucelles,1310,22,France,1100,1500,,,,22,36
+64599957,Bourges,Cathédrale_Saint-Étienne,6407,37,France,1195,1480,,,,37,80
+119060953,Bordeaux,Abbatiale Sainte-Croix,2158,15,France,1080,1120,,,,15,46
+116379269,Bordeaux,Basilique Saint-Michel,2993,23,France,1300,1500,,,,23,55
+133271301,Beziers,Cathédrale Saint-Nazaire,3135,32,France,1250,1450,,,,32,56
+106241292,Beauvais,Cathédrale Saint-Pierre,4072,49,France,1225,1347,,church not finished (skipped as an outlier),,,
+106264971,Beauvais,Église Saint-Étienne,2431,30,France,1120,1240,,,,30,49
+132132649,Bayeux,Cathédrale Notre-Dame-de-l'Assomption,3725,23,France,1040,1420,,,,23,61
+62630233,Auxerre,Cathédrale Saint-Étienne,3562,30,France,1220,1500,,,,30,60
+65470768,Auch,Cathédrale Sainte-Marie,3807,27,France,1489,1520,,,,27,62
+126915366,Angers,Cathédrale Saint-Maurice,3217,25,France,1143,1240,,,,25,57
+309089736,Amiens,Cathédrale Notre-Dame,7215,42,France,1220,1499,,,,42,85
+,Avranches,Cathédrale Saint-Andre,2400,22,France,1025,1121,,,,22,49
+47576069,Colmar,Église Saint-Mathieu,1902,23,France,1280,1300,,,,23,44
+69522625,Toul,cathedrale saint-etienne,5831,32,France,1220,1497,,,,32,76
+29488268,Selestat (Sélestat),Église Saint-Georges,1553,20,France,1220,1500,,,,20,39
+45393044,Rodez,Cathédrale Notre-Dame-de-l'Assomption,4321,30,France,1277,1542,,,,30,66
+94305805,Quimper,Cathédrale Saint-Corentin,3060,20,France,1239,1493,,,,20,55
+39704141,Noyon,Cathédrale de la Nativité de Notre-Dame,5898,23,France,1145,1295,,,,23,77
+112060042,Meaux,Basilique-Cathédrale Saint-Étienne,3938,31,France,1175,1540,,,,31,63
+70979680,Lodeve (Lodève),Cathédrale Saint-Fulcran,2024,25,France,1265,1320,,,,25,45
+63719981,Langres,Cathédrale Saint-Mammès,2951,23,France,1150,1366,,,,23,54
+91980198,Lectoure,Cathédrale Saint-Gervais-Saint-Protais,2305,21,France,1473,1600,,,,21,48
+50805141,Issoire,Abbatiale Saint-Austremoine,1528,19,France,1133,1166,,,,19,39
+,Grasse,Cathédrale Notre-Dame-du-Puy de Grasse,800,14,France,1250,,,,,14,28
+107586863,Fontenay le Comte (Fontenay-le-Comte),Église Notre-Dame,1446,18,France,1420,1440,,height of choir,,18,38
+68663205,Coutances,Cathédrale Notre-Dame,3270,22,France,1220,1270,,,,22,57
+66636479,Condom,Église Saint-Pierre,2304,25,France,1400,1507,,,,25,48
+,Carpentras,Cathédrale Saint-Siffrein de Carpentras,1600,23,France,1450,,,,,23,40
+160643152,Brioude,Basilique Saint-Julien,2057.231158,22,France,1080,1180,,,,22,45
+,Bernay (Eure),Notre dame de Bernay,1200,16,France,1010,,,,,16,35
+,Hix,St Martin d' Hix,170,9,France,1100,1200,,height estimated from photo,,9,13
+,Emeville,St Leger d' Emebille,216,6,France,1280,1300,,height estimated from photo,,6,15
+,Beaune,St Flocel,60,3.6,France,960,,,,,3.6,8
+151930483,Aire (Aire-sur-l'Adour),Cathédrale Saint-Jean-Baptiste,1586.366592,15,France,1060,1300,,,,15,40
+282912737,Eu,Notre-Dame et Saint-Laurent,1820.368132,21,France,1186,1230,,,,21,43
+142251606,Senlis,Cathédrale de l'Assomption de Notre-Dame,2297.64809,24,France,1151,1191,,,,24,48
+146670643,Laon,Cathédrale Notre-Dame,5016.823922,25,France,1135,1235,,,,25,71
+102809767,Chartres,Cathédrale Notre-Dame,7307.69506,37,France,1134,1260,,,,37,85
+28379422,Nantes,Cathédrale Saint-Pierre-et-Saint-Paul,4435.139866,38,France,1430,1536,,,,38,67
+25055228,Le Mans,Cathédrale Saint-Julien,5118.50101,33,France,1139,1423,,,,33,72
+3541088,Strasbourg (Strassburg),Cathédrale Notre-Dame,5986.050552,31,France,1176,1439,,,,31,77
+,,,,,,,,,,,,
+241049106,Goerlitz (Görlitz),Pfarrkirche St. Peter und Paul,2758,27,Germany,1425,1497,,,,27,53
+25847999,Hildesheim,Sankt Michaelis,1963.577228,17,Germany,1011,1031,,,,17,44
+25529590,Schwerin,Schweriner Dom St. Maria und St. Johannes,3200,27,Germany,1171,1246,,,,27,57
+4532022,"Koeln (Köln, Cologne)",Kölner Dom,6000,43,Germany,1248,1480,,,,43,77
+44440156,Wismar,Sankt Nikolai,3380.316174,37,Germany,1381,1487,,,,37,58
+193120840,Wismar,St.-Georgen-Kirche,3341.711896,35,Germany,1404,1594,,,,35,58
+88049041,Lueneburg (Lüneburg),Sankt Nicolai,1246.095965,28,Germany,1420,1460,,,,28,35
+88049858,Lueneburg (Lüneburg),St. Michaelis,2054.866551,20,Germany,1376,1438,,,,20,45
+22993770,Magdeburg,Magdeburger Dom,4629.64038,32,Germany,1209,1520,,,,32,68
+155551498,Mainz,Hoher Dom St. Martin,4830.067093,29,Germany,1085,1400,,,,29,69
+225698612,Muenchen (München),Frauenkirche,4437.718438,37,Germany,1468,194,,,,37,67
+40967526,Muenster (Münster (Westfalen)),St.-Paulus-Dom,4331.349654,23,Germany,1225,1264,,,,23,66
+50556446,Noerdlingen (Nördlingen),St. Georg,2517.182143,20,Germany,1427,1490,,,,20,50
+24275959,"Luebeck (Lübeck), see also Old-Luebeck",St.-Marien-Kirche,3727.358336,39,Germany,1250,1351,,,,39,61
+135776766,"Luebeck (Lübeck), see also Old-Luebeck",St.-Aegidien-Kirche,1552.572904,15,Germany,1227,1320,,,,15,39
+37741501,Prenzlau,Marienkirche,2203.813173,22,Germany,1289,1340,,,,22,47
+39962246,Regensburg,Dom Sankt Peter,3306.282838,32,Germany,1200,1221,,,,32,58
+25697707,Ulm,Ulmer Münster,6019.861331,42,Germany,1377,1525,,,,42,78
+174425588,Viersen,St. Johannes,1278.048146,17,Germany,1895,1900,,,,17,36
+107172724,Stralsund,St.-Jacobi-Kirche,2130.40141,25,Germany,1303,1400,,,,25,46
+94168520,Worms,Dom St. Peter,3316.336899,26,Germany,1130,1300,,,,26,58
+206694451,Worms,Liebfrauenkirche,2088.797317,19,Germany,1276,1468,,,,19,46
+2052246,Halberstadt,Dom St. Stephanus und St. Sixtus,2800,27,Germany,1236,1491,,,,27,53
+53212149,Essen,Münsterkirche-Dom zu Essen,1166,14,Germany,1280,1320,,,,14,34
+45954637,Koblenz,Basilika Sankt Kastor,1395.249054,15,Germany,1000,1208,,,,15,37
+169014352,Koblenz,Liebfrauenkirche,1052.2047,17,Germany,1404,1487,,,,17,32
+25857134,Koblenz,Florinskirche,1333.038884,15,Germany,1582,1614,,,,15,37
+10212387,"Koeln (Köln, Cologne)",St. Pantaleon,2098.845383,18,Germany,966,1002,,,,18,46
+24463323,"Koeln (Köln, Cologne)",St. Cäcilien,1008.113837,14,Germany,1100,1200,,,,14,32
+25270980,"Koeln (Köln, Cologne)",Groß St.Martin,1449.568309,21,Germany,1150,1220,,,,21,38
+25284355,"Koeln (Köln, Cologne)",St.Andreas,1518.597703,18,Germany,1414,1492,,,,18,39
+27780576,"Koeln (Köln, Cologne)",St. Ursula,1349.460795,16,Germany,1125,1300,,,,16,37
+30079415,"Koeln (Köln, Cologne)",St. Maria im Kapitol,2424.917036,18,Germany,1040,1065,,,,18,49
+31776681,"Koeln (Köln, Cologne)",St. Georg,1220.782766,12,Germany,1050,1074,,,,12,35
+38246033,"Koeln (Köln, Cologne)",St. Gereon,1650.754303,17,Germany,1220,1380,,,,17,41
+248656007,"Koeln (Köln, Cologne)",St. Severin,1503.887425,20,Germany,1030,1237,,,,20,39
+282443595,"Koeln (Köln, Cologne)",St. Aposteln,1973.65227,19,Germany,1150,1250,,,,19,44
+316013323,"Koeln (Köln, Cologne)",St. Kunibert,1809.619749,23,Germany,1210,1251,,,,23,43
+19829176,Moenchengladbach (Mönchengladbach),Münsterbasilika St. Vitus,1306.638456,18,Germany,1150,1275,,,,18,36
+50284360,Trier,Dom St. Peter zu Trier,3937.040244,29,Germany,1040,1196,,,,29,63
+136513654,Trier,St. Matthias,2018.142938,19,Germany,1127,1160,,,,19,45
+26498173,Werden (now part of Essen),Basilika St. Ludgerus,1934.25041,20,Germany,1256,1300,,,,20,44
+26165742,Speyer,Dom zu Speyer,6017.28005,33,Germany,1030,1106,,,,33,78
+95401019,Stralsund,St. Marien-Kirche,3600,33,Germany,1385,1548,,,,33,60
+35870306,Rostock (see Dierkov),St.-Marien-Kirche,3300,32,Germany,1290,1450,,,,32,57
+,Nunkirche,"St Rochus, pfarrkirche",280,8,Germany,1200,1750,,,,8,17
+,Weiler,"St Kosmas & Damian, pfarrkirche",108,6,Germany,1120,1150,,,,6,10
+,Trier,"St Agritius, Kastor & Florin, Kaplle zur Eiche",62,4,Germany,1180,1200,,,,4,8
+,Alken an der Mosel,"St Michael, pfarkirche",200,5,Germany,1100,1300,,,,5,14
+,,,,,,,,,,,,
+26495164,"Antwerpen (Anvers, Antwerp)",Onze-Lieve-Vrouwekathedraal,7140.702392,28,Belgium,1351,1521,,,,28,85
+391532327,Dinant,Collégiale Notre-Dame de Dinant,1066.67101,22,Belgium,1120,1279,,,,22,33
+2295569,"Liege (Luik, Luettich)",Cathédrale Saint-Paul,2700,24,Belgium,1240,1390,,,,24,52
+28809723,Mechelen (Malines),Sint Romboutskathedraal,4334.315688,28,Belgium,1335,1520,,,,28,66
+32817141,Mons (Bergen),Collégiale Sainte-Waudru,4496.592258,25, ,1450,1691,,,,25,67
+30126781,Nivelles (Nijvel),Collégiale Sainte Gertrude,2969.2015,20,Belgium,992,1046,,,,20,54
+55213272,Tournai (Doornik),Cathédrale Notre-Dame,5120.755598,36,Belgium,1066,1255,,,,36,72
+105192350,"Gent (Gand, Ghent)",Sint-Baafskathedraal,4234.90583,31,Belgium,1280,1353,,,,31,65
+,Bois,"St Lambert, pfarrkirche",192,8,Belgium,1000,1200,,,,8,14
+,Chardeneux-sous-Bonsin,"Maria, pfarkirche",144,6,Belgium,1100,1200,,,,6,12
+,Frasnes,Notre-dame du Roux,220,8,Belgium,1180,1200,,,,8,15
+,,,,,,,,,,,,
+137472252,Basel,Basler Münster,2683.431696,20,Swittzerland,1180,1420,,,,20,52
+,,,,,,,,,,,,
+267777506,Breda,Onze Lieve Vrouwekerk,2903.972241,23,Netherlands,1400,1509,,,,23,54
+274017666,Gouda,Sint Janskerk,4972.72582,25,Netherlands,1404,1510,,,,25,71
+47470547,Groningen,Der Aa-kerk,1911.378725,29,Netherlands,1400,1500,,,,29,44
+52966906,Leiden,Pieterskerk,3691.740261,29,Netherlands,1380,1520,,,,29,61
+288153046,Leiden,Hooglandse Kerk,3215.961712,26,Netherlands,1377,1500,,,,26,57
+268259385,s Hertogenbosch,Sint-Janskathedraal,5013.89409,29,Netherlands,1220,1530,,,,29,71
+33492308,Utrecht,Domkerk,4000,32,Netherlands,1254,1517,,including part destroyed after MA,,32,63
+,Oosterland,"St Nikolaas, pfarrkirche",312,10,Netherlands,1150,1900,,,,10,18
+,Ommeren,"St Lambertus, pfarrkirche",106,7,Netherlands,1100,1200,,,,7,10
+,Andelst,"St Vitus, pfarrkirche",168,6,Netherlands,1000,1200,,,,6,13
+,,,,,,,,,,,,
+,Nettlecombe,Church of St Mary the virgin,410,9,United Kingdom,1200,1400,,height estimated from photo,,9,20
+,Wasdale,Church of St Olaf,62,4,United Kingdom,900,1000,,height estimated from photo,,4,8
+,Culbone,"St Beuno, Culbone parish church",50,5,United Kingdom,1000,1500,,height estimated from photo,,5,7
+40650689,Beverley,Beverley Minster,2635.799589,20,United Kingdom,1220,1400,,,,20,51
+48937931,Bristol,Bristol Cathedral,3196.600977,16,United Kingdom,1216,1450,,,,16,57
+28021345,Canterbury,Canterbury Cathedral,6402.355287,27,United Kingdom,1070,1420,,,,27,80
+87134587,Carlisle,Carlisle Cathedral,2144.501447,22,United Kingdom,1122,1300,,,,22,46
+28230540,Exeter,Exeter Cathedral,3810.278425,21,United Kingdom,1133,1380,,,,21,62
+364313092,London,Westminster Abbey,5768.827227,31,United Kingdom,1245,1517,,,,31,76
+4099626,St Albans,St Albans Cathedral,4956.694654,20,United Kingdom,1077,1400,,,,20,70
+28750371,York,York Minster,7000,30,United Kingdom,1220,1472,,,,30,84
+,Glasgow,St Mungo's Cathedral,2200,32,United Kingdom,1124,1450,,,,32,46.9041576
+149498084,Salisbury,Salisbury Cathedral,5000,26,United Kingdom,1120,1258,,,,26,70.71067812
+242966968,Lincoln,Lincoln Cathedral,6000,25,United Kingdom,1192,1330,,,,25,77.45966692
