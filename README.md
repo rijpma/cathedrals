@@ -2,7 +2,9 @@
 
 This repository contains reproduction files for the paper "Church building and the economy during Europe’s ‘Age of the Cathedrals’, 700–1500 CE".
 
-All tables and figures except figure 1 can be reproduced by running the script `reproduce.sh`. Figure 1 is included as a separate excel file: `excels/England Ch building GDP & earnings.xlsx`.
+There are scripts to create the data as well as the figures. The scripts prep_citydata.R prep_popdata.R, and prep_churchdata.R create the basic data files. The remaining scripts create the figures in the main paper and the appendices.
+
+All tables and figures except figure 1 can be reproduced by running the script `reproduce.sh`. Figure 1 is included as a separate excel file: `excels/England Ch building GDP & earnings.xlsx`. The table below matches the files to the tables and figures in the paper.
 
 |paper    |file              |
 |---------|------------------|
@@ -10,7 +12,7 @@ All tables and figures except figure 1 can be reproduced by running the script `
 |Table 1  | tab/sumstats_perc_7001100.html|
 |         | tab/sumstats_perc11001500.html|
 |         | tab/sumstats.html|
-|Figure 2 | **update in paper**|
+|Figure 2 | figs/distrs_prepost_heap.pdf|
 |Figure 3 | figs/europetotal_hc.pdf|
 |Figure 3 | figs/europetotal_hc.pdf|
 |Figure 4 | figs/4m3maps_smoothed.pdf|
@@ -36,11 +38,9 @@ All tables and figures except figure 1 can be reproduced by running the script `
 |Figure A9| figs/disasterpanel.pdf|
 |Figure A9| figs/disasterpanel.pdf|
 
-There are scripts to create the data as well as the figures. The scripts prep_citydata.R prep_popdata.R, and prep_churchdata.R create the basic data files. The remaining scripts create the figures in the main paper and the appendices.
-
 The scripts cat_osmchurches.R and cat_geocoding.R are excluded from the overall reproduction script because they make a lot of requests at the OpenStreetMap/overpass and google geocoding servers. Moreover, the data on the servers can have changed since the original requests. They are included here only to show how this part of the data was created.
 
-The scripts have a GPLv3 license. The data based on OpenStreetMap has an [Open Database License](http://opendatacommons.org/licenses/odbl/1.0/). This holds for the following files:
+The scripts have a GPL-3 license. The data based on OpenStreetMap has an [Open Database License](http://opendatacommons.org/licenses/odbl/1.0/). This holds for the following files:
 
 * dat/checkedchurches_eb_8_2018sep4.csv
 * dat/churches_italy_2_2018oct2.csv
