@@ -95,16 +95,16 @@ itmin = -0.025
 itmax = 0.058
 eumin = -0.00005
 eumax = 0.00335
-pdf("figs/fittedpoints.pdf")
-par(mfrow = c(1, 2))
-plot(ecdf(bldobs[ctr == "it", ratio_to_successor - ratio_predicted]), 
-    pch = 1, xlim = c(-0.2, 0.2))
-abline(v = c(itmin, itmax)) # between these values
-# rest
-plot(ecdf(bldobs[ctr != "it" & endm2 != 0 & successor_endm2 != 0, ratio_to_successor - 0.53]),
-    xlim = c(-0.01, 0.01), pch = NA, lty = 1)
-abline(v = c(eumin, eumax)) # between these values
-dev.off()
+# pdf("figs/fittedpoints.pdf")
+# par(mfrow = c(1, 2))
+# plot(ecdf(bldobs[ctr == "it", ratio_to_successor - ratio_predicted]), 
+#     pch = 1, xlim = c(-0.2, 0.2))
+# abline(v = c(itmin, itmax)) # between these values
+# # rest
+# plot(ecdf(bldobs[ctr != "it" & endm2 != 0 & successor_endm2 != 0, ratio_to_successor - 0.53]),
+#     xlim = c(-0.01, 0.01), pch = NA, lty = 1)
+# abline(v = c(eumin, eumax)) # between these values
+# dev.off()
 
 # = predicted in buildings
 bldobs[, predicted := "no"]
@@ -229,23 +229,23 @@ m1 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==1,])
 m2 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==2,])
 m3 = lm(end_surface ~ previous_surface - 1, data=sfc[factor==3,])
 
-pdf("figs/surface_fits.pdf", height=3, width=8)
-par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0))
-plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
-    main='1st predecessor', xlab = '', ylab = 'End surface (m2)')
-points(end_surface ~ previous_surface, data=sfc[factor==1,])
-abline(m1, col = 'gray')
-abline(a=0, b=1.879)
-# text(2000, 1000, "OLS fit", col=2)
-# text(1000, 5000, "Rule of thumb", col=1)
-plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
-    main='2nd predecessor', xlab = 'Previous surface (m2)', ylab = '')
-points(end_surface ~ previous_surface, data=sfc[factor==2,])
-abline(m2, col = 'gray')
-abline(a=0, b=1.879^2)
-plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
-    main='3rd predecessor', xlab = '', ylab = '')
-points(end_surface ~ previous_surface, data=sfc[factor==3,])
-abline(m3, col = 'gray')
-abline(a=0, b=1.879^3)
-dev.off()
+# pdf("figs/surface_fits.pdf", height=3, width=8)
+# par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0))
+# plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
+#     main='1st predecessor', xlab = '', ylab = 'End surface (m2)')
+# points(end_surface ~ previous_surface, data=sfc[factor==1,])
+# abline(m1, col = 'gray')
+# abline(a=0, b=1.879)
+# # text(2000, 1000, "OLS fit", col=2)
+# # text(1000, 5000, "Rule of thumb", col=1)
+# plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
+#     main='2nd predecessor', xlab = 'Previous surface (m2)', ylab = '')
+# points(end_surface ~ previous_surface, data=sfc[factor==2,])
+# abline(m2, col = 'gray')
+# abline(a=0, b=1.879^2)
+# plot(end_surface ~ previous_surface, data=sfc, type='n', bty='l', 
+#     main='3rd predecessor', xlab = '', ylab = '')
+# points(end_surface ~ previous_surface, data=sfc[factor==3,])
+# abline(m3, col = 'gray')
+# abline(a=0, b=1.879^3)
+# dev.off()

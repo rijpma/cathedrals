@@ -65,34 +65,8 @@ dynobs[, list(m3_end=sum(m3, na.rm=TRUE)), by=paste(osmid, bldindex)][, mean(m3_
 cat("average end-size final church: \n")
 dynobs[, list(m3_end=sum(m3[bldindex==max(bldindex)], na.rm=TRUE)), by=osmid][, mean(m3_end)]
 
-# distribution observations
-# -------------------------
-pdf('figs/phasedistr_hc.pdf', height = 6, width = 10)
-par(mfrow=c(2, 4), mar=c(4, 4, 2, 1), font.main = 1)
-x = dynobs_sp[, grep('ctr$|year_crc', names(dynobs_sp)), with = F]
-for (country in unique(x$ctr)){
-    histmat = as.matrix(x[ctr == country, grep("year", names(x)), with = F])
-    histmat[histmat < 700] = 700
-    histmat[histmat > 1600] = 1600
-    hi = hist(histmat, breaks = M, plot = F)
-    hi$counts = hi$counts / M
-    plot(hi, main='', xlab = 'year')
-    title(main=country, line = -0.1)
-}
-dev.off()
-
-pdf('figs/phasedistr.pdf', height = 6, width = 10)
-par(mfrow=c(2, 4), mar = c(2, 2, 3, 1), font.main = 1)
-x = dynobs_sp[, list(ctr, year)]
-x[year > 1600, year := 1600]
-x[year < 700, year := 700]
-for (country in unique(x$ctr)){
-    hist(x[ctr == country, year], breaks = 9, main = '')
-    title(main = country, line = -0.1)
-}
-dev.off()
-
 # w. european totals
+# ------------------
 eutotal = fullobs[data.table::between(decade, 700, 1500), list(im3y20 = base::sum(.SD, na.rm=TRUE) / M / 1e6), by=decade, .SDcols = impvrbs]
 
 # m3 per 20y period en country
@@ -186,26 +160,6 @@ geography_south = pcitobs[,
          `Rivercanal, Mediterranean` = mean(im3_cnt[rivercanal == 1 & mediterranean == 1], na.rm = TRUE),
          `Coastal, Mediterranean` = mean(im3_cnt[coastal == 1 & mediterranean == 1], na.rm = TRUE)),
     by = list(year)]
-
-pdf("figs/geography_hc.pdf", height=3, width=8)
-par(mfrow=c(1, 3), font.main=1, mar = c(4.5, 4, 1.5, 0.2))
-matplot(geography[, 1], geography[, -1], 
-    bty = 'l', type='b', col='gray', lty = 1, pch = 1,
-    ylab = m3y100lbl, 
-    xlab = '')
-lines(coastal ~ year, data = geography, type='b', lwd = 1.5)
-title(main='Coastal', line = -0.3)
-matplot(geography[, 1], geography[, -1], 
-    bty = 'l', type='b', col='gray', lty = 1, pch = 1,
-    xlab = 'century')
-lines(rivercanal ~ year, data = geography, type='b', lwd = 1.5)
-title(main='River/canal', line = -0.3)
-matplot(geography[, 1], geography[, -1], 
-    bty = 'l', type='b', col='gray', lty = 1, pch = 1,
-    xlab = '')
-lines(landlocked ~ year, data = geography, type='b', lwd = 1.5)
-title(main='Landlocked', line = -0.3)
-dev.off()
 
 cat("annualised growth 900-1200:\n")
 geography[year %in% c(900, 1200), 
