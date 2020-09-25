@@ -152,12 +152,12 @@ geography = pcitobs[,
 pcitobs[ctr == "it" &  mediterranean == 0, mediterranean := 1]
 geography_north = pcitobs[, 
     list(`Landlocked, Northern` = mean(im3_cnt[landlocked == 1 & mediterranean == 0], na.rm = TRUE),
-         `Rivercanal, Northern` = mean(im3_cnt[rivercanal == 1 & mediterranean == 0], na.rm = TRUE),
+         `River/canal, Northern` = mean(im3_cnt[rivercanal == 1 & mediterranean == 0], na.rm = TRUE),
          `Coastal, Northern` = mean(im3_cnt[coastal == 1 & mediterranean == 0], na.rm = TRUE)),
     by = list(year)]
 geography_south = pcitobs[, 
     list(`Landlocked, Mediterranean` = mean(im3_cnt[landlocked == 1 & mediterranean == 1], na.rm = TRUE),
-         `Rivercanal, Mediterranean` = mean(im3_cnt[rivercanal == 1 & mediterranean == 1], na.rm = TRUE),
+         `River/canal, Mediterranean` = mean(im3_cnt[rivercanal == 1 & mediterranean == 1], na.rm = TRUE),
          `Coastal, Mediterranean` = mean(im3_cnt[coastal == 1 & mediterranean == 1], na.rm = TRUE)),
     by = list(year)]
 
