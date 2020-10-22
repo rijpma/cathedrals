@@ -10,6 +10,8 @@ library("raster") # for spatial splitting of data
 library("sf")
 library("data.table")
 library("stringi")
+library("rgeos")
+library("zoo")
 
 # rasters for country ids where absent
 nld = raster::getData("GADM", country='NLD', level=0)
