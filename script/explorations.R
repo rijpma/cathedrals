@@ -12,7 +12,8 @@ dynobs = data.table::fread("dat/dynobs.csv")
 statobs = data.table::fread("dat/statobs.csv")
 dynobs_sp = merge(dynobs, statobs, by="osmid")
 citobs = data.table::fread("dat/citobs.csv")
-fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
+# fullobs_sp = data.table::fread("gunzip -c dat/fullobs_sp.csv.gz")
+fullobs_sp = data.table::fread("gunzip -c ~/data/churches/fullobs_sp.csv.gz")
 fullobs = fullobs_sp[, -names(statobs)[-1], with = F]
 
 M = 9 # number of imputations
@@ -76,6 +77,8 @@ abline(v=c(768, 1140, 1315, 1000, 1348), col='gray')
 lines(eutotal, type='b', lwd=1.5, pch=1, cex=0.9)
 dev.off()
 
+fwrite(eutotal, "dat/figure3.csv")
+
 # growth rates
 cat("annualised growth rate 960-1260: ")
 annualised_growth(eutotal[decade == 960 | decade == 1260, im3y20], delta = 1260 - 961)
@@ -130,6 +133,7 @@ lines(other ~ decade, data = bytype, lwd=1.5)
 title(main="other", line=-1)
 dev.off()
 
+fwrite(bytype, "dat/figure8.csv")
 
 # building by city geography
 # --------------------------
@@ -202,6 +206,11 @@ for (geo in names(geography_south)[-1]){
     axis1ks(side = 2)
 }
 dev.off()
+out = rbindlist(list(
+        north = setNames(geography_north, c("year", "landlocked", "rivercanal", "coastal")),
+        south = setNames(geography_south, c("year", "landlocked", "rivercanal", "coastal"))),
+    idcol = TRUE)
+fwrite(out, "dat/figure9.csv")
 
 # totals per region
 # -----------------
