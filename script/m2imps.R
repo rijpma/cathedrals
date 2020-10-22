@@ -217,7 +217,7 @@ axis1ks(side = 2)
 plot(All ~ decade, data = ctrsalt,
         type = 'l', lwd = 1.5, col = 1,
         yaxt = "n",
-        main = "All", ylab = "")
+        main = "W. Europe", ylab = "")
 lines(All ~ decade, data = ctrsold, col = "gray", lwd = 1.5)
 axis1ks(side = 2)
 dev.off()
