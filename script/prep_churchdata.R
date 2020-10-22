@@ -68,7 +68,7 @@ setnames(chr_ad,
 ad_sf = st_as_sf(chr_ad[!is.na(lat) & osmlink != ""], 
     coords = c("lon", "lat"), crs = 4326)
 chr_ad[!is.na(lat) & osmlink != "",
-    iso3 := sf::st_join(ad_sf, nweu, join = sf::st_intersects)$ISO]
+    iso3 := sf::st_join(ad_sf, nweu, join = sf::st_intersects)$GID_0]
 chr_ad[, ctr := tolower(substr(iso3, 1, 2))]
 chr_ad[, ctr := ifelse(ctr == "gb", "uk", ctr)]
 
@@ -283,8 +283,9 @@ ita = raster::getData("GADM", country='ITA', level=1)
 # Only Chiesa di San Vitale, Como and St Peter in Rome are missed, 
 # both actually not in Italy and can be circumvented by assigning
 # south first, and then assiging "rest" rest north
-ita_south = sf::st_as_sf(ita[ita$NAME_1 %in% c("Abruzzo", "Molise",
-    "Campania", "Apulia", "Basilicata", "Calabria", "Sicily", "Sardegna"), ])
+ita_south = sf::st_as_sf(
+    ita[ita$NAME_1 %in% c("Abruzzo", "Molise","Campania", "Apulia", 
+        "Basilicata", "Calabria", "Sicily", "Sardegna"), ])
 
 statob_sf = sf::st_as_sf(statobs, coords = c("lon", "lat"), crs = 4326)
 statobs_in_ita_south = sf::st_join(statob_sf, ita_south, join = sf::st_intersects, left = F)
