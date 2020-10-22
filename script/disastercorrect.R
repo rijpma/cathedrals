@@ -255,7 +255,6 @@ for (i in 1:length(ctrs)){
         type = 'l', lwd = 1.5)
     if (i == 1 | i == 4) title(ylab = m3y20lblm)
 }
-legend("topleft", fill = c("gray", "black"), legend = c("original", "adjusted (all disasters)"))
 par(mfrow=c(2, 3), mar=c(4, 4, 1.5, 0.5), font.main=1)
 for (i in 1:length(ctrs)){
     country = ctrs[i]
@@ -266,5 +265,4 @@ for (i in 1:length(ctrs)){
         type = 'l', lwd = 1.5)
     if (i == 1 | i == 4) title(ylab = m3y20lblm)
 }
-legend("topleft", fill = c("gray", "black"), legend = c("original", "adjusted (earthquakes)"))
 dev.off()
