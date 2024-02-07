@@ -146,6 +146,16 @@ midcent = midcent[data.table::between(year, 650, 1550),
      .SDcols = impvrbs]
 pcitobs = merge(midcent, siem, by=c('city', 'year'), all.x=TRUE)
 
+out = pcitobs[, 
+    list(city, loc_frmtd, country, tld,
+        year,
+        lat, lon, 
+        `transport location`, 
+        rivercanal, coastal, landlocked,
+        atlantic, whitesea, blacksea, northsea, caspian, mediterranean, baltic,
+        inhab, im3_cnt)]
+writexl::write_xlsx(out, "excels/cities_geography.xlsx")
+
 geography = pcitobs[, 
     list(rivercanal = mean(im3_cnt[rivercanal == 1], na.rm = TRUE),
          coastal = mean(im3_cnt[coastal == 1], na.rm = TRUE),
@@ -300,6 +310,9 @@ byctr[decade %% 100 != 0, urb_inhab := NA]
 byctr2[decade %% 100 != 0, urb_inhab := NA]
 byctr3[decade %% 100 != 0, urb_inhab := NA]
 eu[decade %% 100 != 0, urb_inhab := NA]
+
+fwrite(byctr[, list(ctr, decade, pop, urb_inhab, im3_dec = round(im3_dec))], 
+    "dat/countrydata.csv")
 
 # interpolate pop
 byctr[, urb_inhab_i := round(exp(zoo::na.approx(log(urb_inhab)))), 
